@@ -1,0 +1,149 @@
+{
+  "welcome": "Backend Editor (Visual)",
+  "sections": {
+    "variables": "Variables",
+    "math": "Mathematics",
+    "logic": "Logic & Comparison",
+    "literals": "Literals & Objects",
+    "control": "Control flow",
+    "actions": "Actions",
+    "functions": "Functions",
+    "structures": "Data Structures"
+  },
+  "workspace": {
+    "add_function": "New function",
+    "function_name_prompt": "Enter function name:",
+    "error_no_spaces": "Function name must not contain spaces."
+  },
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
+  "blocks": {
+    "true": "True",
+    "false": "False",
+    "var": {
+      "label": "declare var",
+      "label_sidebar": "var",
+      "label_choice": "choose var",
+      "placeholder_name": "name",
+      "placeholder_value": "value",
+      "type_label": "type",
+      "select_var": "Select variable",
+      "types": {
+        "string": "String",
+        "number": "Number",
+        "boolean": "Boolean",
+        "array": "Array",
+        "object": "Object",
+        "any": "Any"
+      },
+      "select_struct": "Select structure"
+    },
+    "assign": {
+      "label": "assign"
+    },
+    "equal": {
+      "label": "is equal to"
+    },
+    "compare": {
+      "lt": "is less than",
+      "gt": "is greater than",
+      "lte": "is less than or equal to",
+      "gte": "is greater than or equal to",
+      "neq": "is not equal to"
+    },
+    "struct": {
+      "label": "struct",
+      "placeholder_name": "StructName",
+      "add": "Add structure",
+      "add_field": "Add field",
+      "field_name": "field name",
+      "field_default": "default val.",
+      "nullable": "null ?"
+    },
+    "math": {
+      "placeholder": "0",
+      "add": "addition",
+      "sub": "subtraction",
+      "mul": "multiplication",
+      "div": "division",
+      "mod": "modulo"
+    },
+    "literal": {
+      "string": "string",
+      "number": "number",
+      "array": "array",
+      "object": "object",
+      "object_property": "property"
+    },
+    "array_push": {
+      "label": "append to array",
+      "value_label": "value"
+    },
+    "array_remove": {
+      "label": "remove from array",
+      "from_label": "from"
+    },
+    "array_set_key": {
+      "label": "update key",
+      "key_label": "",
+      "from_label": "from array",
+      "with_label": "with",
+      "select_key": "Select key"
+    },
+    "if": {
+      "label": "if",
+      "then": "then",
+      "placeholder": "condition"
+    },
+    "elseif": {
+      "label": "else if",
+      "then": "then",
+      "placeholder": "condition"
+    },
+    "else": {
+      "label": "else"
+    },
+    "for": {
+      "label": "for",
+      "from": "from",
+      "to": "to"
+    },
+    "while": {
+      "label": "while",
+      "placeholder": "condition"
+    },
+    "foreach": {
+      "label": "for each",
+      "in": "in",
+      "item": "item",
+      "list": "list"
+    },
+    "break": {
+      "label": "break"
+    },
+    "continue": {
+      "label": "continue"
+    },
+    "print": {
+      "label": "print"
+    },
+    "start": {
+      "label": "when started"
+    },
+    "function": {
+      "call": "call",
+      "select": "Select function"
+    },
+    "parameter": {
+      "label": "parameter",
+      "label_choice": "choose param",
+      "placeholder_name": "name",
+      "select_param": "Select parameter"
+    },
+    "return": {
+      "label": "return"
+    }
+  }
+}

@@ -1,0 +1,149 @@
+{
+  "welcome": "Éditeur de Backend (Visuel)",
+  "sections": {
+    "variables": "Variables",
+    "math": "Mathématiques",
+    "logic": "Logique & Comparaison",
+    "literals": "Littéraux & Objets",
+    "control": "Contrôle de flux",
+    "actions": "Actions",
+    "functions": "Fonctions",
+    "structures": "Structures de données"
+  },
+  "workspace": {
+    "add_function": "Nouvelle fonction",
+    "function_name_prompt": "Entrez le nom de la fonction :",
+    "error_no_spaces": "Le nom de la fonction ne doit pas contenir d'espaces."
+  },
+  "common": {
+    "cancel": "Annuler",
+    "confirm": "Confirmer"
+  },
+  "blocks": {
+    "true": "Vrai",
+    "false": "Faux",
+    "var": {
+      "label": "déclarer var",
+      "label_sidebar": "var",
+      "label_choice": "choisir var",
+      "placeholder_name": "nom",
+      "placeholder_value": "valeur",
+      "type_label": "type",
+      "select_var": "Choisir variable",
+      "types": {
+        "string": "Chaîne de caractères",
+        "number": "Nombre",
+        "boolean": "Booléen",
+        "array": "Tableau",
+        "object": "Objet",
+        "any": "N'importe lequel"
+      },
+      "select_struct": "Choisir structure"
+    },
+    "assign": {
+      "label": "affecter"
+    },
+    "equal": {
+      "label": "est égal à"
+    },
+    "compare": {
+      "lt": "est inférieur à",
+      "gt": "est supérieur à",
+      "lte": "est inférieur ou égal à",
+      "gte": "est supérieur ou égal à",
+      "neq": "est différent de"
+    },
+    "struct": {
+      "label": "structure",
+      "placeholder_name": "NomStructure",
+      "add": "Ajouter une structure",
+      "add_field": "Ajouter un champ",
+      "field_name": "nom champ",
+      "field_default": "valeur par déf.",
+      "nullable": "null ?"
+    },
+    "math": {
+      "placeholder": "0",
+      "add": "addition",
+      "sub": "soustraction",
+      "mul": "multiplication",
+      "div": "division",
+      "mod": "modulo"
+    },
+    "literal": {
+      "string": "chaîne",
+      "number": "nombre",
+      "array": "tableau",
+      "object": "objet",
+      "object_property": "propriété"
+    },
+    "array_push": {
+      "label": "ajouter dans tableau",
+      "value_label": "la valeur"
+    },
+    "array_remove": {
+      "label": "supprimer du tableau",
+      "from_label": "de"
+    },
+    "array_set_key": {
+      "label": "modifier la clé",
+      "key_label": "",
+      "from_label": "du tableau",
+      "with_label": "avec",
+      "select_key": "Sélectionner la clé"
+    },
+    "if": {
+      "label": "si",
+      "then": "alors",
+      "placeholder": "condition"
+    },
+    "elseif": {
+      "label": "sinon si",
+      "then": "alors",
+      "placeholder": "condition"
+    },
+    "else": {
+      "label": "sinon"
+    },
+    "for": {
+      "label": "pour",
+      "from": "de",
+      "to": "à"
+    },
+    "while": {
+      "label": "tant que",
+      "placeholder": "condition"
+    },
+    "foreach": {
+      "label": "pour chaque",
+      "in": "dans",
+      "item": "item",
+      "list": "liste"
+    },
+    "break": {
+      "label": "interrompre"
+    },
+    "continue": {
+      "label": "continuer"
+    },
+    "print": {
+      "label": "afficher"
+    },
+    "start": {
+      "label": "au démarrage"
+    },
+    "function": {
+      "call": "appeler",
+      "select": "Choisir fonction"
+    },
+    "parameter": {
+      "label": "paramètre",
+      "label_choice": "choisir param",
+      "placeholder_name": "nom",
+      "select_param": "Choisir paramètre"
+    },
+    "return": {
+      "label": "retourner"
+    }
+  }
+}

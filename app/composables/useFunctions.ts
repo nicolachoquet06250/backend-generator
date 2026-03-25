@@ -1,0 +1,182 @@
+export interface BlockInstance {
+  id: string;
+  type: string; // 'var', 'math', 'if', etc.
+  config: any;
+  children: BlockInstance[];
+}
+
+export interface FunctionDefinition {
+  id: string;
+  name: string;
+  blocks: BlockInstance[];
+}
+
+export const useFunctions = () => {
+  const functions = useState<FunctionDefinition[]>('editor-functions', () => [
+    { id: 'f1', name: 'main', blocks: [] }
+  ]);
+  
+  const activeFunctionId = useState<string>('active-function-id', () => 'f1');
+
+  const addFunction = (name: string) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    functions.value.push({ id, name, blocks: [] });
+    activeFunctionId.value = id;
+  };
+
+  const removeFunction = (id: string) => {
+    functions.value = functions.value.filter(f => f.id !== id);
+    if (activeFunctionId.value === id && functions.value.length > 0) {
+      activeFunctionId.value = functions.value[0]!.id;
+    }
+  };
+
+  const addBlockToFunction = (functionId: string, blockType: string, parentBlockId?: string, slotName?: string, existingBlock?: BlockInstance, afterBlockId?: string, initialConfig?: any) => {
+    const f = functions.value.find(func => func.id === functionId);
+    if (f) {
+      const id = Math.random().toString(36).substr(2, 9);
+      const newBlock: BlockInstance = existingBlock ? { ...existingBlock, id } : {
+        id,
+        type: blockType,
+        config: initialConfig || {},
+        children: []
+      };
+
+      if (!existingBlock && (blockType === 'array_push' || blockType === 'array')) {
+        newBlock.config.slots = {
+          ...newBlock.config.slots,
+          value: null
+        };
+      }
+
+      if (parentBlockId) {
+        // Find parent block recursively
+        const findAndAdd = (blocks: BlockInstance[]): boolean => {
+          for (const b of blocks) {
+            if (b.id === parentBlockId) {
+              if (!b.config.slots) b.config.slots = {};
+              if (slotName) {
+                b.config.slots[slotName] = newBlock;
+              } else {
+                if (afterBlockId) {
+                  const index = b.children.findIndex(child => child.id === afterBlockId);
+                  if (index !== -1) {
+                    b.children.splice(index + 1, 0, newBlock);
+                  } else {
+                    b.children.push(newBlock);
+                  }
+                } else {
+                  b.children.unshift(newBlock); // Add at the beginning if no afterBlockId and it's a child list
+                }
+              }
+              return true;
+            }
+            if (findAndAdd(b.children)) return true;
+            if (b.config.slots) {
+              for (const slot in b.config.slots) {
+                if (b.config.slots[slot] && findAndAdd([b.config.slots[slot]])) return true;
+              }
+            }
+          }
+          return false;
+        };
+        findAndAdd(f.blocks);
+      } else {
+        if (afterBlockId) {
+          if (afterBlockId === 'start') {
+            f.blocks.unshift(newBlock);
+            return;
+          }
+          const index = f.blocks.findIndex(b => b.id === afterBlockId);
+          if (index !== -1) {
+            f.blocks.splice(index + 1, 0, newBlock);
+          } else {
+            f.blocks.push(newBlock);
+          }
+        } else {
+          f.blocks.push(newBlock);
+        }
+      }
+    }
+  };
+
+  const removeBlockFromFunction = (functionId: string, blockId: string) => {
+    const f = functions.value.find(func => func.id === functionId);
+    if (f) {
+      const recursiveRemove = (blocks: BlockInstance[]): BlockInstance[] => {
+        return blocks.filter(b => {
+          if (b.id === blockId) return false;
+          b.children = recursiveRemove(b.children);
+          if (b.config.slots) {
+            for (const slot in b.config.slots) {
+              if (b.config.slots[slot]?.id === blockId) {
+                delete b.config.slots[slot];
+              } else if (b.config.slots[slot]) {
+                b.config.slots[slot] = recursiveRemove([b.config.slots[slot]])[0];
+              }
+            }
+          }
+          return true;
+        });
+      };
+      f.blocks = recursiveRemove(f.blocks);
+    }
+  };
+
+  const updateBlockConfig = (functionId: string, blockId: string, config: any) => {
+    const f = functions.value.find(func => func.id === functionId);
+    if (f) {
+      const recursiveUpdate = (blocks: BlockInstance[]): boolean => {
+        for (const b of blocks) {
+          if (b.id === blockId) {
+            b.config = { ...b.config, ...config };
+            return true;
+          }
+          if (recursiveUpdate(b.children)) return true;
+          if (b.config.slots) {
+            for (const slot in b.config.slots) {
+              if (b.config.slots[slot] && recursiveUpdate([b.config.slots[slot]])) return true;
+            }
+          }
+        }
+        return false;
+      };
+      recursiveUpdate(f.blocks);
+    }
+  };
+
+  const getBlockById = (functionId: string, blockId: string): BlockInstance | null => {
+    const f = functions.value.find(func => func.id === functionId);
+    if (!f) return null;
+    
+    const findRecursive = (blocks: BlockInstance[]): BlockInstance | null => {
+      for (const b of blocks) {
+        if (b.id === blockId) return b;
+        const fromChildren = findRecursive(b.children);
+        if (fromChildren) return fromChildren;
+        if (b.config.slots) {
+          for (const slot in b.config.slots) {
+            if (b.config.slots[slot]) {
+              const fromSlot = findRecursive([b.config.slots[slot]]);
+              if (fromSlot) return fromSlot;
+            }
+          }
+        }
+      }
+      return null;
+    };
+    
+    return findRecursive(f.blocks);
+  };
+
+  return {
+    functions,
+    activeFunctionId,
+    addFunction,
+    removeFunction,
+    addBlockToFunction,
+    removeBlockFromFunction,
+    updateBlockConfig,
+    getBlockById
+  };
+};
