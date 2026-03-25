@@ -25,7 +25,7 @@ jobs:
         run: npm i
 
       - name: Generate Nuxt internal files
-        run: npx nuxi prepare
+        run: rm package-lock.json && npm i
 
       - name: Build
         run: npm run build

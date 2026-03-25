@@ -22,9 +22,8 @@ export default defineNuxtConfig({
   },
 
   nitro: {
-    buildDir: 'output',
     output: {
-      dir: 'output'
+      dir: 'output',
     }
   }
 })
