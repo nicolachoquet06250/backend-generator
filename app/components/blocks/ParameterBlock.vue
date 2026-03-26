@@ -7,6 +7,7 @@ const props = defineProps<{
   isExpression?: boolean;
   blockId?: string;
   config?: any;
+  children?: any[];
 }>();
 
 const { functions, activeFunctionId, updateBlockConfig } = useFunctions();

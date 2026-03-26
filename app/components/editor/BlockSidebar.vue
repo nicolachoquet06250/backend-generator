@@ -130,6 +130,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
                          type === 'object' ? ObjectBlock :
                          ObjectPropertyBlock" 
                      minimal
+                     v-bind="type === 'array_set_key' ? { targetKey: null } : {}"
           />
         </div>
         <!-- Multi-drop helpers -->
@@ -193,7 +194,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
            @dragstart="onDragStart($event, 'array_set_key')"
            @touchstart="handleTouchStart($event, 'array_set_key')"
            @mousedown="onStopPropagation">
-        <ArraySetKeyBlock minimal />
+        <ArraySetKeyBlock minimal :targetKey="null" />
       </div>
     </div>
 

@@ -9,6 +9,7 @@ const props = defineProps<{
   config?: any;
   array?: any;
   value?: any;
+  children?: any[];
 }>();
 
 const { structures } = useDataStructures();

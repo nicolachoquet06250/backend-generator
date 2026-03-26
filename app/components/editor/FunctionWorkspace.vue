@@ -97,6 +97,16 @@ const onTrashDrop = (e: DragEvent) => {
 
 const onMobileDrop = (e: any) => {
   const dataTransfer = e.detail.dataTransfer;
+  const existingBlockId = dataTransfer.getData('existingBlockId');
+  
+  if (existingBlockId) {
+    // Si c'est un bloc existant qu'on déplace dans le vide du workspace, 
+    // on ne fait rien pour l'instant (ou on pourrait le déplacer à la racine)
+    // Le comportement actuel du desktop semble ne rien faire si on drop un bloc existant 
+    // en dehors d'une zone de drop.
+    return;
+  }
+
   onDrop({ 
     dataTransfer,
     preventDefault: () => {},

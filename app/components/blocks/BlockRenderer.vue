@@ -81,6 +81,10 @@ const getBlockProps = (block: any) => {
     return { ...baseProps, value: isTrue, children: block.children };
   }
 
+  if (block.type === 'array_set_key') {
+    return { ...baseProps, targetKey: block.config?.slots?.key, children: block.children };
+  }
+
   return { ...baseProps, children: block.children };
 };
 </script>

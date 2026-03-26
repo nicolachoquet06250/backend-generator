@@ -9,6 +9,7 @@ defineProps<{
   config?: any;
   array?: any;
   index?: any;
+  children?: any[];
 }>();
 
 const acceptedArrayTypes = ['var', 'parameter', 'array', 'function'];

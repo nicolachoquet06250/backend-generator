@@ -23,6 +23,7 @@ const props = defineProps<{
   blockId?: string;
   value?: any;
   config?: any;
+  children?: any[];
 }>();
 
 const { structures } = useDataStructures();

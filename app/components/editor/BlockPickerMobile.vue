@@ -25,6 +25,9 @@ import PrintBlock from '../blocks/PrintBlock.vue';
 import SetVarBlock from '../blocks/SetVarBlock.vue';
 import EqualBlock from '../blocks/EqualBlock.vue';
 import ComparisonBlock from '../blocks/ComparisonBlock.vue';
+import { useMobileDragDrop } from '~/composables/useMobileDragDrop';
+
+const { onTouchStart, onTouchMove, onTouchEnd } = useMobileDragDrop();
 
 const props = defineProps<{
   show: boolean;
@@ -35,6 +38,14 @@ const emit = defineEmits(['close', 'select']);
 
 const onSelect = (type: string) => {
   emit('select', type);
+};
+
+const handleTouchStart = (e: TouchEvent, type: string) => {
+  const target = e.target as HTMLElement;
+  if (target && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(target.tagName)) {
+    return;
+  }
+  onTouchStart(e, { blockType: type, 'text/plain': type, 'application/x-block-type': type });
 };
 
 const inLoop = inject('inLoop', ref(false));
@@ -89,7 +100,11 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div class="block-picker-mobile">
+  <div class="block-picker-mobile"
+       @touchmove="onTouchMove" 
+       @touchend="onTouchEnd"
+       @touchcancel="onTouchEnd"
+  >
     <div class="category-tabs">
       <button 
         v-for="cat in filteredCategories" 
@@ -105,10 +120,14 @@ watchEffect(() => {
     <div class="category-content">
       <!-- Variables -->
       <div v-if="activeCategory === 'variables'" class="mobile-section">
-        <div v-if="isAccepted('var')" class="mobile-clickable-block" @click="onSelect('var')">
+        <div v-if="isAccepted('var')" class="mobile-clickable-block" 
+             @click="onSelect('var')"
+             @touchstart="handleTouchStart($event, 'var')">
           <VarBlock minimal />
         </div>
-        <div v-if="isAccepted('set_var')" class="mobile-clickable-block" @click="onSelect('set_var')">
+        <div v-if="isAccepted('set_var')" class="mobile-clickable-block" 
+             @click="onSelect('set_var')"
+             @touchstart="handleTouchStart($event, 'set_var')">
           <SetVarBlock minimal />
         </div>
       </div>
@@ -116,18 +135,24 @@ watchEffect(() => {
       <!-- Mathématiques -->
       <div v-if="activeCategory === 'math'" class="mobile-section">
         <div v-for="op in ['+', '-', '*', '/', '%']" :key="op" 
-             class="mobile-clickable-block" @click="onSelect('math-' + op)">
+             class="mobile-clickable-block" 
+             @click="onSelect('math-' + op)"
+             @touchstart="handleTouchStart($event, 'math-' + op)">
           <MathBlock :symbol="op" minimal />
         </div>
       </div>
 
       <!-- Logique & Comparaison -->
       <div v-if="activeCategory === 'logic'" class="mobile-section">
-        <div v-if="isAccepted('equal')" class="mobile-clickable-block" @click="onSelect('equal')">
+        <div v-if="isAccepted('equal')" class="mobile-clickable-block" 
+             @click="onSelect('equal')"
+             @touchstart="handleTouchStart($event, 'equal')">
           <EqualBlock minimal />
         </div>
         <div v-for="op in ['<', '>', '<=', '>=', '!=']" :key="op"
-             class="mobile-clickable-block" @click="onSelect('compare-' + op)">
+             class="mobile-clickable-block" 
+             @click="onSelect('compare-' + op)"
+             @touchstart="handleTouchStart($event, 'compare-' + op)">
           <ComparisonBlock :symbol="op" minimal />
         </div>
       </div>
@@ -135,12 +160,16 @@ watchEffect(() => {
       <!-- Littéraux & Objets -->
       <div v-if="activeCategory === 'literals'" class="mobile-section">
         <div v-for="val in [true, false]" :key="String(val)"
-             class="mobile-clickable-block" @click="onSelect(val ? 'true' : 'false')">
+             class="mobile-clickable-block" 
+             @click="onSelect(val ? 'true' : 'false')"
+             @touchstart="handleTouchStart($event, val ? 'true' : 'false')">
           <BooleanBlock :value="val" minimal />
         </div>
         <div v-for="type in ['string', 'number', 'array', 'object', 'object_property']" 
              :key="type"
-             class="mobile-clickable-block" @click="onSelect(type)">
+             class="mobile-clickable-block" 
+             @click="onSelect(type)"
+             @touchstart="handleTouchStart($event, type)">
           <component :is="type === 'string' ? StringBlock : 
                          type === 'number' ? NumberBlock :
                          type === 'array' ? ArrayBlock :
@@ -154,7 +183,9 @@ watchEffect(() => {
       <!-- Contrôle de flux -->
       <div v-if="activeCategory === 'control'" class="mobile-section">
         <template v-for="type in ['if', 'elseif', 'else', 'while', 'for', 'foreach', 'break', 'continue']" :key="type">
-          <div v-if="isAccepted(type)" class="mobile-clickable-block" @click="onSelect(type)">
+          <div v-if="isAccepted(type)" class="mobile-clickable-block" 
+               @click="onSelect(type)"
+               @touchstart="handleTouchStart($event, type)">
             <component :is="type === 'if' ? IfBlock : 
                            type === 'elseif' ? ElseIfBlock :
                            type === 'else' ? ElseBlock :
@@ -171,29 +202,43 @@ watchEffect(() => {
 
       <!-- Actions -->
       <div v-if="activeCategory === 'actions'" class="mobile-section">
-        <div v-if="isAccepted('print')" class="mobile-clickable-block" @click="onSelect('print')">
+        <div v-if="isAccepted('print')" class="mobile-clickable-block" 
+             @click="onSelect('print')"
+             @touchstart="handleTouchStart($event, 'print')">
           <PrintBlock minimal />
         </div>
-        <div v-if="isAccepted('array_push')" class="mobile-clickable-block" @click="onSelect('array_push')">
+        <div v-if="isAccepted('array_push')" class="mobile-clickable-block" 
+             @click="onSelect('array_push')"
+             @touchstart="handleTouchStart($event, 'array_push')">
           <ArrayPushBlock minimal />
         </div>
-        <div v-if="isAccepted('array_remove')" class="mobile-clickable-block" @click="onSelect('array_remove')">
+        <div v-if="isAccepted('array_remove')" class="mobile-clickable-block" 
+             @click="onSelect('array_remove')"
+             @touchstart="handleTouchStart($event, 'array_remove')">
           <ArrayRemoveBlock minimal />
         </div>
-        <div v-if="isAccepted('array_set_key')" class="mobile-clickable-block" @click="onSelect('array_set_key')">
+        <div v-if="isAccepted('array_set_key')" class="mobile-clickable-block" 
+             @click="onSelect('array_set_key')"
+             @touchstart="handleTouchStart($event, 'array_set_key')">
           <ArraySetKeyBlock minimal />
         </div>
       </div>
 
       <!-- Fonctions -->
       <div v-if="activeCategory === 'functions'" class="mobile-section">
-        <div v-if="isAccepted('function')" class="mobile-clickable-block" @click="onSelect('parameter')">
+        <div v-if="isAccepted('function')" class="mobile-clickable-block" 
+             @click="onSelect('parameter')"
+             @touchstart="handleTouchStart($event, 'parameter')">
           <ParameterBlock minimal />
         </div>
-        <div v-if="isAccepted('function')" class="mobile-clickable-block" @click="onSelect('function')">
+        <div v-if="isAccepted('function')" class="mobile-clickable-block" 
+             @click="onSelect('function')"
+             @touchstart="handleTouchStart($event, 'function')">
           <FunctionCallBlock minimal />
         </div>
-        <div v-if="isAccepted('return')" class="mobile-clickable-block" @click="onSelect('return')">
+        <div v-if="isAccepted('return')" class="mobile-clickable-block" 
+             @click="onSelect('return')"
+             @touchstart="handleTouchStart($event, 'return')">
           <ReturnBlock minimal />
         </div>
       </div>

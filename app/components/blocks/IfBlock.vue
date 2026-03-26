@@ -8,6 +8,7 @@ const props = defineProps<{
   blockId?: string;
   condition?: any;
   config?: any;
+  children?: any[];
 }>();
 </script>
 

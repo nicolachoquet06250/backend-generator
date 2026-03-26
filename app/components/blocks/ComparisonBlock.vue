@@ -11,6 +11,7 @@ const props = defineProps<{
   left?: any;
   right?: any;
   isExpression?: boolean;
+  children?: any[];
 }>();
 
 const opLabel = computed(() => {

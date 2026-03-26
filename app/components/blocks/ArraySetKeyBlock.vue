@@ -8,8 +8,9 @@ const props = defineProps<{
   blockId?: string;
   config?: any;
   array?: any;
-  key?: any;
+  targetKey?: any;
   value?: any;
+  children?: any[];
 }>();
 
 const { structures } = useDataStructures();
@@ -110,10 +111,10 @@ watch(selectedKey, (val) => {
         <BlockDropZone 
           slotName="key" 
           :parentBlockId="blockId!" 
-          :block="key"
+          :block="targetKey"
           :acceptedBlockTypes="['string', 'number', 'var', 'parameter', 'function']"
         >
-          <BlockRenderer v-if="key" :block="key" isExpression />
+          <BlockRenderer v-if="targetKey" :block="targetKey" isExpression />
         </BlockDropZone>
       </template>
 

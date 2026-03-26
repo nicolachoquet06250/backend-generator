@@ -10,6 +10,7 @@ defineProps<{
   left?: any;
   right?: any;
   isExpression?: boolean;
+  children?: any[];
 }>();
 
 </script>

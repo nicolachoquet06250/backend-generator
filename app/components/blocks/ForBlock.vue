@@ -21,6 +21,7 @@ defineProps<{
   from?: any;
   to?: any;
   config?: any;
+  children?: any[];
 }>();
 
 provide('inLoop', ref(true));

@@ -20,6 +20,7 @@ defineProps<{
   blockId?: string;
   list?: any;
   config?: any;
+  children?: any[];
 }>();
 
 provide('inLoop', ref(true));

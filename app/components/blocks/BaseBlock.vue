@@ -6,11 +6,13 @@ const props = withDefaults(defineProps<{
   blockId?: string;
   blockType?: string;
   draggable?: boolean;
+  children?: any[];
 }>(), {
   draggable: true
 });
 
 const { activeFunctionId } = useFunctions();
+const { onTouchStart, onTouchMove, onTouchEnd } = useMobileDragDrop();
 
 const onDragStart = (e: DragEvent) => {
   if (props.minimal) return; // Don't drag from sidebar via this handler
@@ -22,6 +24,25 @@ const onDragStart = (e: DragEvent) => {
     }
     e.dataTransfer.setData('sourceFunctionId', activeFunctionId.value);
     e.dataTransfer.effectAllowed = 'move';
+  }
+};
+
+const handleTouchStart = (e: TouchEvent) => {
+  if (props.minimal) return;
+  const target = e.target as HTMLElement;
+  if (target && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(target.tagName)) {
+    return;
+  }
+  
+  if (props.blockId && activeFunctionId.value) {
+    const data: Record<string, string> = {
+      existingBlockId: props.blockId,
+      sourceFunctionId: activeFunctionId.value
+    };
+    if (props.blockType) {
+      data.blockType = props.blockType;
+    }
+    onTouchStart(e, data);
   }
 };
 
@@ -41,7 +62,10 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
     v-bind="draggable ? { draggable: true } : {}"
     @dragstart="onDragStart"
     @mousedown="onStopPropagation"
-    @touchstart="onStopPropagation"
+    @touchstart="(e) => { onStopPropagation(e); handleTouchStart(e); }"
+    @touchmove="onTouchMove"
+    @touchend="onTouchEnd"
+    @touchcancel="onTouchEnd"
   >
     <div class="block-content">
       <span v-if="label" class="block-label">{{ label }}</span>

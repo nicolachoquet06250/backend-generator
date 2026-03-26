@@ -3,6 +3,7 @@ import BaseBlock from './BaseBlock.vue';
 defineProps<{
   minimal?: boolean;
   blockId?: string;
+  children?: any[];
 }>();
 </script>
 

@@ -142,7 +142,10 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
           { symbol: block.type.split('-')[1], blockId: block.id, config: block.config, ...block.config.slots } : 
           (block.type === 'true' || block.type === 'false' ? 
             { value: block.type === 'true', blockId: block.id, config: block.config, ...block.config.slots } :
-            { blockId: block.id, config: block.config, ...block.config.slots }
+            (block.type === 'array_set_key' ?
+              { blockId: block.id, config: block.config, ...block.config.slots, targetKey: block.config?.slots?.key } :
+              { blockId: block.id, config: block.config, ...block.config.slots }
+            )
           )"
       >
         <!-- For blocks that have children (loops, conditions) -->

@@ -19,6 +19,7 @@ defineProps<{
   blockId?: string;
   config?: any;
   value?: any;
+  children?: any[];
 }>();
 
 const getOperandComponent = (block: any) => {

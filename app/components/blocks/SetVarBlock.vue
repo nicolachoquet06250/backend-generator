@@ -10,6 +10,7 @@ const props = defineProps<{
   config?: any;
   variable?: any;
   value?: any;
+  children?: any[];
 }>();
 
 const { functions, activeFunctionId, updateBlockConfig } = useFunctions();

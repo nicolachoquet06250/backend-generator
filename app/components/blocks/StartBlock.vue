@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import BaseBlock from './BaseBlock.vue';
+defineProps<{
+  children?: any[];
+}>();
 </script>
 
 <template>

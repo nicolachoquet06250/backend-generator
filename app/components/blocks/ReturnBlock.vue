@@ -19,6 +19,7 @@ defineProps<{
   minimal?: boolean;
   blockId?: string;
   config?: any;
+  children?: any[];
 }>();
 
 const getValueComponent = (block: any) => {
