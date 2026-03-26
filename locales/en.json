@@ -1,4 +1,5 @@
 {
+  "title": "Backend Generator",
   "welcome": "Blueprint editor",
   "sections": {
     "variables": "Variables",

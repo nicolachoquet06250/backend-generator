@@ -49,6 +49,7 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
+      title: 'Backend Generator',
       link: [
         { rel: 'manifest', href: '/manifest.webmanifest' }
       ]

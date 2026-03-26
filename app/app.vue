@@ -4,9 +4,13 @@ import FunctionWorkspace from './components/editor/FunctionWorkspace.vue';
 import StructBlock from './components/blocks/StructBlock.vue';
 import PWAManager from './components/common/PWAManager.vue';
 
-const { locale, locales, setLocale } = useI18n();
+const { locale, locales, setLocale, t } = useI18n();
 const { structures, addStructure, removeStructure } = useDataStructures();
 const { isMobile } = useDevice();
+
+useHead({
+  title: t('title')
+})
 
 const showStructures = ref(false);
 
