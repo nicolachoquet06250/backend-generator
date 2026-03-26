@@ -120,11 +120,8 @@ const handleTouchStart = (e: TouchEvent, type: string) => {
                 @dragstart="onDragStart($event, 'literal*3')"
                 @touchstart.passive="handleTouchStart($event, 'literal*3')">
              <div class="multi-icon">
-               <div class="mini-block"></div>
-               <div class="mini-block"></div>
-               <div class="mini-block"></div>
+               <div class="mini-block" v-for="i in 3" :key="i"/>
              </div>
-             <span>x3</span>
            </div>
         </div>
       </div>
@@ -260,16 +257,17 @@ const handleTouchStart = (e: TouchEvent, type: string) => {
 }
 .multi {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  gap: 4px;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  padding: 9px 4px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px dashed rgba(255, 255, 255, 0.2);
   border-radius: 4px;
   cursor: grab;
-  width: 60px;
-  height: 60px;
+  min-width: 60px;
+  flex: 1;
 }
 .multi:hover {
   background: rgba(255, 255, 255, 0.1);

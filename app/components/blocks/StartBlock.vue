@@ -3,7 +3,7 @@ import BaseBlock from './BaseBlock.vue';
 </script>
 
 <template>
-  <BaseBlock color="#FFBF00" :label="$t('blocks.start.label')">
+  <BaseBlock color="#FFBF00" :label="$t('blocks.start.label')" :draggable="false">
     <div class="start-icon">🏁</div>
   </BaseBlock>
 </template>

@@ -1,11 +1,14 @@
 <script setup lang="ts">
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   label?: string;
   color?: string;
   minimal?: boolean;
   blockId?: string;
   blockType?: string;
-}>();
+  draggable?: boolean;
+}>(), {
+  draggable: true
+});
 
 const { activeFunctionId } = useFunctions();
 
@@ -28,7 +31,7 @@ const onDragStart = (e: DragEvent) => {
     class="block-container" 
     :class="{ minimal, 'is-full-width': $attrs.class && ($attrs.class as string).includes('full-width') }"
     :style="{ backgroundColor: color || '#4C97FF' }"
-    draggable="true"
+    v-bind="draggable ? { draggable: true } : {}"
     @dragstart="onDragStart"
   >
     <div class="block-content">

@@ -5,7 +5,7 @@ import StructBlock from './components/blocks/StructBlock.vue';
 
 const { locale, locales, setLocale } = useI18n();
 const { structures, addStructure, removeStructure } = useDataStructures();
-// const { isMobile } = useDevice();
+const { isMobile } = useDevice();
 
 const showStructures = ref(false);
 </script>
@@ -18,7 +18,7 @@ const showStructures = ref(false);
       </div>
       <div class="header-actions">
         <button class="struct-toggle" @click="showStructures = !showStructures">
-          {{ $t('sections.structures') }} ({{ structures.length }})
+          {{ $t('sections.structures') }} <template v-if="!isMobile">({{ structures.length }})</template>
         </button>
         <div class="lang-switcher">
           <button 
@@ -27,7 +27,12 @@ const showStructures = ref(false);
             @click="setLocale(loc.code)"
             :class="{ active: locale === loc.code }"
           >
-            {{ loc.name }}
+            <template v-if="isMobile">
+              {{ loc.name?.substring(0, 2) }}
+            </template>
+            <template v-else>
+              {{ loc.name }}
+            </template>
           </button>
         </div>
       </div>
@@ -188,6 +193,12 @@ body {
   padding: 6px 12px;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.lang-switcher {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 }
 
 .lang-switcher button {
