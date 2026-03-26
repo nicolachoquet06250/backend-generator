@@ -186,6 +186,7 @@ const getValueComponent = (block: any) => {
   display: flex;
   align-items: center;
   gap: 8px;
+  color: light-dark(#000000, #ffffff);
 }
 .param-row.has-default {
   opacity: 0.8;
