@@ -148,5 +148,11 @@
     "return": {
       "label": "return"
     }
+  },
+  "pwa": {
+    "offline_ready": "App ready to work offline.",
+    "new_content": "New content available, click on reload button to update.",
+    "reload": "Reload",
+    "close": "Close"
   }
 }

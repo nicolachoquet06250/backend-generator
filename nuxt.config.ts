@@ -2,7 +2,48 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['@nuxtjs/i18n'],
+  modules: ['@nuxtjs/i18n', '@vite-pwa/nuxt'],
+  pwa: {
+    registerType: 'autoUpdate',
+    manifest: {
+      name: 'Backend Generator',
+      short_name: 'BEGen',
+      description: 'Générateur de backend graphique',
+      theme_color: '#ffffff',
+      icons: [
+        {
+          src: '/android/launchericon-192x192.png',
+          sizes: '192x192',
+          type: 'image/png'
+        },
+        {
+          src: '/android/launchericon-512x512.png',
+          sizes: '512x512',
+          type: 'image/png'
+        },
+        {
+          src: '/android/launchericon-512x512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'any maskable'
+        }
+      ]
+    },
+    workbox: {
+      navigateFallback: '/',
+      globPatterns: ['**/*.{js,css,html,png,svg,ico}']
+    },
+    client: {
+      installPrompt: true,
+      periodicSyncForUpdates: 3600,
+    },
+    devOptions: {
+      enabled: true,
+      suppressWarnings: true,
+      navigateFallbackAllowlist: [/^\/$/],
+      type: 'module'
+    }
+  },
   i18n: {
     locales: [
       { code: 'en', iso: 'en-US', name: 'English', file: 'en.json' },

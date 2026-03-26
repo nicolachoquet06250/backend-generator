@@ -13,24 +13,43 @@ export interface DataStructure {
 }
 
 export const useDataStructures = () => {
-  const structures = useState<DataStructure[]>('data-structures', () => [
-    { 
-      id: '1', 
-      name: 'User',
-      fields: [
-        { id: 'f1', name: 'id', type: 'number', nullable: false, defaultValue: 0 },
-        { id: 'f2', name: 'email', type: 'string', nullable: false, defaultValue: '' }
-      ]
-    },
-    { 
-      id: '2', 
-      name: 'Product',
-      fields: [
-        { id: 'f3', name: 'name', type: 'string', nullable: false, defaultValue: '' },
-        { id: 'f4', name: 'price', type: 'number', nullable: false, defaultValue: 0 }
-      ]
+  const structures = useState<DataStructure[]>('data-structures', () => {
+    if (import.meta.client) {
+      const saved = localStorage.getItem('data-structures');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error('Failed to parse saved structures', e);
+        }
+      }
     }
-  ]);
+    return [
+      { 
+        id: '1', 
+        name: 'User',
+        fields: [
+          { id: 'f1', name: 'id', type: 'number', nullable: false, defaultValue: 0 },
+          { id: 'f2', name: 'email', type: 'string', nullable: false, defaultValue: '' }
+        ]
+      },
+      { 
+        id: '2', 
+        name: 'Product',
+        fields: [
+          { id: 'f3', name: 'name', type: 'string', nullable: false, defaultValue: '' },
+          { id: 'f4', name: 'price', type: 'number', nullable: false, defaultValue: 0 }
+        ]
+      }
+    ];
+  });
+
+  // Persist state when it changes
+  watch(structures, (newStructures) => {
+    if (import.meta.client) {
+      localStorage.setItem('data-structures', JSON.stringify(newStructures));
+    }
+  }, { deep: true });
 
   const addStructure = (name: string) => {
     structures.value.push({

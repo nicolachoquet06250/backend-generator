@@ -12,11 +12,44 @@ export interface FunctionDefinition {
 }
 
 export const useFunctions = () => {
-  const functions = useState<FunctionDefinition[]>('editor-functions', () => [
-    { id: 'f1', name: 'main', blocks: [] }
-  ]);
+  const functions = useState<FunctionDefinition[]>('editor-functions', () => {
+    if (import.meta.client) {
+      const saved = localStorage.getItem('editor-functions');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error('Failed to parse saved functions', e);
+        }
+      }
+    }
+    return [
+      { id: 'f1', name: 'main', blocks: [] }
+    ];
+  });
   
-  const activeFunctionId = useState<string>('active-function-id', () => 'f1');
+  const activeFunctionId = useState<string>('active-function-id', () => {
+    if (import.meta.client) {
+      const saved = localStorage.getItem('active-function-id');
+      if (saved && functions.value.some(f => f.id === saved)) {
+        return saved;
+      }
+    }
+    return functions.value.length > 0 ? functions.value[0].id : 'f1';
+  });
+
+  // Persist state when it changes
+  watch(functions, (newFunctions) => {
+    if (import.meta.client) {
+      localStorage.setItem('editor-functions', JSON.stringify(newFunctions));
+    }
+  }, { deep: true });
+
+  watch(activeFunctionId, (newId) => {
+    if (import.meta.client) {
+      localStorage.setItem('active-function-id', newId);
+    }
+  });
 
   const addFunction = (name: string) => {
     const id = Math.random().toString(36).substr(2, 9);

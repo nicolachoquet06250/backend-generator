@@ -148,5 +148,11 @@
     "return": {
       "label": "retourner"
     }
+  },
+  "pwa": {
+    "offline_ready": "L'application est prête à être utilisée hors ligne.",
+    "new_content": "Nouveau contenu disponible, cliquez sur le bouton de rechargement pour mettre à jour.",
+    "reload": "Recharger",
+    "close": "Fermer"
   }
 }

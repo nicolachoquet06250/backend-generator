@@ -2,6 +2,7 @@
 import BlockSidebar from './components/editor/BlockSidebar.vue';
 import FunctionWorkspace from './components/editor/FunctionWorkspace.vue';
 import StructBlock from './components/blocks/StructBlock.vue';
+import PWAManager from './components/common/PWAManager.vue';
 
 const { locale, locales, setLocale } = useI18n();
 const { structures, addStructure, removeStructure } = useDataStructures();
@@ -85,6 +86,8 @@ function getPWADisplayMode() {
           </div>
         </div>
       </Transition>
+
+      <PWAManager />
     </main>
   </div>
 </template>
