@@ -8,10 +8,27 @@ const { structures, addStructure, removeStructure } = useDataStructures();
 const { isMobile } = useDevice();
 
 const showStructures = ref(false);
+
+function getPWADisplayMode() {
+  if (document.referrer.startsWith('android-app://'))
+    return 'twa';
+  if (window.matchMedia('(display-mode: browser)').matches)
+    return 'browser';
+  if (window.matchMedia('(display-mode: standalone)').matches)
+    return 'standalone';
+  if (window.matchMedia('(display-mode: minimal-ui)').matches)
+    return 'minimal-ui';
+  if (window.matchMedia('(display-mode: fullscreen)').matches)
+    return 'fullscreen';
+  if (window.matchMedia('(display-mode: window-controls-overlay)').matches)
+    return 'window-controls-overlay';
+
+  return 'unknown';
+}
 </script>
 
 <template>
-  <div class="editor-layout" :class="{ 'mobile-mode': isMobile }">
+  <div class="editor-layout" :class="[{ 'mobile-mode': isMobile }, getPWADisplayMode()]">
     <header class="main-header">
       <div class="logo">
         <h1>{{ $t('welcome') }}</h1>
@@ -165,6 +182,10 @@ body {
   &.mobile-mode {
     display: flex;
     flex-direction: column;
+
+    &.browser {
+      height: calc(100vh - 56px);
+    }
 
     > .editor-body {
       flex: 1;

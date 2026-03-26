@@ -270,7 +270,7 @@ const onMobileTrashDragLeave = () => {
 }
 
 .add-tab-floating {
-  position: fixed;
+  position: absolute;
   bottom: 20px;
   right: 20px;
   width: 56px;
@@ -326,7 +326,7 @@ const onMobileTrashDragLeave = () => {
 }
 
 .trash-bin {
-  position: fixed;
+  position: absolute;
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
