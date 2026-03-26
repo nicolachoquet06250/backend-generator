@@ -35,7 +35,7 @@ export const useFunctions = () => {
         return saved;
       }
     }
-    return functions.value.length > 0 ? functions.value[0].id : 'f1';
+    return functions.value.length > 0 ? functions.value[0]!.id : 'f1';
   });
 
   // Persist state when it changes
