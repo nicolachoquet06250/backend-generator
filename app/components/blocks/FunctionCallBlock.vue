@@ -39,12 +39,16 @@ const otherFunctions = computed(() => {
 const selectedFunction = computed(() => otherFunctions.value.find(f => f.id === selectedFunctionId.value));
 
 // Extraire les paramètres (déclarés via des blocs Parameter au sein de la fonction cible)
-interface ParamInfo { name: string; type: any }
+interface ParamInfo { name: string; type: any; hasDefault: boolean }
 
 const findParamsInBlocks = (blocks: any[], acc: ParamInfo[]) => {
   blocks.forEach((b) => {
     if (b.type === 'parameter' && b.config?.name) {
-      acc.push({ name: b.config.name, type: b.config?.type ?? 'any' });
+      acc.push({ 
+        name: b.config.name, 
+        type: b.config?.type ?? 'any',
+        hasDefault: !!b.config?.hasDefaultValue
+      });
     }
     if (b.children) findParamsInBlocks(b.children, acc);
     if (b.config?.slots) {
@@ -62,7 +66,17 @@ const parameters = computed<ParamInfo[]>(() => {
   }
   // unicité par nom, garder le premier
   const seen = new Set<string>();
-  return acc.filter(p => (seen.has(p.name) ? false : (seen.add(p.name), true)));
+  const uniqueParams = acc.filter(p => seen.has(p.name) ? false : (() => {
+    seen.add(p.name);
+    return true;
+  })());
+
+  // Trier les paramètres : ceux sans valeur par défaut d'abord, ceux avec à la fin
+  return uniqueParams.sort((a, b) => {
+    if (a.hasDefault && !b.hasDefault) return 1;
+    if (!a.hasDefault && b.hasDefault) return -1;
+    return 0;
+  });
 });
 
 // Mapping des types vers les types acceptés par la DropZone
@@ -131,33 +145,33 @@ const getValueComponent = (block: any) => {
     </template>
 
     <template #bottom v-if="!minimal && selectedFunction">
-              <div class="params-container">
-                <div class="param-row" v-for="p in parameters" :key="p.name">
-                  <span class="param-name">{{ p.name }}</span>
-                  <span class="param-type">: {{ formatType(p.type) }}</span>
-                  <span class="param-label">=</span>
-                  <BlockDropZone
-                    :parentBlockId="blockId!"
-                    :slotName="`arg_${p.name}`"
-                    :acceptedBlockTypes="typeToAccepted(p.type)"
-                    :block="config?.slots?.[`arg_${p.name}`]"
-                  >
-                    <component
-                      v-if="config?.slots?.[`arg_${p.name}`]"
-                      :is="getValueComponent(config.slots[`arg_${p.name}`])"
-                      v-bind="config.slots[`arg_${p.name}`].type.startsWith('math-') || config.slots[`arg_${p.name}`].type.startsWith('compare-') ?
-                        { symbol: config.slots[`arg_${p.name}`].type.split('-')[1], blockId: config.slots[`arg_${p.name}`].id, config: config.slots[`arg_${p.name}`].config, ...config.slots[`arg_${p.name}`].config.slots, isExpression: true } :
-                        (config.slots[`arg_${p.name}`].type === 'boolean' || config.slots[`arg_${p.name}`].type === 'true' || config.slots[`arg_${p.name}`].type === 'false' || config.slots[`arg_${p.name}`].type === 'equal' ?
-                          { value: config.slots[`arg_${p.name}`].type === 'true' || (config.slots[`arg_${p.name}`].config && (config.slots[`arg_${p.name}`].config.value === true || config.slots[`arg_${p.name}`].config.value === 'true')), blockId: config.slots[`arg_${p.name}`].id, config: config.slots[`arg_${p.name}`].config, ...config.slots[`arg_${p.name}`].config.slots, isExpression: true } :
-                          { blockId: config.slots[`arg_${p.name}`].id, config: config.slots[`arg_${p.name}`].config, ...config.slots[`arg_${p.name}`].config.slots, isExpression: true }
-                        )"
-                    />
-                  </BlockDropZone>
-                </div>
-                <div v-if="parameters.length === 0" class="param-row">
-                  <span class="param-label">( )</span>
-                </div>
-              </div>
+      <div class="params-container">
+        <div class="param-row" v-for="p in parameters" :key="p.name" :class="{ 'has-default': p.hasDefault }">
+          <span class="param-name">{{ p.name }}</span>
+          <span class="param-type">: {{ formatType(p.type) }}{{ p.hasDefault ? '?' : '' }}</span>
+          <span class="param-label">=</span>
+          <BlockDropZone
+            :parentBlockId="blockId!"
+            :slotName="`arg_${p.name}`"
+            :acceptedBlockTypes="typeToAccepted(p.type)"
+            :block="config?.slots?.[`arg_${p.name}`]"
+          >
+            <component
+              v-if="config?.slots?.[`arg_${p.name}`]"
+              :is="getValueComponent(config.slots[`arg_${p.name}`])"
+              v-bind="config.slots[`arg_${p.name}`].type.startsWith('math-') || config.slots[`arg_${p.name}`].type.startsWith('compare-') ?
+                { symbol: config.slots[`arg_${p.name}`].type.split('-')[1], blockId: config.slots[`arg_${p.name}`].id, config: config.slots[`arg_${p.name}`].config, ...config.slots[`arg_${p.name}`].config.slots, isExpression: true } :
+                (config.slots[`arg_${p.name}`].type === 'boolean' || config.slots[`arg_${p.name}`].type === 'true' || config.slots[`arg_${p.name}`].type === 'false' || config.slots[`arg_${p.name}`].type === 'equal' ?
+                  { value: config.slots[`arg_${p.name}`].type === 'true' || (config.slots[`arg_${p.name}`].config && (config.slots[`arg_${p.name}`].config.value === true || config.slots[`arg_${p.name}`].config.value === 'true')), blockId: config.slots[`arg_${p.name}`].id, config: config.slots[`arg_${p.name}`].config, ...config.slots[`arg_${p.name}`].config.slots, isExpression: true } :
+                  { blockId: config.slots[`arg_${p.name}`].id, config: config.slots[`arg_${p.name}`].config, ...config.slots[`arg_${p.name}`].config.slots, isExpression: true }
+                )"
+            />
+          </BlockDropZone>
+        </div>
+        <div v-if="parameters.length === 0" class="param-row">
+          <span class="param-label">( )</span>
+        </div>
+      </div>
     </template>
   </BaseBlock>
 </template>
@@ -172,6 +186,12 @@ const getValueComponent = (block: any) => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+.param-row.has-default {
+  opacity: 0.8;
+}
+.param-row.has-default:hover {
+  opacity: 1;
 }
 .param-label {
   font-weight: bold;

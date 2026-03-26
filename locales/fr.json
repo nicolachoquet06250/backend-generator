@@ -142,6 +142,7 @@
       "label_sidebar": "paramètre",
       "label_choice": "choisir param",
       "placeholder_name": "nom",
+      "placeholder_default": "valeur par défaut",
       "select_param": "Choisir paramètre"
     },
     "return": {

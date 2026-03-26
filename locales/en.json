@@ -142,6 +142,7 @@
       "label_sidebar": "parameter",
       "label_choice": "choose param",
       "placeholder_name": "name",
+      "placeholder_default": "default value",
       "select_param": "Select parameter"
     },
     "return": {
