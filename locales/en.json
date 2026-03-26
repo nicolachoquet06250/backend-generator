@@ -9,8 +9,14 @@
     "control": "Control flow",
     "actions": "Actions",
     "functions": "Functions",
+    "data_formats": "Data Formats",
     "structures": "Data Structures",
-    "blocks": "Blocks"
+    "blocks": "Blocks",
+    "web": "Web"
+  },
+  "domains": {
+    "base": "Base",
+    "web": "Web"
   },
   "workspace": {
     "add_function": "New function",
@@ -78,6 +84,11 @@
       "array": "array",
       "object": "object",
       "object_property": "property"
+    },
+    "object": {
+      "select_structure": "Select a structure:",
+      "choose": "Choose...",
+      "or_drop_props": "OR DROP PROPERTIES"
     },
     "array_push": {
       "label": "append to array",
@@ -148,6 +159,16 @@
     },
     "return": {
       "label": "return"
+    },
+    "json": {
+      "label": "JSON",
+      "placeholder": "{'{'}\"key\": \"value\"{'}'}"
+    },
+    "html": {
+      "label": "HTML"
+    },
+    "new_route": {
+      "label": "New route"
     }
   },
   "pwa": {

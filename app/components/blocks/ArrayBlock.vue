@@ -11,7 +11,7 @@ const props = defineProps<{
   children?: any[];
 }>();
 
-const { activeFunctionId, addBlockToFunction, functions, getBlockById } = useFunctions();
+const { activeFunctionId, addBlockToFunction } = useFunctions();
 
 const onBlockDragStart = (e: DragEvent, block: any) => {
   if (e.dataTransfer && activeFunctionId.value) {

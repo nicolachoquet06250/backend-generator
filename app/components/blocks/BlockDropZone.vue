@@ -1,11 +1,12 @@
 <script setup lang="ts">
 const props = defineProps<{
-  slotName: string;
+  slotName?: string;
   parentBlockId: string;
   afterBlockId?: string;
   block?: any;
   acceptedBlockTypes?: string[];
   isStackZone?: boolean;
+  filterContext?: string;
 }>();
 
 import BlockPickerModal from '../editor/BlockPickerModal.vue';
@@ -52,7 +53,7 @@ const isAccepted = (type: string) => {
     normalizedType = 'boolean';
   }
 
-  const expressionTypes = ['string', 'number', 'boolean', 'true', 'false', 'var', 'parameter', 'math-op', 'compare-op', 'equal', 'array', 'object', 'object_property', 'function', 'print'];
+  const expressionTypes = ['string', 'number', 'boolean', 'true', 'false', 'var', 'parameter', 'math-op', 'compare-op', 'equal', 'array', 'object', 'object_property', 'function', 'print', 'json', 'html'];
   
   const expandedAccepted = props.acceptedBlockTypes.flatMap(t => t === 'expression' ? expressionTypes : [t]);
 
@@ -139,6 +140,14 @@ const isAccepted = (type: string) => {
     }
   }
 
+  if (parentBlock && (parentBlock.type === 'json' || parentBlock.type === 'html' || parentBlock.type === 'new_route')) {
+    // Si un bloc est déjà présent dans ce slot et que ce n'est pas une zone de pile, on refuse
+    if (props.block && !props.isStackZone) return false;
+
+    // On n'accepte que les types explicitement fournis dans expandedAccepted (car déjà limités dans JsonBlock/HtmlBlock/NewRouteBlock)
+    return expandedAccepted.includes(normalizedType);
+  }
+
   return expandedAccepted.includes(normalizedType) ||
       (expandedAccepted.includes('math-op') && normalizedType.startsWith('math-')) ||
       (expandedAccepted.includes('compare-op') && normalizedType.startsWith('compare-'));
@@ -215,6 +224,11 @@ const onDrop = (e: DragEvent) => {
             // Si le nouveau bloc est aussi un tableau, on lui transmet le elementType si nécessaire
             if (blockToCreate === 'array' && parentBlock.config.elementType.kind === 'array') {
               initialConfig = { elementType: parentBlock.config.elementType.elementType };
+            }
+          } else if (parentBlock && (parentBlock.type === 'json' || parentBlock.type === 'html')) {
+            // Pour le bloc JSON/HTML, si on drop un littéral générique, on crée une string par défaut
+            if (currentType === 'literal') {
+              blockToCreate = 'string';
             }
           } else if (parentBlock && (parentBlock.type === 'var' || parentBlock.type === 'set_var') && props.slotName === 'value') {
             let targetKind = 'any';
@@ -465,6 +479,7 @@ const onMobileDragLeave = () => {
     <BlockPickerModal 
       :show="showPicker" 
       :accepted-types="acceptedBlockTypes"
+      :filterContext="filterContext"
       @close="showPicker = false"
       @select="handlePickerSelect"
     />

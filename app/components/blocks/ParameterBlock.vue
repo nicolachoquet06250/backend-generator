@@ -76,7 +76,14 @@ watch(selectedParam, (val) => {
 
 watch(typeConfig, (val) => {
   if (props.blockId && activeFunctionId.value) {
-    updateBlockConfig(activeFunctionId.value, props.blockId, { type: val });
+    const configUpdate: any = { type: val };
+    if (typeof val === 'object' && val.structId) {
+      configUpdate.structId = val.structId;
+    } else if (typeof val === 'string' && (val === 'req' || val === 'res')) {
+      // Cas particuliers pour Request/Response si stockés en string directe
+      configUpdate.structId = val;
+    }
+    updateBlockConfig(activeFunctionId.value, props.blockId, configUpdate);
   }
 }, { deep: true });
 

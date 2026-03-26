@@ -21,6 +21,9 @@ import ArrayPushBlock from '../blocks/ArrayPushBlock.vue';
 import ArrayRemoveBlock from '../blocks/ArrayRemoveBlock.vue';
 import ArraySetKeyBlock from '../blocks/ArraySetKeyBlock.vue';
 import ReturnBlock from '../blocks/ReturnBlock.vue';
+import JsonBlock from '../blocks/JsonBlock.vue';
+import HtmlBlock from '../blocks/HtmlBlock.vue';
+import NewRouteBlock from '../blocks/NewRouteBlock.vue';
 import PrintBlock from '../blocks/PrintBlock.vue';
 import SetVarBlock from '../blocks/SetVarBlock.vue';
 import EqualBlock from '../blocks/EqualBlock.vue';
@@ -28,6 +31,12 @@ import ComparisonBlock from '../blocks/ComparisonBlock.vue';
 import { useMobileDragDrop } from '~/composables/useMobileDragDrop';
 
 const { onTouchStart, onTouchMove, onTouchEnd } = useMobileDragDrop();
+
+const activeDomain = ref('base');
+const domains = [
+  { id: 'base', label: 'domains.base' },
+  { id: 'web', label: 'domains.web' }
+];
 
 const onDragStart = (e: DragEvent, type: string) => {
   if (e.dataTransfer) {
@@ -55,12 +64,25 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
 </script>
 
 <template>
-  <div class="block-sidebar" 
+  <div class="block-sidebar"
        @touchmove="onTouchMove" 
        @touchend="onTouchEnd"
        @touchcancel="onTouchEnd"
   >
-    <!-- Variables -->
+    <div class="domain-tabs">
+      <button 
+        v-for="domain in domains" 
+        :key="domain.id"
+        class="domain-tab"
+        :class="{ active: activeDomain === domain.id }"
+        @click="activeDomain = domain.id"
+      >
+        {{ $t(domain.label) }}
+      </button>
+    </div>
+
+    <div v-if="activeDomain === 'base'" class="domain-content">
+      <!-- Variables -->
     <div class="sidebar-section">
       <h3>{{ $t('sections.variables') }}</h3>
       <div class="draggable-wrapper" draggable="true" 
@@ -220,6 +242,36 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
         <ReturnBlock minimal />
       </div>
     </div>
+
+    <!-- Formats de données -->
+    <div class="sidebar-section">
+      <h3>{{ $t('sections.data_formats') }}</h3>
+      <div class="draggable-wrapper" draggable="true" 
+           @dragstart="onDragStart($event, 'json')"
+           @touchstart="handleTouchStart($event, 'json')"
+           @mousedown="onStopPropagation">
+        <JsonBlock minimal />
+      </div>
+      <div class="draggable-wrapper" draggable="true" 
+           @dragstart="onDragStart($event, 'html')"
+           @touchstart="handleTouchStart($event, 'html')"
+           @mousedown="onStopPropagation">
+        <HtmlBlock minimal />
+      </div>
+    </div>
+    </div>
+
+    <div v-else-if="activeDomain === 'web'" class="domain-content">
+      <div class="sidebar-section">
+        <h3>{{ $t('sections.web') }}</h3>
+        <div class="draggable-wrapper" draggable="true" 
+             @dragstart="onDragStart($event, 'new_route')"
+             @touchstart="handleTouchStart($event, 'new_route')"
+             @mousedown="onStopPropagation">
+          <NewRouteBlock minimal />
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -233,6 +285,44 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
   padding: 20px;
   height: 100%;
   box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.domain-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--sidebar-border);
+  padding-bottom: 8px;
+}
+
+.domain-tab {
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  color: var(--sidebar-text);
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  opacity: 0.7;
+}
+
+.domain-tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  opacity: 1;
+}
+
+.domain-tab.active {
+  background: var(--primary-color, #4C97FF);
+  color: white;
+  opacity: 1;
+}
+
+.domain-content {
+  flex: 1;
+  overflow-y: auto;
 }
 
 .sidebar-section {

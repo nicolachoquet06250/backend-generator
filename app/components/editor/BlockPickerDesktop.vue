@@ -23,15 +23,25 @@ import ArraySetKeyBlock from '../blocks/ArraySetKeyBlock.vue';
 import ReturnBlock from '../blocks/ReturnBlock.vue';
 import PrintBlock from '../blocks/PrintBlock.vue';
 import SetVarBlock from '../blocks/SetVarBlock.vue';
+import JsonBlock from '../blocks/JsonBlock.vue';
+import HtmlBlock from '../blocks/HtmlBlock.vue';
+import NewRouteBlock from '../blocks/NewRouteBlock.vue';
 import EqualBlock from '../blocks/EqualBlock.vue';
 import ComparisonBlock from '../blocks/ComparisonBlock.vue';
 
 const props = defineProps<{
   show: boolean;
   acceptedTypes?: string[];
+  filterContext?: string;
 }>();
 
 const emit = defineEmits(['close', 'select']);
+
+const activeDomain = ref('base');
+const domains = [
+  { id: 'base', label: 'domains.base' },
+  { id: 'web', label: 'domains.web' }
+];
 
 const onSelect = (type: string) => {
   emit('select', type);
@@ -63,119 +73,145 @@ const isAccepted = (type: string) => {
 </script>
 
 <template>
-  <div class="block-picker-grid">
-    <!-- Variables -->
-    <div class="picker-section" v-if="isAccepted('var') || isAccepted('set_var')">
-      <h3>{{ $t('sections.variables') }}</h3>
-      <div class="blocks-list">
-        <div v-if="isAccepted('var')" class="clickable-block" @click="onSelect('var')">
-          <VarBlock minimal />
-        </div>
-        <div v-if="isAccepted('set_var')" class="clickable-block" @click="onSelect('set_var')">
-          <SetVarBlock minimal />
-        </div>
-      </div>
+  <div class="block-picker-desktop">
+    <div class="domain-tabs">
+      <button 
+        v-for="domain in domains" 
+        :key="domain.id"
+        class="domain-tab"
+        :class="{ active: activeDomain === domain.id }"
+        @click="activeDomain = domain.id"
+      >
+        {{ $t(domain.label) }}
+      </button>
     </div>
 
-    <!-- Mathématiques -->
-    <div class="picker-section" v-if="['math-op', 'function'].map(isAccepted).includes(true)">
-      <h3>{{ $t('sections.math') }}</h3>
-      <div class="blocks-list">
-        <div v-for="op in ['+', '-', '*', '/', '%']" :key="op" 
-             class="clickable-block" @click="onSelect('math-' + op)">
-          <MathBlock :symbol="op" minimal />
+    <div v-if="activeDomain === 'base'" class="block-picker-grid">
+      <!-- Variables -->
+      <div class="picker-section" v-if="isAccepted('var') || isAccepted('set_var')">
+        <h3>{{ $t('sections.variables') }}</h3>
+        <div class="blocks-list">
+          <div v-if="isAccepted('var')" class="clickable-block" @click="onSelect('var')">
+            <VarBlock minimal />
+          </div>
+          <div v-if="isAccepted('set_var')" class="clickable-block" @click="onSelect('set_var')">
+            <SetVarBlock minimal />
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Logique & Comparaison -->
-    <div class="picker-section" v-if="['equal', 'compare-op', 'function'].map(isAccepted).includes(true)">
-      <h3>{{ $t('sections.logic') }}</h3>
-      <div class="blocks-list">
-        <div v-if="isAccepted('equal')" class="clickable-block" @click="onSelect('equal')">
-          <EqualBlock minimal />
-        </div>
-        <div v-for="op in ['<', '>', '<=', '>=', '!=']" :key="op"
-             class="clickable-block" @click="onSelect('compare-' + op)">
-          <ComparisonBlock :symbol="op" minimal />
+      <!-- Mathématiques -->
+      <div class="picker-section" v-if="['math-op', 'function'].map(isAccepted).includes(true)">
+        <h3>{{ $t('sections.math') }}</h3>
+        <div class="blocks-list">
+          <div v-for="op in ['+', '-', '*', '/', '%']" :key="op"
+               class="clickable-block" @click="onSelect('math-' + op)">
+            <MathBlock :symbol="op" minimal />
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Littéraux & Objets -->
-    <div class="picker-section" v-if="['expression', 'function'].map(isAccepted).includes(true)">
-      <h3>{{ $t('sections.literals') }}</h3>
-      <div class="blocks-list literals">
-        <div v-for="val in [true, false]" :key="String(val)"
-             class="clickable-block" @click="onSelect(val ? 'true' : 'false')">
-          <BooleanBlock :value="val" minimal />
-        </div>
-        <div v-for="type in ['string', 'number', 'array', 'object', 'object_property']" 
-             :key="type"
-             class="clickable-block" @click="onSelect(type)">
-          <component :is="type === 'string' ? StringBlock : 
-                         type === 'number' ? NumberBlock :
-                         type === 'array' ? ArrayBlock :
-                         type === 'object' ? ObjectBlock :
-                         ObjectPropertyBlock" 
-                     minimal
-          />
+      <!-- Logique & Comparaison -->
+      <div class="picker-section" v-if="['equal', 'compare-op', 'function'].map(isAccepted).includes(true)">
+        <h3>{{ $t('sections.logic') }}</h3>
+        <div class="blocks-list">
+          <div v-if="isAccepted('equal')" class="clickable-block" @click="onSelect('equal')">
+            <EqualBlock minimal />
+          </div>
+          <div v-for="op in ['<', '>', '<=', '>=', '!=']" :key="op"
+               class="clickable-block" @click="onSelect('compare-' + op)">
+            <ComparisonBlock :symbol="op" minimal />
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Contrôle de flux -->
-    <div class="picker-section" v-if="['if', 'elseif', 'else', 'while', 'for', 'foreach', 'break', 'continue'].map(type => isAccepted(type)).filter(t => t).length > 0">
-      <h3>{{ $t('sections.control') }}</h3>
-      <div class="blocks-list">
-        <template v-for="type in ['if', 'elseif', 'else', 'while', 'for', 'foreach', 'break', 'continue']" :key="type">
-          <div v-if="isAccepted(type)" class="clickable-block" @click="onSelect(type)">
-            <component :is="type === 'if' ? IfBlock : 
-                           type === 'elseif' ? ElseIfBlock :
-                           type === 'else' ? ElseBlock :
-                           type === 'while' ? WhileBlock :
-                           type === 'for' ? ForBlock :
-                           type === 'foreach' ? ForEachBlock :
-                           type === 'break' ? BreakBlock :
-                           ContinueBlock" 
+      <!-- Littéraux & Objets -->
+      <div class="picker-section" v-if="['expression', 'function'].map(isAccepted).includes(true)">
+        <h3>{{ $t('sections.literals') }}</h3>
+        <div class="blocks-list literals">
+          <div v-for="val in [true, false]" :key="String(val)"
+               class="clickable-block" @click="onSelect(val ? 'true' : 'false')">
+            <BooleanBlock :value="val" minimal />
+          </div>
+          <div v-for="type in ['string', 'number', 'array', 'object', 'object_property']"
+               :key="type"
+               class="clickable-block" @click="onSelect(type)">
+            <component :is="type === 'string' ? StringBlock :
+                           type === 'number' ? NumberBlock :
+                           type === 'array' ? ArrayBlock :
+                           type === 'object' ? ObjectBlock :
+                           ObjectPropertyBlock"
                        minimal
             />
           </div>
-        </template>
+        </div>
+      </div>
+
+      <!-- Contrôle de flux -->
+      <div class="picker-section" v-if="['if', 'elseif', 'else', 'while', 'for', 'foreach', 'break', 'continue'].map(type => isAccepted(type)).filter(t => t).length > 0">
+        <h3>{{ $t('sections.control') }}</h3>
+        <div class="blocks-list">
+          <template v-for="type in ['if', 'elseif', 'else', 'while', 'for', 'foreach', 'break', 'continue']" :key="type">
+            <div v-if="isAccepted(type)" class="clickable-block" @click="onSelect(type)">
+              <component :is="type === 'if' ? IfBlock :
+                             type === 'elseif' ? ElseIfBlock :
+                             type === 'else' ? ElseBlock :
+                             type === 'while' ? WhileBlock :
+                             type === 'for' ? ForBlock :
+                             type === 'foreach' ? ForEachBlock :
+                             type === 'break' ? BreakBlock :
+                             ContinueBlock"
+                         minimal
+              />
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="picker-section" v-if="['print', 'array_push', 'array_remove', 'array_set_key'].map(type => isAccepted(type)).filter(t => t).length > 0">
+        <h3>{{ $t('sections.actions') }}</h3>
+        <div class="blocks-list">
+          <div v-if="isAccepted('print')" class="clickable-block" @click="onSelect('print')">
+            <PrintBlock minimal />
+          </div>
+          <div v-if="isAccepted('array_push')" class="clickable-block" @click="onSelect('array_push')">
+            <ArrayPushBlock minimal />
+          </div>
+          <div v-if="isAccepted('array_remove')" class="clickable-block" @click="onSelect('array_remove')">
+            <ArrayRemoveBlock minimal />
+          </div>
+          <div v-if="isAccepted('array_set_key')" class="clickable-block" @click="onSelect('array_set_key')">
+            <ArraySetKeyBlock minimal />
+          </div>
+        </div>
+      </div>
+
+      <!-- Fonctions -->
+      <div class="picker-section">
+        <h3>{{ $t('sections.functions') }}</h3>
+        <div class="blocks-list">
+          <div v-if="isAccepted('function')" class="clickable-block" @click="onSelect('parameter')">
+            <ParameterBlock minimal />
+          </div>
+          <div v-if="isAccepted('function')" class="clickable-block" @click="onSelect('function')">
+            <FunctionCallBlock minimal :filterContext="filterContext" />
+          </div>
+          <div v-if="isAccepted('return')" class="clickable-block" @click="onSelect('return')">
+            <ReturnBlock minimal />
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Actions -->
-    <div class="picker-section" v-if="['print', 'array_push', 'array_remove', 'array_set_key'].map(type => isAccepted(type)).filter(t => t).length > 0">
-      <h3>{{ $t('sections.actions') }}</h3>
-      <div class="blocks-list">
-        <div v-if="isAccepted('print')" class="clickable-block" @click="onSelect('print')">
-          <PrintBlock minimal />
-        </div>
-        <div v-if="isAccepted('array_push')" class="clickable-block" @click="onSelect('array_push')">
-          <ArrayPushBlock minimal />
-        </div>
-        <div v-if="isAccepted('array_remove')" class="clickable-block" @click="onSelect('array_remove')">
-          <ArrayRemoveBlock minimal />
-        </div>
-        <div v-if="isAccepted('array_set_key')" class="clickable-block" @click="onSelect('array_set_key')">
-          <ArraySetKeyBlock minimal />
-        </div>
-      </div>
-    </div>
-
-    <!-- Fonctions -->
-    <div class="picker-section">
-      <h3>{{ $t('sections.functions') }}</h3>
-      <div class="blocks-list">
-        <div v-if="isAccepted('function')" class="clickable-block" @click="onSelect('parameter')">
-          <ParameterBlock minimal />
-        </div>
-        <div v-if="isAccepted('function')" class="clickable-block" @click="onSelect('function')">
-          <FunctionCallBlock minimal />
-        </div>
-        <div v-if="isAccepted('return')" class="clickable-block" @click="onSelect('return')">
-          <ReturnBlock minimal />
+    <!-- Web (Domain: web) -->
+    <div v-else-if="activeDomain === 'web'" class="block-picker-grid">
+      <div class="picker-section" v-if="isAccepted('new_route')">
+        <h3>{{ $t('sections.web') }}</h3>
+        <div class="blocks-list">
+          <div class="clickable-block" @click="onSelect('new_route')">
+            <NewRouteBlock minimal />
+          </div>
         </div>
       </div>
     </div>
@@ -183,6 +219,43 @@ const isAccepted = (type: string) => {
 </template>
 
 <style scoped>
+.block-picker-desktop {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.domain-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--sidebar-border);
+  padding: 0 10px 10px 10px;
+}
+
+.domain-tab {
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  color: var(--sidebar-text);
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+  opacity: 0.7;
+}
+
+.domain-tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+  opacity: 1;
+}
+
+.domain-tab.active {
+  background: var(--primary-color, #4C97FF);
+  color: white;
+  opacity: 1;
+}
+
 .block-picker-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

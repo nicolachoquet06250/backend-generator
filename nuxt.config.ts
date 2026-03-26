@@ -1,3 +1,5 @@
+import process from 'node:process';
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -39,7 +41,7 @@ export default defineNuxtConfig({
       periodicSyncForUpdates: 3600,
     },
     devOptions: {
-      enabled: true,
+      enabled: process.env.NODE_ENV !== 'development',
       suppressWarnings: true,
       navigateFallbackAllowlist: [/^\/$/],
       type: 'module'
@@ -50,7 +52,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: 'Backend Generator',
-      link: [
+      link: process.env.NODE_ENV === 'development' ? [] : [
         { rel: 'manifest', href: '/manifest.webmanifest' }
       ]
     }
@@ -62,7 +64,10 @@ export default defineNuxtConfig({
     ],
     defaultLocale: 'fr',
     langDir: '../locales',
-    strategy: 'no_prefix'
+    strategy: 'no_prefix',
+    // vueI18n: {
+    //   strictMessage: false
+    // }
   },
   vite: {
     optimizeDeps: {

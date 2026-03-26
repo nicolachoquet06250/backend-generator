@@ -25,7 +25,7 @@ const props = defineProps<{
   children?: any[];
 }>();
 
-const { activeFunctionId, addBlockToFunction } = useFunctions();
+const { activeFunctionId } = useFunctions();
 
 const opLabel = computed(() => {
   switch (props.symbol) {

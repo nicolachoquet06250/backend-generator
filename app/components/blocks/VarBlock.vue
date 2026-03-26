@@ -85,24 +85,6 @@ const selectedType = computed(() => {
   return typeConfig.value.kind;
 });
 
-const getOperandComponent = (block: any) => {
-  if (!block) return null;
-  const type = block.type;
-  if (type === 'string') return StringBlock;
-  if (type === 'number') return NumberBlock;
-  if (type === 'array') return ArrayBlock;
-  if (type === 'object') return ObjectBlock;
-  if (type === 'object_property') return ObjectPropertyBlock;
-  if (type === 'var') return VarBlock;
-  if (type === 'parameter') return ParameterBlock;
-  if (type === 'function') return FunctionCallBlock;
-  if (type === 'print') return PrintBlock;
-  if (type === 'equal' || type === 'boolean' || type === 'true' || type === 'false') return BooleanBlock;
-  if (type.startsWith('compare-')) return ComparisonBlock;
-  if (type.startsWith('math-')) return MathBlock;
-  return null;
-};
-
 const selectedStructureId = computed(() => {
   // Parcourir récursivement pour trouver le structId si applicable
   const findStructId = (config: any): string => {

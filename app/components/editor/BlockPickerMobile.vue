@@ -21,6 +21,9 @@ import ArrayPushBlock from '../blocks/ArrayPushBlock.vue';
 import ArrayRemoveBlock from '../blocks/ArrayRemoveBlock.vue';
 import ArraySetKeyBlock from '../blocks/ArraySetKeyBlock.vue';
 import ReturnBlock from '../blocks/ReturnBlock.vue';
+import JsonBlock from '../blocks/JsonBlock.vue';
+import HtmlBlock from '../blocks/HtmlBlock.vue';
+import NewRouteBlock from '../blocks/NewRouteBlock.vue';
 import PrintBlock from '../blocks/PrintBlock.vue';
 import SetVarBlock from '../blocks/SetVarBlock.vue';
 import EqualBlock from '../blocks/EqualBlock.vue';
@@ -32,9 +35,16 @@ const { onTouchStart, onTouchMove, onTouchEnd } = useMobileDragDrop();
 const props = defineProps<{
   show: boolean;
   acceptedTypes?: string[];
+  filterContext?: string;
 }>();
 
 const emit = defineEmits(['close', 'select']);
+
+const activeDomain = ref('base');
+const domains = [
+  { id: 'base', label: 'domains.base' },
+  { id: 'web', label: 'domains.web' }
+];
 
 const onSelect = (type: string) => {
   emit('select', type);
@@ -73,28 +83,31 @@ const isAccepted = (type: string) => {
 };
 
 const categories = [
-  { id: 'variables', label: 'sections.variables', types: ['var', 'set_var'] },
-  { id: 'math', label: 'sections.math', types: ['math-+'] }, // Just to trigger section if math-op accepted
-  { id: 'logic', label: 'sections.logic', types: ['equal', 'compare-<'] },
-  { id: 'literals', label: 'sections.literals', types: ['true', 'string', 'number', 'array', 'object', 'object_property'] },
-  { id: 'control', label: 'sections.control', types: ['if', 'elseif', 'else', 'while', 'for', 'foreach', 'break', 'continue'] },
-  { id: 'actions', label: 'sections.actions', types: ['print', 'array_push', 'array_remove', 'array_set_key'] },
-  { id: 'functions', label: 'sections.functions', types: ['parameter', 'function', 'return'] }
+  { id: 'variables', label: 'sections.variables', types: ['var', 'set_var'], domain: 'base' },
+  { id: 'math', label: 'sections.math', types: ['math-+'], domain: 'base' },
+  { id: 'logic', label: 'sections.logic', types: ['equal', 'compare-<'], domain: 'base' },
+  { id: 'literals', label: 'sections.literals', types: ['true', 'string', 'number', 'array', 'object', 'object_property'], domain: 'base' },
+  { id: 'control', label: 'sections.control', types: ['if', 'elseif', 'else', 'while', 'for', 'foreach', 'break', 'continue'], domain: 'base' },
+  { id: 'actions', label: 'sections.actions', types: ['print', 'array_push', 'array_remove', 'array_set_key'], domain: 'base' },
+  { id: 'functions', label: 'sections.functions', types: ['parameter', 'function', 'return'], domain: 'base' },
+  { id: 'web', label: 'sections.web', types: ['new_route'], domain: 'web' }
 ];
 
 const activeCategory = ref(categories[0]!.id);
 
 const filteredCategories = computed(() => {
   return categories.filter(cat => {
+    if (cat.domain !== activeDomain.value) return false;
     // if (cat.id === 'math') return isAccepted('math-op');
     if (cat.id === 'logic') return true;
     return cat.types.some(type => isAccepted(type));
   });
 });
 
-watchEffect(() => {
-  if (!filteredCategories.value.find(c => c.id === activeCategory.value) && filteredCategories.value.length > 0) {
-    activeCategory.value = filteredCategories.value[0]!.id;
+watch(activeDomain, () => {
+  const firstInDomain = filteredCategories.value[0];
+  if (firstInDomain) {
+    activeCategory.value = firstInDomain.id;
   }
 });
 </script>
@@ -105,6 +118,18 @@ watchEffect(() => {
        @touchend="onTouchEnd"
        @touchcancel="onTouchEnd"
   >
+    <div class="domain-tabs">
+      <button 
+        v-for="domain in domains" 
+        :key="domain.id"
+        class="domain-tab"
+        :class="{ active: activeDomain === domain.id }"
+        @click="activeDomain = domain.id"
+      >
+        {{ $t(domain.label) }}
+      </button>
+    </div>
+
     <div class="category-tabs">
       <button 
         v-for="cat in filteredCategories" 
@@ -234,12 +259,21 @@ watchEffect(() => {
         <div v-if="isAccepted('function')" class="mobile-clickable-block" 
              @click="onSelect('function')"
              @touchstart="handleTouchStart($event, 'function')">
-          <FunctionCallBlock minimal />
+          <FunctionCallBlock minimal :filterContext="filterContext" />
         </div>
         <div v-if="isAccepted('return')" class="mobile-clickable-block" 
              @click="onSelect('return')"
              @touchstart="handleTouchStart($event, 'return')">
           <ReturnBlock minimal />
+        </div>
+      </div>
+
+      <!-- Web -->
+      <div v-if="activeCategory === 'web'" class="mobile-section">
+        <div v-if="isAccepted('new_route')" class="mobile-clickable-block" 
+             @click="onSelect('new_route')"
+             @touchstart="handleTouchStart($event, 'new_route')">
+          <NewRouteBlock minimal />
         </div>
       </div>
     </div>
@@ -251,6 +285,32 @@ watchEffect(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
+}
+
+.domain-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: var(--sidebar-bg);
+  border-bottom: 1px solid var(--sidebar-border);
+}
+
+.domain-tab {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  background: none;
+  color: var(--sidebar-text);
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 4px;
+  opacity: 0.7;
+}
+
+.domain-tab.active {
+  background: var(--header-bg);
+  color: white;
+  opacity: 1;
 }
 
 .category-tabs {

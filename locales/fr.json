@@ -9,8 +9,14 @@
     "control": "Contrôle de flux",
     "actions": "Actions",
     "functions": "Fonctions",
+    "data_formats": "Formats de données",
     "structures": "Structures de données",
-    "blocks": "Blocs"
+    "blocks": "Blocs",
+    "web": "Web"
+  },
+  "domains": {
+    "base": "Base",
+    "web": "Web"
   },
   "workspace": {
     "add_function": "Nouvelle fonction",
@@ -78,6 +84,11 @@
       "array": "tableau",
       "object": "objet",
       "object_property": "propriété"
+    },
+    "object": {
+      "select_structure": "Sélectionner une structure :",
+      "choose": "Choisir...",
+      "or_drop_props": "OU DÉPOSER DES PROPRIÉTÉS"
     },
     "array_push": {
       "label": "ajouter dans tableau",
@@ -148,6 +159,16 @@
     },
     "return": {
       "label": "retourner"
+    },
+    "json": {
+      "label": "JSON",
+      "placeholder": "{'{'}\"clé\": \"valeur\"{'}'}"
+    },
+    "html": {
+      "label": "HTML"
+    },
+    "new_route": {
+      "label": "Nouvelle route"
     }
   },
   "pwa": {

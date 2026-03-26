@@ -52,7 +52,7 @@ export const useFunctions = () => {
   });
 
   const addFunction = (name: string) => {
-    const id = Math.random().toString(36).substr(2, 9);
+    const id = Math.random().toString(36).substring(2, 9);
     functions.value.push({ id, name, blocks: [] });
     activeFunctionId.value = id;
   };
@@ -67,7 +67,7 @@ export const useFunctions = () => {
   const addBlockToFunction = (functionId: string, blockType: string, parentBlockId?: string, slotName?: string, existingBlock?: BlockInstance, afterBlockId?: string, initialConfig?: any) => {
     const f = functions.value.find(func => func.id === functionId);
     if (f) {
-      const id = Math.random().toString(36).substr(2, 9);
+      const id = Math.random().toString(36).substring(2, 9);
       const newBlock: BlockInstance = existingBlock ? { ...existingBlock, id } : {
         id,
         type: blockType,

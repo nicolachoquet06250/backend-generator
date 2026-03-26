@@ -19,9 +19,38 @@ const props = defineProps<{
   blockId?: string;
   config?: any;
   children?: any[];
+  filterContext?: string;
+  parentBlockId?: string;
 }>();
 
-const { functions, activeFunctionId, updateBlockConfig } = useFunctions();
+const { structures } = useDataStructures();
+const { functions, activeFunctionId, getBlockById, updateBlockConfig } = useFunctions();
+
+const parentBlock = props.parentBlockId ? getBlockById(activeFunctionId.value, props.parentBlockId) : null;
+const isParentNewRoute = computed(() => parentBlock?.type === 'new_route');
+
+const filterRouteFunction = (f: FunctionDefinition) => {
+  const params: ParamInfo[] = [];
+  findParamsInBlocks(f.blocks || [], params);
+  
+  const hasRequest = params.some(p => {
+    const type = p.type;
+    if (type && typeof type === 'object') {
+      return (type.kind === 'object' || !type.kind) && structures.value.find(s => s.id === type.structId)?.name === 'Request';
+    }
+    return type === 'Request';
+  });
+  
+  const hasResponse = params.some(p => {
+    const type = p.type;
+    if (type && typeof type === 'object') {
+      return (type.kind === 'object' || !type.kind) && structures.value.find(s => s.id === type.structId)?.name === 'Response';
+    }
+    return type === 'Response';
+  });
+  
+  return hasRequest && hasResponse;
+};
 
 const selectedFunctionId = ref(props.config?.functionId || '');
 
@@ -32,28 +61,44 @@ watch(selectedFunctionId, (val) => {
 });
 
 const otherFunctions = computed(() => {
+  if (props.filterContext === 'new_route' || isParentNewRoute.value) {
+    return functions.value.filter(filterRouteFunction);
+  }
   return functions.value;
 });
 
 // Trouver la fonction sélectionnée
-const selectedFunction = computed(() => otherFunctions.value.find(f => f.id === selectedFunctionId.value));
+const selectedFunction = computed(() => functions.value.find(f => f.id === selectedFunctionId.value));
 
 // Extraire les paramètres (déclarés via des blocs Parameter au sein de la fonction cible)
 interface ParamInfo { name: string; type: any; hasDefault: boolean }
 
 const findParamsInBlocks = (blocks: any[], acc: ParamInfo[]) => {
   blocks.forEach((b) => {
-    if (b.type === 'parameter' && b.config?.name) {
+    // Un bloc 'parameter' est une déclaration s'il a un nom et n'est pas une utilisation (selectedParam absent)
+    if (b.type === 'parameter' && b.config?.name && !b.config?.selectedParam) {
       acc.push({ 
         name: b.config.name, 
         type: b.config?.type ?? 'any',
         hasDefault: !!b.config?.hasDefaultValue
       });
     }
-    if (b.children) findParamsInBlocks(b.children, acc);
+    
+    // Exploration récursive des enfants
+    if (b.children && b.children.length > 0) {
+      findParamsInBlocks(b.children, acc);
+    }
+    
+    // Exploration récursive des slots (important pour les blocs imbriqués comme If, For, etc.)
     if (b.config?.slots) {
       Object.values(b.config.slots).forEach((slotBlock: any) => {
-        if (slotBlock) findParamsInBlocks([slotBlock], acc);
+        if (slotBlock) {
+          if (Array.isArray(slotBlock)) {
+            findParamsInBlocks(slotBlock, acc);
+          } else {
+            findParamsInBlocks([slotBlock], acc);
+          }
+        }
       });
     }
   });
@@ -61,8 +106,11 @@ const findParamsInBlocks = (blocks: any[], acc: ParamInfo[]) => {
 
 const parameters = computed<ParamInfo[]>(() => {
   const acc: ParamInfo[] = [];
-  if (selectedFunction.value) {
-    findParamsInBlocks(selectedFunction.value.blocks || [], acc);
+  if (selectedFunctionId.value) {
+    const targetFunc = functions.value.find(f => f.id === selectedFunctionId.value);
+    if (targetFunc) {
+      findParamsInBlocks(targetFunc.blocks || [], acc);
+    }
   }
   // unicité par nom, garder le premier
   const seen = new Set<string>();
@@ -102,12 +150,22 @@ const typeToAccepted = (t: any): string[] => {
 // Affichage lisible du type
 const { t } = useI18n();
 const formatType = (tpe: any): string => {
+  if (!tpe) return t('blocks.var.types.any');
   const kind = typeof tpe === 'object' ? (tpe.kind || 'object') : tpe;
   if (kind === 'array') {
     const el = typeof tpe === 'object' ? tpe.elementType : 'any';
     return `${t('blocks.var.types.array')}<${formatType(el)}>`;
   }
   if (kind === 'object') {
+    const structId = typeof tpe === 'object' ? tpe.structId : (typeof tpe === 'string' && tpe !== 'object' ? tpe : '');
+    const struct = structures.value.find(s => s.id === structId || s.name === structId);
+    if (struct) {
+      return `${t('blocks.var.types.object')}<${struct.name}>`;
+    }
+    // Cas spécial pour les structures par défaut req/res si elles ne sont pas dans structures
+    if (structId === 'req' || structId === 'Request') return `${t('blocks.var.types.object')}<Request>`;
+    if (structId === 'res' || structId === 'Response') return `${t('blocks.var.types.object')}<Response>`;
+    
     return t('blocks.var.types.object');
   }
   return t(`blocks.var.types.${kind || 'any'}`);
@@ -143,10 +201,9 @@ const getValueComponent = (block: any) => {
         </option>
       </select>
     </template>
-
-    <template #bottom v-if="!minimal && selectedFunction">
+    <template #bottom v-if="(parentBlock?.type !== 'new_route' || parameters.filter(p => !['res', 'req'].includes(p.type.structId)).length > 0) && !minimal && selectedFunction">
       <div class="params-container">
-        <div class="param-row" v-for="p in parameters" :key="p.name" :class="{ 'has-default': p.hasDefault }">
+        <div class="param-row" v-for="p in parameters.filter(_p => !['res', 'req'].includes(_p.type.structId))" :key="p.name" :class="{ 'has-default': p.hasDefault }">
           <span class="param-name">{{ p.name }}</span>
           <span class="param-type">: {{ formatType(p.type) }}{{ p.hasDefault ? '?' : '' }}</span>
           <span class="param-label">=</span>

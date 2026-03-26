@@ -7,6 +7,7 @@ import { useDevice } from '~/composables/useDevice';
 const props = defineProps<{
   show: boolean;
   acceptedTypes?: string[];
+  filterContext?: string;
 }>();
 
 const emit = defineEmits(['close', 'select']);
@@ -26,6 +27,7 @@ const onSelect = (type: string) => {
         v-if="isMobile" 
         :show="show" 
         :acceptedTypes="acceptedTypes" 
+        :filterContext="filterContext"
         @select="onSelect" 
         @close="emit('close')"
       />
@@ -33,6 +35,7 @@ const onSelect = (type: string) => {
         v-else 
         :show="show" 
         :acceptedTypes="acceptedTypes" 
+        :filterContext="filterContext"
         @select="onSelect" 
         @close="emit('close')"
       />

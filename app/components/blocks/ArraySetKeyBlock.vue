@@ -14,7 +14,7 @@ const props = defineProps<{
 }>();
 
 const { structures } = useDataStructures();
-const { activeFunctionId, updateBlockConfig, getBlockById, functions } = useFunctions();
+const { activeFunctionId, updateBlockConfig, functions } = useFunctions();
 
 const acceptedArrayTypes = ['var', 'parameter', 'array', 'object', 'function'];
 const acceptedValueTypes = ['expression'];

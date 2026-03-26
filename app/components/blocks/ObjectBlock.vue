@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import BaseBlock from './BaseBlock.vue';
 import BlockRenderer from './BlockRenderer.vue';
-import BlockDropZone from './BlockDropZone.vue';
-import { useDataStructures } from '~/composables/useDataStructures';
-import { useFunctions } from '~/composables/useFunctions';
+import {useDataStructures} from '~/composables/useDataStructures';
+import {useFunctions} from '~/composables/useFunctions';
 
 const props = defineProps<{
   minimal?: boolean;
@@ -31,8 +30,13 @@ const values = computed({
 });
 
 const updateValue = (fieldName: string, value: any) => {
-  const newValues = { ...values.value, [fieldName]: value };
-  values.value = newValues;
+  values.value = {...values.value, [fieldName]: value};
+};
+
+const selectStructure = (id: string) => {
+  if (props.blockId && activeFunctionId.value) {
+    updateBlockConfig(activeFunctionId.value, props.blockId, { structId: id, values: {} });
+  }
 };
 
 const getFieldType = (field: any) => {
@@ -77,6 +81,17 @@ const getFieldType = (field: any) => {
           </div>
         </div>
       </template>
+      <template v-else-if="!children?.length">
+        <div class="empty-object select-struct">
+          <span class="instruction">{{ $t('blocks.object.select_structure') }}</span>
+          <select class="struct-select" @change="e => selectStructure((e.target as HTMLSelectElement).value)">
+            <option value="" disabled selected>{{ $t('blocks.object.choose') }}</option>
+            <option v-for="struct in structures" :key="struct.id" :value="struct.id">
+              {{ struct.name }}
+            </option>
+          </select>
+        </div>
+      </template>
       <template v-else>
         <div class="empty-object">
           <BlockRenderer 
@@ -84,12 +99,6 @@ const getFieldType = (field: any) => {
             :key="child.id" 
             :block="child" 
             isExpression 
-          />
-          <BlockDropZone 
-            v-if="!children?.length"
-            slotName="properties"
-            :parentBlockId="blockId!"
-            :acceptedBlockTypes="['expression']"
           />
         </div>
       </template>
@@ -158,5 +167,37 @@ const getFieldType = (field: any) => {
   min-height: 22px;
   display: flex;
   align-items: center;
+}
+
+.select-struct {
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  min-width: 200px;
+}
+
+.instruction {
+  font-size: 0.85em;
+  opacity: 0.8;
+  color: white;
+  text-align: center;
+}
+
+.struct-select {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  color: white;
+  padding: 4px 8px;
+  outline: none;
+  cursor: pointer;
+}
+
+.struct-select option {
+  background: #2a2a2a;
+  color: white;
 }
 </style>

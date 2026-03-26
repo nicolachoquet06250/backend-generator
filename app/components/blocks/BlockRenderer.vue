@@ -25,8 +25,12 @@ import ParameterBlock from './ParameterBlock.vue';
 import ArrayPushBlock from './ArrayPushBlock.vue';
 import ArrayRemoveBlock from './ArrayRemoveBlock.vue';
 import ArraySetKeyBlock from './ArraySetKeyBlock.vue';
+import JsonBlock from './JsonBlock.vue';
+import HtmlBlock from './HtmlBlock.vue';
+import NewRouteBlock from './NewRouteBlock.vue';
 
 const props = defineProps<{
+  parentBlockId?: any;
   block: any;
   isExpression?: boolean;
 }>();
@@ -57,6 +61,9 @@ const getBlockComponent = (type: string) => {
   if (type === 'array_push') return ArrayPushBlock;
   if (type === 'array_remove') return ArrayRemoveBlock;
   if (type === 'array_set_key') return ArraySetKeyBlock;
+  if (type === 'json') return JsonBlock;
+  if (type === 'html') return HtmlBlock;
+  if (type === 'new_route') return NewRouteBlock;
   if (type.startsWith('compare-')) return ComparisonBlock;
   return null;
 };
@@ -72,20 +79,24 @@ const getBlockProps = (block: any) => {
   };
 
   if (block.type.startsWith('math-') || block.type.startsWith('compare-')) {
-    return { ...baseProps, symbol: block.type.split('-')[1], children: block.children };
+    return { ...baseProps, symbol: block.type.split('-')[1], children: block.children, parentBlockId: props.parentBlockId };
   }
 
   if (block.type === 'true' || block.type === 'false' || block.type === 'boolean') {
     const isTrue = block.type === 'true' || 
                    (block.config && (block.config.value === true || block.config.value === 'true'));
-    return { ...baseProps, value: isTrue, children: block.children };
+    return { ...baseProps, value: isTrue, children: block.children, parentBlockId: props.parentBlockId };
   }
 
   if (block.type === 'array_set_key') {
-    return { ...baseProps, targetKey: block.config?.slots?.key, children: block.children };
+    return { ...baseProps, targetKey: block.config?.slots?.key, children: block.children, parentBlockId: props.parentBlockId };
   }
 
-  return { ...baseProps, children: block.children };
+  if (block.type === 'new_route' || block.type === 'json' || block.type === 'html') {
+    return { ...baseProps, value: block.config?.slots?.value, children: block.children, parentBlockId: props.parentBlockId };
+  }
+
+  return { ...baseProps, children: block.children, parentBlockId: props.parentBlockId };
 };
 </script>
 

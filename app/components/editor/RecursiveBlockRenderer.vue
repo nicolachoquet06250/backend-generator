@@ -26,10 +26,11 @@ import ParameterBlock from '../blocks/ParameterBlock.vue';
 import ArrayPushBlock from '../blocks/ArrayPushBlock.vue';
 import ArrayRemoveBlock from '../blocks/ArrayRemoveBlock.vue';
 import ArraySetKeyBlock from '../blocks/ArraySetKeyBlock.vue';
+import JsonBlock from '../blocks/JsonBlock.vue';
+import HtmlBlock from '../blocks/HtmlBlock.vue';
+import NewRouteBlock from '../blocks/NewRouteBlock.vue';
 import BlockDropZone from '../blocks/BlockDropZone.vue';
 import { useMobileDragDrop } from '~/composables/useMobileDragDrop';
-
-const inLoop = inject('inLoop', ref(false));
 
 const props = defineProps<{
   blocks: any[];
@@ -37,7 +38,7 @@ const props = defineProps<{
   parentBlockId?: string;
 }>();
 
-const { activeFunctionId, addBlockToFunction, getBlockById, removeBlockFromFunction } = useFunctions();
+const { activeFunctionId } = useFunctions();
 const { onTouchStart, onTouchMove, onTouchEnd } = useMobileDragDrop();
 
 const getBlockComponent = (type: string) => {
@@ -67,6 +68,9 @@ const getBlockComponent = (type: string) => {
   if (type === 'array_push') return ArrayPushBlock;
   if (type === 'array_remove') return ArrayRemoveBlock;
   if (type === 'array_set_key') return ArraySetKeyBlock;
+  if (type === 'json') return JsonBlock;
+  if (type === 'html') return HtmlBlock;
+  if (type === 'new_route') return NewRouteBlock;
   if (type.startsWith('compare-')) return ComparisonBlock;
   return null;
 };
@@ -144,7 +148,10 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
             { value: block.type === 'true', blockId: block.id, config: block.config, ...block.config.slots } :
             (block.type === 'array_set_key' ?
               { blockId: block.id, config: block.config, ...block.config.slots, targetKey: block.config?.slots?.key } :
-              { blockId: block.id, config: block.config, ...block.config.slots }
+              (block.type === 'new_route' ?
+                { blockId: block.id, config: block.config, ...block.config.slots, value: block.config?.slots?.value } :
+                { blockId: block.id, config: block.config, ...block.config.slots }
+              )
             )
           )"
       >

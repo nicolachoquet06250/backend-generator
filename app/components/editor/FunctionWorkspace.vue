@@ -69,15 +69,6 @@ const onDragOver = (e: DragEvent) => {
   }
 };
 
-const onBlockDragStart = (e: DragEvent, blockId: string) => {
-  if (e.dataTransfer && activeFunctionId.value) {
-    e.dataTransfer.setData('existingBlockId', blockId);
-    e.dataTransfer.setData('text/plain', blockId);
-    e.dataTransfer.setData('sourceFunctionId', activeFunctionId.value);
-    e.dataTransfer.effectAllowed = 'move';
-  }
-};
-
 const onTrashDragOver = (e: DragEvent) => {
   e.preventDefault();
   isDraggingOverTrash.value = true;
@@ -207,6 +198,7 @@ const onMobileTrashDragLeave = () => {
   flex-direction: column;
   height: 100%;
   background: var(--workspace-bg);
+  overflow: auto;
 }
 
 @media (max-width: 768px) {

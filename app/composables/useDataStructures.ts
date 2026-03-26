@@ -26,6 +26,16 @@ export const useDataStructures = () => {
     }
     return [
       { 
+        id: 'req', 
+        name: 'Request',
+        fields: []
+      },
+      { 
+        id: 'res', 
+        name: 'Response',
+        fields: []
+      },
+      { 
         id: '1', 
         name: 'User',
         fields: [
@@ -53,7 +63,7 @@ export const useDataStructures = () => {
 
   const addStructure = (name: string) => {
     structures.value.push({
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).substring(2, 9),
       name,
       fields: []
     });
@@ -74,7 +84,7 @@ export const useDataStructures = () => {
     const struct = structures.value.find(s => s.id === structId);
     if (struct) {
       struct.fields.push({
-        id: Math.random().toString(36).substr(2, 9),
+        id: Math.random().toString(36).substring(2, 9),
         name: 'field',
         type: 'string',
         nullable: false,
