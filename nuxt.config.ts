@@ -6,6 +6,7 @@ export default defineNuxtConfig({
   pwa: {
     registerType: 'autoUpdate',
     manifest: {
+      display: 'fullscreen',
       name: 'Backend Generator',
       short_name: 'BEGen',
       description: 'Générateur de backend graphique',
