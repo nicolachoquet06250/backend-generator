@@ -11,7 +11,7 @@ const showStructures = ref(false);
 </script>
 
 <template>
-  <div class="editor-layout">
+  <div class="editor-layout" :class="{ 'mobile-mode': isMobile }">
     <header class="main-header">
       <div class="logo">
         <h1>{{ $t('welcome') }}</h1>
@@ -161,6 +161,16 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+
+  &.mobile-mode {
+    display: flex;
+    flex-direction: column;
+
+    > .editor-body {
+      flex: 1;
+      overflow: auto;
+    }
+  }
 }
 
 .main-header {
