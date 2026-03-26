@@ -43,6 +43,15 @@ export default defineNuxtConfig({
       suppressWarnings: true,
       navigateFallbackAllowlist: [/^\/$/],
       type: 'module'
+    },
+    injectRegister: 'auto',
+    includeAssets: ['favicon.ico', 'robots.txt'],
+  },
+  app: {
+    head: {
+      link: [
+        { rel: 'manifest', href: '/manifest.webmanifest' }
+      ]
     }
   },
   i18n: {
