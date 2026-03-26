@@ -51,7 +51,7 @@ const isAccepted = (type: string) => {
     normalizedType = 'boolean';
   }
 
-  const expressionTypes = ['string', 'number', 'boolean', 'true', 'false', 'var', 'parameter', 'math-op', 'compare-op', 'equal', 'array', 'object', 'object_property', 'function', 'print'];
+  const expressionTypes = ['string', 'number', 'boolean', 'true', 'false', 'var', 'parameter', 'math-op', 'compare-op', 'equal', 'array', 'object', 'object_property', 'function', 'print', 'expression'];
   
   if (type.startsWith('math-')) normalizedType = 'math-op';
   if (type.startsWith('compare-')) normalizedType = 'compare-op';
@@ -75,9 +75,8 @@ const activeCategory = ref(categories[0]!.id);
 
 const filteredCategories = computed(() => {
   return categories.filter(cat => {
-    if (cat.id === 'math') return isAccepted('math-op');
-    if (cat.id === 'logic') return isAccepted('equal') || isAccepted('compare-op');
-    if (cat.id === 'literals') return isAccepted('expression');
+    // if (cat.id === 'math') return isAccepted('math-op');
+    if (cat.id === 'logic') return true;
     return cat.types.some(type => isAccepted(type));
   });
 });
@@ -108,11 +107,9 @@ watchEffect(() => {
       <div v-if="activeCategory === 'variables'" class="mobile-section">
         <div v-if="isAccepted('var')" class="mobile-clickable-block" @click="onSelect('var')">
           <VarBlock minimal />
-<!--          <span>{{ $t('blocks.var.label_sidebar') }}</span>-->
         </div>
         <div v-if="isAccepted('set_var')" class="mobile-clickable-block" @click="onSelect('set_var')">
           <SetVarBlock minimal />
-<!--          <span>{{ $t('blocks.assign.label') }}</span>-->
         </div>
       </div>
 
@@ -121,7 +118,6 @@ watchEffect(() => {
         <div v-for="op in ['+', '-', '*', '/', '%']" :key="op" 
              class="mobile-clickable-block" @click="onSelect('math-' + op)">
           <MathBlock :symbol="op" minimal />
-<!--          <span>{{ $t(`blocks.math.${op === '+' ? 'add' : op === '-' ? 'sub' : op === '*' ? 'mul' : op === '/' ? 'div' : 'mod'}`) }}</span>-->
         </div>
       </div>
 
@@ -129,12 +125,10 @@ watchEffect(() => {
       <div v-if="activeCategory === 'logic'" class="mobile-section">
         <div v-if="isAccepted('equal')" class="mobile-clickable-block" @click="onSelect('equal')">
           <EqualBlock minimal />
-<!--          <span>{{ $t('blocks.equal.label') }}</span>-->
         </div>
         <div v-for="op in ['<', '>', '<=', '>=', '!=']" :key="op"
              class="mobile-clickable-block" @click="onSelect('compare-' + op)">
           <ComparisonBlock :symbol="op" minimal />
-<!--          <span>{{ $t(`blocks.compare.${op === '<' ? 'lt' : op === '>' ? 'gt' : op === '<=' ? 'lte' : op === '>=' ? 'gte' : 'neq'}`) }}</span>-->
         </div>
       </div>
 
@@ -143,7 +137,6 @@ watchEffect(() => {
         <div v-for="val in [true, false]" :key="String(val)"
              class="mobile-clickable-block" @click="onSelect(val ? 'true' : 'false')">
           <BooleanBlock :value="val" minimal />
-<!--          <span>{{ val ? $t('blocks.true') : $t('blocks.false') }}</span>-->
         </div>
         <div v-for="type in ['string', 'number', 'array', 'object', 'object_property']" 
              :key="type"
@@ -155,7 +148,6 @@ watchEffect(() => {
                          ObjectPropertyBlock" 
                      minimal
           />
-<!--          <span>{{ $t(`blocks.literal.${type}`) }}</span>-->
         </div>
       </div>
 
@@ -173,7 +165,6 @@ watchEffect(() => {
                            ContinueBlock" 
                        minimal
             />
-<!--            <span>{{ $t(`blocks.${type}.label`) }}</span>-->
           </div>
         </template>
       </div>
@@ -182,35 +173,28 @@ watchEffect(() => {
       <div v-if="activeCategory === 'actions'" class="mobile-section">
         <div v-if="isAccepted('print')" class="mobile-clickable-block" @click="onSelect('print')">
           <PrintBlock minimal />
-<!--          <span>{{ $t('blocks.print.label') }}</span>-->
         </div>
         <div v-if="isAccepted('array_push')" class="mobile-clickable-block" @click="onSelect('array_push')">
           <ArrayPushBlock minimal />
-<!--          <span>{{ $t('blocks.array_push.label') }}</span>-->
         </div>
         <div v-if="isAccepted('array_remove')" class="mobile-clickable-block" @click="onSelect('array_remove')">
           <ArrayRemoveBlock minimal />
-<!--          <span>{{ $t('blocks.array_remove.label') }}</span>-->
         </div>
         <div v-if="isAccepted('array_set_key')" class="mobile-clickable-block" @click="onSelect('array_set_key')">
           <ArraySetKeyBlock minimal />
-<!--          <span>{{ $t('blocks.array_set_key.label') }}</span>-->
         </div>
       </div>
 
       <!-- Fonctions -->
       <div v-if="activeCategory === 'functions'" class="mobile-section">
-        <div v-if="isAccepted('parameter')" class="mobile-clickable-block" @click="onSelect('parameter')">
+        <div v-if="isAccepted('function')" class="mobile-clickable-block" @click="onSelect('parameter')">
           <ParameterBlock minimal />
-<!--          <span>{{ $t('blocks.parameter.label_sidebar') }}</span>-->
         </div>
         <div v-if="isAccepted('function')" class="mobile-clickable-block" @click="onSelect('function')">
           <FunctionCallBlock minimal />
-<!--          <span>{{ $t('blocks.function.call') }}</span>-->
         </div>
         <div v-if="isAccepted('return')" class="mobile-clickable-block" @click="onSelect('return')">
           <ReturnBlock minimal />
-<!--          <span>{{ $t('blocks.return.label') }}</span>-->
         </div>
       </div>
     </div>

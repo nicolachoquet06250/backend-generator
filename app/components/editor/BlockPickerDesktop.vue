@@ -51,7 +51,7 @@ const isAccepted = (type: string) => {
     normalizedType = 'boolean';
   }
 
-  const expressionTypes = ['string', 'number', 'boolean', 'true', 'false', 'var', 'parameter', 'math-op', 'compare-op', 'equal', 'array', 'object', 'object_property', 'function', 'print'];
+  const expressionTypes = ['string', 'number', 'boolean', 'true', 'false', 'var', 'parameter', 'math-op', 'compare-op', 'equal', 'array', 'object', 'object_property', 'function', 'print', 'expression'];
   
   if (type.startsWith('math-')) normalizedType = 'math-op';
   if (type.startsWith('compare-')) normalizedType = 'compare-op';
@@ -78,7 +78,7 @@ const isAccepted = (type: string) => {
     </div>
 
     <!-- Mathématiques -->
-    <div class="picker-section" v-if="isAccepted('math-op')">
+    <div class="picker-section" v-if="['math-op', 'function'].map(isAccepted).includes(true)">
       <h3>{{ $t('sections.math') }}</h3>
       <div class="blocks-list">
         <div v-for="op in ['+', '-', '*', '/', '%']" :key="op" 
@@ -89,7 +89,7 @@ const isAccepted = (type: string) => {
     </div>
 
     <!-- Logique & Comparaison -->
-    <div class="picker-section" v-if="isAccepted('equal') || isAccepted('compare-op')">
+    <div class="picker-section" v-if="['equal', 'compare-op', 'function'].map(isAccepted).includes(true)">
       <h3>{{ $t('sections.logic') }}</h3>
       <div class="blocks-list">
         <div v-if="isAccepted('equal')" class="clickable-block" @click="onSelect('equal')">
@@ -103,7 +103,7 @@ const isAccepted = (type: string) => {
     </div>
 
     <!-- Littéraux & Objets -->
-    <div class="picker-section" v-if="isAccepted('expression')">
+    <div class="picker-section" v-if="['expression', 'function'].map(isAccepted).includes(true)">
       <h3>{{ $t('sections.literals') }}</h3>
       <div class="blocks-list literals">
         <div v-for="val in [true, false]" :key="String(val)"
@@ -125,7 +125,7 @@ const isAccepted = (type: string) => {
     </div>
 
     <!-- Contrôle de flux -->
-    <div class="picker-section">
+    <div class="picker-section" v-if="['if', 'elseif', 'else', 'while', 'for', 'foreach', 'break', 'continue'].map(type => isAccepted(type)).filter(t => t).length > 0">
       <h3>{{ $t('sections.control') }}</h3>
       <div class="blocks-list">
         <template v-for="type in ['if', 'elseif', 'else', 'while', 'for', 'foreach', 'break', 'continue']" :key="type">
@@ -146,7 +146,7 @@ const isAccepted = (type: string) => {
     </div>
 
     <!-- Actions -->
-    <div class="picker-section">
+    <div class="picker-section" v-if="['print', 'array_push', 'array_remove', 'array_set_key'].map(type => isAccepted(type)).filter(t => t).length > 0">
       <h3>{{ $t('sections.actions') }}</h3>
       <div class="blocks-list">
         <div v-if="isAccepted('print')" class="clickable-block" @click="onSelect('print')">
@@ -168,7 +168,7 @@ const isAccepted = (type: string) => {
     <div class="picker-section">
       <h3>{{ $t('sections.functions') }}</h3>
       <div class="blocks-list">
-        <div v-if="isAccepted('parameter')" class="clickable-block" @click="onSelect('parameter')">
+        <div v-if="isAccepted('function')" class="clickable-block" @click="onSelect('parameter')">
           <ParameterBlock minimal />
         </div>
         <div v-if="isAccepted('function')" class="clickable-block" @click="onSelect('function')">

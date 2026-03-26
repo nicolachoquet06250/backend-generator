@@ -83,6 +83,10 @@ const onBlockDragStart = (e: DragEvent, block: any) => {
 };
 
 const handleTouchStart = (e: TouchEvent, block: any) => {
+  const target = e.target as HTMLElement;
+  if (target && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(target.tagName)) {
+    return;
+  }
   if (activeFunctionId.value) {
     onTouchStart(e, { 
       existingBlockId: block.id, 
@@ -91,6 +95,13 @@ const handleTouchStart = (e: TouchEvent, block: any) => {
       sourceFunctionId: activeFunctionId.value,
       'application/x-block-type': block.type 
     });
+  }
+};
+
+const onStopPropagation = (e: MouseEvent | TouchEvent) => {
+  const target = e.target as HTMLElement;
+  if (target && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(target.tagName)) {
+    e.stopPropagation();
   }
 };
 </script>
@@ -122,7 +133,8 @@ const handleTouchStart = (e: TouchEvent, block: any) => {
          class="block-item"
          draggable="true"
          @dragstart.stop="onBlockDragStart($event, block)"
-         @touchstart.passive="handleTouchStart($event, block)"
+         @touchstart="handleTouchStart($event, block)"
+         @mousedown="onStopPropagation"
     >
       <component
         :is="getBlockComponent(block.type)" 

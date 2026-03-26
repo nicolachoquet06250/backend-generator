@@ -24,6 +24,13 @@ const onDragStart = (e: DragEvent) => {
     e.dataTransfer.effectAllowed = 'move';
   }
 };
+
+const onStopPropagation = (e: MouseEvent | TouchEvent) => {
+  const target = e.target as HTMLElement;
+  if (target && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(target.tagName)) {
+    e.stopPropagation();
+  }
+};
 </script>
 
 <template>
@@ -33,6 +40,8 @@ const onDragStart = (e: DragEvent) => {
     :style="{ backgroundColor: color || '#4C97FF' }"
     v-bind="draggable ? { draggable: true } : {}"
     @dragstart="onDragStart"
+    @mousedown="onStopPropagation"
+    @touchstart="onStopPropagation"
   >
     <div class="block-content">
       <span v-if="label" class="block-label">{{ label }}</span>

@@ -39,7 +39,18 @@ const onDragStart = (e: DragEvent, type: string) => {
 };
 
 const handleTouchStart = (e: TouchEvent, type: string) => {
+  const target = e.target as HTMLElement;
+  if (target && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(target.tagName)) {
+    return;
+  }
   onTouchStart(e, { blockType: type, 'text/plain': type, 'application/x-block-type': type });
+};
+
+const onStopPropagation = (e: MouseEvent | TouchEvent) => {
+  const target = e.target as HTMLElement;
+  if (target && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(target.tagName)) {
+    e.stopPropagation();
+  }
 };
 </script>
 
@@ -54,12 +65,14 @@ const handleTouchStart = (e: TouchEvent, type: string) => {
       <h3>{{ $t('sections.variables') }}</h3>
       <div class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'var')"
-           @touchstart.passive="handleTouchStart($event, 'var')">
+           @touchstart="handleTouchStart($event, 'var')"
+           @mousedown="onStopPropagation">
         <VarBlock minimal />
       </div>
       <div class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'set_var')"
-           @touchstart.passive="handleTouchStart($event, 'set_var')">
+           @touchstart="handleTouchStart($event, 'set_var')"
+           @mousedown="onStopPropagation">
         <SetVarBlock minimal />
       </div>
     </div>
@@ -70,7 +83,8 @@ const handleTouchStart = (e: TouchEvent, type: string) => {
       <div v-for="op in ['+', '-', '*', '/', '%']" :key="op" 
            class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'math-' + op)"
-           @touchstart.passive="handleTouchStart($event, 'math-' + op)">
+           @touchstart="handleTouchStart($event, 'math-' + op)"
+           @mousedown="onStopPropagation">
         <MathBlock :symbol="op" minimal />
       </div>
     </div>
@@ -80,13 +94,15 @@ const handleTouchStart = (e: TouchEvent, type: string) => {
       <h3>{{ $t('sections.logic') }}</h3>
       <div class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'equal')"
-           @touchstart.passive="handleTouchStart($event, 'equal')">
+           @touchstart="handleTouchStart($event, 'equal')"
+           @mousedown="onStopPropagation">
         <EqualBlock minimal />
       </div>
       <div v-for="op in ['<', '>', '<=', '>=', '!=']" :key="op"
            class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'compare-' + op)"
-           @touchstart.passive="handleTouchStart($event, 'compare-' + op)">
+           @touchstart="handleTouchStart($event, 'compare-' + op)"
+           @mousedown="onStopPropagation">
         <ComparisonBlock :symbol="op" minimal />
       </div>
     </div>
@@ -98,14 +114,16 @@ const handleTouchStart = (e: TouchEvent, type: string) => {
         <div v-for="val in [true, false]" :key="String(val)"
              class="draggable-wrapper" draggable="true" 
              @dragstart="onDragStart($event, val ? 'true' : 'false')"
-             @touchstart.passive="handleTouchStart($event, val ? 'true' : 'false')">
+             @touchstart="handleTouchStart($event, val ? 'true' : 'false')"
+             @mousedown="onStopPropagation">
           <BooleanBlock :value="val" minimal />
         </div>
         <div v-for="type in ['string', 'number', 'array', 'object', 'object_property']" 
              :key="type"
              class="draggable-wrapper" draggable="true" 
              @dragstart="onDragStart($event, type)"
-             @touchstart.passive="handleTouchStart($event, type)">
+             @touchstart="handleTouchStart($event, type)"
+             @mousedown="onStopPropagation">
           <component :is="type === 'string' ? StringBlock : 
                          type === 'number' ? NumberBlock :
                          type === 'array' ? ArrayBlock :
@@ -118,7 +136,8 @@ const handleTouchStart = (e: TouchEvent, type: string) => {
         <div class="multi-drop-helpers">
            <div class="draggable-wrapper multi" draggable="true" 
                 @dragstart="onDragStart($event, 'literal*3')"
-                @touchstart.passive="handleTouchStart($event, 'literal*3')">
+                @touchstart="handleTouchStart($event, 'literal*3')"
+                @mousedown="onStopPropagation">
              <div class="multi-icon">
                <div class="mini-block" v-for="i in 3" :key="i"/>
              </div>
@@ -134,7 +153,8 @@ const handleTouchStart = (e: TouchEvent, type: string) => {
            :key="type"
            class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, type)"
-           @touchstart.passive="handleTouchStart($event, type)">
+           @touchstart="handleTouchStart($event, type)"
+           @mousedown="onStopPropagation">
         <component :is="type === 'if' ? IfBlock : 
                        type === 'elseif' ? ElseIfBlock :
                        type === 'else' ? ElseBlock :
@@ -151,16 +171,28 @@ const handleTouchStart = (e: TouchEvent, type: string) => {
     <!-- Actions -->
     <div class="sidebar-section">
       <h3>{{ $t('sections.actions') }}</h3>
-      <div class="draggable-wrapper" draggable="true" @dragstart="onDragStart($event, 'print')">
+      <div class="draggable-wrapper" draggable="true" 
+           @dragstart="onDragStart($event, 'print')"
+           @touchstart="handleTouchStart($event, 'print')"
+           @mousedown="onStopPropagation">
         <PrintBlock minimal />
       </div>
-      <div class="draggable-wrapper" draggable="true" @dragstart="onDragStart($event, 'array_push')">
+      <div class="draggable-wrapper" draggable="true" 
+           @dragstart="onDragStart($event, 'array_push')"
+           @touchstart="handleTouchStart($event, 'array_push')"
+           @mousedown="onStopPropagation">
         <ArrayPushBlock minimal />
       </div>
-      <div class="draggable-wrapper" draggable="true" @dragstart="onDragStart($event, 'array_remove')">
+      <div class="draggable-wrapper" draggable="true" 
+           @dragstart="onDragStart($event, 'array_remove')"
+           @touchstart="handleTouchStart($event, 'array_remove')"
+           @mousedown="onStopPropagation">
         <ArrayRemoveBlock minimal />
       </div>
-      <div class="draggable-wrapper" draggable="true" @dragstart="onDragStart($event, 'array_set_key')">
+      <div class="draggable-wrapper" draggable="true" 
+           @dragstart="onDragStart($event, 'array_set_key')"
+           @touchstart="handleTouchStart($event, 'array_set_key')"
+           @mousedown="onStopPropagation">
         <ArraySetKeyBlock minimal />
       </div>
     </div>
@@ -168,13 +200,22 @@ const handleTouchStart = (e: TouchEvent, type: string) => {
     <!-- Fonctions -->
     <div class="sidebar-section">
       <h3>{{ $t('sections.functions') }}</h3>
-      <div class="draggable-wrapper" draggable="true" @dragstart="onDragStart($event, 'parameter')">
+      <div class="draggable-wrapper" draggable="true" 
+           @dragstart="onDragStart($event, 'parameter')"
+           @touchstart="handleTouchStart($event, 'parameter')"
+           @mousedown="onStopPropagation">
         <ParameterBlock minimal />
       </div>
-      <div class="draggable-wrapper" draggable="true" @dragstart="onDragStart($event, 'function')">
+      <div class="draggable-wrapper" draggable="true" 
+           @dragstart="onDragStart($event, 'function')"
+           @touchstart="handleTouchStart($event, 'function')"
+           @mousedown="onStopPropagation">
         <FunctionCallBlock minimal />
       </div>
-      <div class="draggable-wrapper" draggable="true" @dragstart="onDragStart($event, 'return')">
+      <div class="draggable-wrapper" draggable="true" 
+           @dragstart="onDragStart($event, 'return')"
+           @touchstart="handleTouchStart($event, 'return')"
+           @mousedown="onStopPropagation">
         <ReturnBlock minimal />
       </div>
     </div>

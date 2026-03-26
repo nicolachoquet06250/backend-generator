@@ -448,13 +448,15 @@ const onMobileDragLeave = () => {
     @dragover="onDragOver"
     @dragleave="onDragLeave"
     @drop="onDrop"
-    :draggable="!!block"
-    @dragstart="onDragStart"
+    v-bind="!!block ? { draggable: true } : {}"
+    @dragstart.stop="onDragStart"
     @mobile-dragover="onMobileDragOver"
     @mobile-dragleave="onMobileDragLeave"
     @mobile-drop="onMobileDrop"
     @click.stop="onZoneClick"
     @pointerdown.stop
+    @mousedown.stop
+    @touchstart.stop
     :style="{ cursor: (!block && !isMobile) ? 'default' : 'pointer' }"
   >
     <slot v-if="block" />
