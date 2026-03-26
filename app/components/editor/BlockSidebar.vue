@@ -25,26 +25,41 @@ import PrintBlock from '../blocks/PrintBlock.vue';
 import SetVarBlock from '../blocks/SetVarBlock.vue';
 import EqualBlock from '../blocks/EqualBlock.vue';
 import ComparisonBlock from '../blocks/ComparisonBlock.vue';
+import { useMobileDragDrop } from '~/composables/useMobileDragDrop';
+
+const { onTouchStart, onTouchMove, onTouchEnd } = useMobileDragDrop();
 
 const onDragStart = (e: DragEvent, type: string) => {
   if (e.dataTransfer) {
     e.dataTransfer.setData('blockType', type);
-    // On ajoute aussi le type dans les types pour y accéder pendant dragover
     e.dataTransfer.setData('text/plain', type);
+    e.dataTransfer.setData('application/x-block-type', type);
     e.dataTransfer.effectAllowed = 'copy';
   }
+};
+
+const handleTouchStart = (e: TouchEvent, type: string) => {
+  onTouchStart(e, { blockType: type, 'text/plain': type, 'application/x-block-type': type });
 };
 </script>
 
 <template>
-  <div class="block-sidebar">
+  <div class="block-sidebar" 
+       @touchmove="onTouchMove" 
+       @touchend="onTouchEnd"
+       @touchcancel="onTouchEnd"
+  >
     <!-- Variables -->
     <div class="sidebar-section">
       <h3>{{ $t('sections.variables') }}</h3>
-      <div class="draggable-wrapper" draggable="true" @dragstart="onDragStart($event, 'var')">
+      <div class="draggable-wrapper" draggable="true" 
+           @dragstart="onDragStart($event, 'var')"
+           @touchstart.passive="handleTouchStart($event, 'var')">
         <VarBlock minimal />
       </div>
-      <div class="draggable-wrapper" draggable="true" @dragstart="onDragStart($event, 'set_var')">
+      <div class="draggable-wrapper" draggable="true" 
+           @dragstart="onDragStart($event, 'set_var')"
+           @touchstart.passive="handleTouchStart($event, 'set_var')">
         <SetVarBlock minimal />
       </div>
     </div>
@@ -53,7 +68,9 @@ const onDragStart = (e: DragEvent, type: string) => {
     <div class="sidebar-section">
       <h3>{{ $t('sections.math') }}</h3>
       <div v-for="op in ['+', '-', '*', '/', '%']" :key="op" 
-           class="draggable-wrapper" draggable="true" @dragstart="onDragStart($event, 'math-' + op)">
+           class="draggable-wrapper" draggable="true" 
+           @dragstart="onDragStart($event, 'math-' + op)"
+           @touchstart.passive="handleTouchStart($event, 'math-' + op)">
         <MathBlock :symbol="op" minimal />
       </div>
     </div>
@@ -61,11 +78,15 @@ const onDragStart = (e: DragEvent, type: string) => {
     <!-- Logique & Comparaison -->
     <div class="sidebar-section">
       <h3>{{ $t('sections.logic') }}</h3>
-      <div class="draggable-wrapper" draggable="true" @dragstart="onDragStart($event, 'equal')">
+      <div class="draggable-wrapper" draggable="true" 
+           @dragstart="onDragStart($event, 'equal')"
+           @touchstart.passive="handleTouchStart($event, 'equal')">
         <EqualBlock minimal />
       </div>
       <div v-for="op in ['<', '>', '<=', '>=', '!=']" :key="op"
-           class="draggable-wrapper" draggable="true" @dragstart="onDragStart($event, 'compare-' + op)">
+           class="draggable-wrapper" draggable="true" 
+           @dragstart="onDragStart($event, 'compare-' + op)"
+           @touchstart.passive="handleTouchStart($event, 'compare-' + op)">
         <ComparisonBlock :symbol="op" minimal />
       </div>
     </div>
@@ -75,12 +96,16 @@ const onDragStart = (e: DragEvent, type: string) => {
       <h3>{{ $t('sections.literals') }}</h3>
       <div class="literals-grid">
         <div v-for="val in [true, false]" :key="String(val)"
-             class="draggable-wrapper" draggable="true" @dragstart="onDragStart($event, val ? 'true' : 'false')">
+             class="draggable-wrapper" draggable="true" 
+             @dragstart="onDragStart($event, val ? 'true' : 'false')"
+             @touchstart.passive="handleTouchStart($event, val ? 'true' : 'false')">
           <BooleanBlock :value="val" minimal />
         </div>
         <div v-for="type in ['string', 'number', 'array', 'object', 'object_property']" 
              :key="type"
-             class="draggable-wrapper" draggable="true" @dragstart="onDragStart($event, type)">
+             class="draggable-wrapper" draggable="true" 
+             @dragstart="onDragStart($event, type)"
+             @touchstart.passive="handleTouchStart($event, type)">
           <component :is="type === 'string' ? StringBlock : 
                          type === 'number' ? NumberBlock :
                          type === 'array' ? ArrayBlock :
@@ -91,7 +116,9 @@ const onDragStart = (e: DragEvent, type: string) => {
         </div>
         <!-- Multi-drop helpers -->
         <div class="multi-drop-helpers">
-           <div class="draggable-wrapper multi" draggable="true" @dragstart="onDragStart($event, 'literal*3')">
+           <div class="draggable-wrapper multi" draggable="true" 
+                @dragstart="onDragStart($event, 'literal*3')"
+                @touchstart.passive="handleTouchStart($event, 'literal*3')">
              <div class="multi-icon">
                <div class="mini-block"></div>
                <div class="mini-block"></div>
@@ -108,7 +135,9 @@ const onDragStart = (e: DragEvent, type: string) => {
       <h3>{{ $t('sections.control') }}</h3>
       <div v-for="type in ['if', 'elseif', 'else', 'while', 'for', 'foreach', 'break', 'continue']" 
            :key="type"
-           class="draggable-wrapper" draggable="true" @dragstart="onDragStart($event, type)">
+           class="draggable-wrapper" draggable="true" 
+           @dragstart="onDragStart($event, type)"
+           @touchstart.passive="handleTouchStart($event, type)">
         <component :is="type === 'if' ? IfBlock : 
                        type === 'elseif' ? ElseIfBlock :
                        type === 'else' ? ElseBlock :
@@ -163,7 +192,7 @@ const onDragStart = (e: DragEvent, type: string) => {
   border-right: 1px solid var(--sidebar-border);
   overflow-y: auto;
   padding: 20px;
-  height: calc(100% - 40px);
+  height: 100%;
   box-shadow: 2px 0 5px rgba(0,0,0,0.05);
 }
 

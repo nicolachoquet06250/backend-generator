@@ -8,7 +8,8 @@
     "control": "Contrôle de flux",
     "actions": "Actions",
     "functions": "Fonctions",
-    "structures": "Structures de données"
+    "structures": "Structures de données",
+    "blocks": "Blocs"
   },
   "workspace": {
     "add_function": "Nouvelle fonction",
@@ -138,6 +139,7 @@
     },
     "parameter": {
       "label": "paramètre",
+      "label_sidebar": "paramètre",
       "label_choice": "choisir param",
       "placeholder_name": "nom",
       "select_param": "Choisir paramètre"

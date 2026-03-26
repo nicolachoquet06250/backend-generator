@@ -26,7 +26,7 @@ const onDragStart = (e: DragEvent) => {
 <template>
   <div 
     class="block-container" 
-    :class="{ minimal }"
+    :class="{ minimal, 'is-full-width': $attrs.class && ($attrs.class as string).includes('full-width') }"
     :style="{ backgroundColor: color || '#4C97FF' }"
     draggable="true"
     @dragstart="onDragStart"
@@ -59,7 +59,7 @@ const onDragStart = (e: DragEvent) => {
 
 <style scoped>
 .block-container {
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
   padding: 8px 12px;
   border-radius: 8px;
@@ -71,10 +71,17 @@ const onDragStart = (e: DragEvent) => {
   cursor: grab;
   margin: 4px;
   min-width: 60px;
+  width: auto;
   max-width: 100%;
   box-sizing: border-box;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.3);
   transition: transform 0.1s, box-shadow 0.1s;
+  overflow-x: auto;
+  height: max-content;
+}
+
+.block-container.is-full-width {
+  width: calc(100% - 8px);
 }
 
 .block-container:hover {
@@ -88,10 +95,11 @@ const onDragStart = (e: DragEvent) => {
 }
 
 .block-container.minimal {
-  padding: 6px 10px;
-  margin: 2px;
-  font-size: 12px;
-  border-radius: 6px;
+  padding: 4px 8px;
+  margin: 0;
+  font-size: 11px;
+  border-radius: 4px;
+  min-width: auto;
 }
 
 .block-content {
@@ -100,6 +108,7 @@ const onDragStart = (e: DragEvent) => {
   gap: 8px;
   overflow-x: auto;
   padding-bottom: 2px;
+  min-height: 24px;
 }
 
 .block-content::-webkit-scrollbar {
@@ -120,6 +129,7 @@ const onDragStart = (e: DragEvent) => {
   text-shadow: 0 1px 1px rgba(0,0,0,0.2);
 }
 
+
 .block-bottom-container {
   display: flex;
   margin-top: 4px;
@@ -136,6 +146,7 @@ const onDragStart = (e: DragEvent) => {
   border-radius: 0 0 8px 8px;
   min-height: 24px;
   width: 100%;
+  max-width: calc(100% - 12px);
   box-shadow: inset 2px 2px 4px rgba(0,0,0,0.1);
   border-left: 4px solid rgba(255,255,255,0.2);
 }

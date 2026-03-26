@@ -8,7 +8,8 @@
     "control": "Control flow",
     "actions": "Actions",
     "functions": "Functions",
-    "structures": "Data Structures"
+    "structures": "Data Structures",
+    "blocks": "Blocks"
   },
   "workspace": {
     "add_function": "New function",
@@ -138,6 +139,7 @@
     },
     "parameter": {
       "label": "parameter",
+      "label_sidebar": "parameter",
       "label_choice": "choose param",
       "placeholder_name": "name",
       "select_param": "Select parameter"

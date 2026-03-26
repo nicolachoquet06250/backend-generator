@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import RecursiveBlockRenderer from './RecursiveBlockRenderer.vue';
 import AppModal from '../common/AppModal.vue';
+import { useMobileDragDrop } from '~/composables/useMobileDragDrop';
 
 const { t } = useI18n();
 const { functions, activeFunctionId, addFunction, removeFunction, addBlockToFunction, removeBlockFromFunction, getBlockById } = useFunctions();
+const { onTouchMove, onTouchEnd } = useMobileDragDrop();
 
 const showCreateModal = ref(false);
 const newFunctionName = ref('');
@@ -61,7 +63,8 @@ const onDrop = (e: DragEvent) => {
 const onDragOver = (e: DragEvent) => {
   e.preventDefault();
   if (e.dataTransfer) {
-    const isExisting = e.dataTransfer.types.includes('existingblockid');
+    const types = Array.from(e.dataTransfer.types);
+    const isExisting = types.some(t => t.toLowerCase() === 'existingblockid');
     e.dataTransfer.dropEffect = isExisting ? 'move' : 'copy';
   }
 };
@@ -69,6 +72,7 @@ const onDragOver = (e: DragEvent) => {
 const onBlockDragStart = (e: DragEvent, blockId: string) => {
   if (e.dataTransfer && activeFunctionId.value) {
     e.dataTransfer.setData('existingBlockId', blockId);
+    e.dataTransfer.setData('text/plain', blockId);
     e.dataTransfer.setData('sourceFunctionId', activeFunctionId.value);
     e.dataTransfer.effectAllowed = 'move';
   }
@@ -90,6 +94,32 @@ const onTrashDrop = (e: DragEvent) => {
   }
   isDraggingOverTrash.value = false;
 };
+
+const onMobileDrop = (e: any) => {
+  const dataTransfer = e.detail.dataTransfer;
+  onDrop({ 
+    dataTransfer,
+    preventDefault: () => {},
+    stopPropagation: () => {}
+  } as any);
+};
+
+const onMobileTrashDragOver = () => {
+  isDraggingOverTrash.value = true;
+};
+
+const onMobileTrashDrop = (e: any) => {
+  const dataTransfer = e.detail.dataTransfer;
+  const blockId = dataTransfer.getData('existingBlockId');
+  if (blockId && activeFunctionId.value) {
+    removeBlockFromFunction(activeFunctionId.value, blockId);
+  }
+  isDraggingOverTrash.value = false;
+};
+
+const onMobileTrashDragLeave = () => {
+  isDraggingOverTrash.value = false;
+};
 </script>
 
 <template>
@@ -102,15 +132,19 @@ const onTrashDrop = (e: DragEvent) => {
            @click="activeFunctionId = func.id"
       >
         {{ func.name }}
-        <span class="close-tab" @click.stop="removeFunction(func.id)">×</span>
+        <span v-if="func.name !== 'main'" class="close-tab" @click.stop="removeFunction(func.id)">×</span>
       </div>
-      <button class="add-tab" @click="createFunction">+</button>
     </div>
 
     <div class="workspace-body">
       <div class="drop-zone" 
            @dragover="onDragOver" 
            @drop="onDrop"
+           @mobile-dragover="onDragOver({ preventDefault: () => {} } as any)"
+           @mobile-drop="onMobileDrop"
+           @touchmove="onTouchMove"
+           @touchend="onTouchEnd"
+           @touchcancel="onTouchEnd"
       >
         <RecursiveBlockRenderer v-if="activeFunction" :blocks="activeFunction.blocks" is-root />
       </div>
@@ -121,9 +155,17 @@ const onTrashDrop = (e: DragEvent) => {
         @dragover="onTrashDragOver"
         @dragleave="onTrashDragLeave"
         @drop="onTrashDrop"
+        @mobile-dragover="onMobileTrashDragOver"
+        @mobile-dragleave="onMobileTrashDragLeave"
+        @mobile-drop="onMobileTrashDrop"
+        @dragleave.passive="onTrashDragLeave"
       >
         <div class="trash-icon">🗑️</div>
       </div>
+
+      <button class="add-tab-floating" @click="createFunction">
+        <span>+</span>
+      </button>
     </div>
 
     <AppModal
@@ -153,9 +195,14 @@ const onTrashDrop = (e: DragEvent) => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 60px);
-  max-width: calc(100vw - 361px);
+  height: 100%;
   background: var(--workspace-bg);
+}
+
+@media (max-width: 768px) {
+  .workspace {
+    width: 100%;
+  }
 }
 
 .tabs {
@@ -163,6 +210,12 @@ const onTrashDrop = (e: DragEvent) => {
   background: var(--tabs-bg);
   padding: 8px 8px 0 8px;
   gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+}
+
+.tabs::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
 }
 
 .tab {
@@ -180,6 +233,7 @@ const onTrashDrop = (e: DragEvent) => {
   border-bottom: none;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 14px;
+  white-space: nowrap;
 }
 
 .tab:hover {
@@ -205,20 +259,41 @@ const onTrashDrop = (e: DragEvent) => {
   color: #dc3545;
 }
 
-.add-tab {
-  border: none;
+.add-tab-floating {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
   background: var(--header-bg);
   color: white;
-  font-size: 18px;
-  padding: 0 12px;
-  margin-bottom: 4px;
-  border-radius: 4px;
+  border: none;
+  border-radius: 50%;
   cursor: pointer;
-  transition: opacity 0.2s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  z-index: 10001;
+  transition: all 0.2s ease;
 }
 
-.add-tab:hover {
-  opacity: 0.9;
+.add-tab-floating:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+}
+
+.add-tab-floating:active {
+  transform: scale(0.95);
+}
+
+@media (min-width: 769px) {
+  .add-tab-floating {
+    position: absolute;
+    bottom: 32px;
+    right: 140px;
+  }
 }
 
 .workspace-body {
@@ -230,56 +305,83 @@ const onTrashDrop = (e: DragEvent) => {
 
 .drop-zone {
   flex: 1;
-  padding: 20px;
+  padding: 0;
   overflow: auto;
   display: flex;
   flex-direction: column;
+}
 
-  &:has(.is-root) {
-    padding: 0;
-  }
+.drop-zone:has(.is-root) {
+  padding-bottom: 0;
 }
 
 .trash-bin {
-  position: absolute;
-  bottom: -20px;
-  right: 40px;
-  width: 100px;
-  height: 100px;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 80px;
   background: var(--modal-bg);
-  border: 2px dashed #ff4c4c;
+  border: 3px dashed #ff4c4c;
   border-radius: 50%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   color: #ff4c4c;
   pointer-events: auto;
-  z-index: 10;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 10000;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 768px) {
+  .trash-bin {
+    left: 20px;
+    transform: none;
+    width: 60px;
+    height: 60px;
+  }
 }
 
 .trash-bin:hover, .trash-bin.active {
   transform: scale(1.1);
-  box-shadow: 0 8px 20px rgba(220, 53, 69, 0.2);
+}
+
+@media (max-width: 768px) {
+  .trash-bin:hover, .trash-bin.active {
+    transform: scale(1.1);
+  }
+}
+
+@media (min-width: 769px) {
+  .trash-bin:hover, .trash-bin.active {
+    transform: scale(1.1);
+  }
 }
 
 .trash-bin.active {
-  background: rgba(220, 53, 69, 0.1);
+  background: rgba(220, 53, 69, 0.15);
   border-style: solid;
   border-color: #dc3545;
+}
+
+@media (min-width: 769px) {
+  .trash-bin {
+    position: absolute;
+    bottom: 20px;
+    right: 40px;
+    left: auto;
+    transform: none;
+    width: 80px;
+    height: 80px;
+  }
 }
 
 .trash-icon {
   font-size: 2em;
   user-select: none;
-}
-
-.trash-text {
-  font-size: 0.8em;
-  font-weight: 600;
-  margin-top: 4px;
 }
 
 .prompt-content {

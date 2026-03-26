@@ -5,6 +5,7 @@ import StructBlock from './components/blocks/StructBlock.vue';
 
 const { locale, locales, setLocale } = useI18n();
 const { structures, addStructure, removeStructure } = useDataStructures();
+// const { isMobile } = useDevice();
 
 const showStructures = ref(false);
 </script>
@@ -33,7 +34,7 @@ const showStructures = ref(false);
     </header>
 
     <main class="editor-body">
-      <BlockSidebar />
+      <BlockSidebar class="desktop-only" />
       <FunctionWorkspace />
       
       <!-- Overlay for Structures -->
@@ -54,9 +55,11 @@ const showStructures = ref(false);
                 @remove="removeStructure(struct.id)"
               />
             </div>
-            <button class="add-btn" @click="addStructure('NewStruct')">
-              + {{ $t('blocks.struct.add') }}
-            </button>
+            <div class="panel-footer">
+              <button class="add-btn" @click="addStructure('NewStruct')">
+                + {{ $t('blocks.struct.add') }}
+              </button>
+            </div>
           </div>
         </div>
       </Transition>
@@ -65,6 +68,15 @@ const showStructures = ref(false);
 </template>
 
 <style>
+* {
+  box-sizing: border-box;
+}
+
+[draggable] {
+  user-select: none;
+  -webkit-user-drag: element;
+}
+
 :root {
   --bg-color: #ffffff;
   --text-color: #333333;
@@ -202,7 +214,7 @@ body {
 
 /* Structures Overlay */
 .structures-overlay {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
@@ -211,39 +223,78 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 100;
+  z-index: 20000;
 }
 
 .structures-panel {
   background: var(--modal-bg);
-  width: 80%;
-  max-width: 800px;
-  max-height: 80vh;
-  padding: 20px;
-  border-radius: 8px;
+  width: 90%;
+  max-width: 1000px;
+  max-height: 90vh;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--sidebar-border);
+  background: var(--sidebar-bg);
+  border-radius: 12px 12px 0 0;
 }
 
-.panel-header h3 { margin: 0; }
-.panel-header button { 
-  background: none; border: none; font-size: 24px; cursor: pointer; color: inherit;
+.panel-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-color);
+  letter-spacing: -0.01em;
+}
+
+.panel-header button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--sidebar-section-bg);
+  border: 1px solid var(--sidebar-section-border);
+  border-radius: 8px;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--sidebar-text);
+  line-height: 1;
+  transition: all 0.2s;
+}
+
+.panel-header button:hover {
+  background: #ff4c4c;
+  color: white;
+  border-color: #ff4c4c;
 }
 
 .structs-list {
+  padding: 24px;
   flex: 1;
   overflow-y: auto;
+  align-items: stretch;
+
+  > .block-container {
+    margin-bottom: 16px;
+  }
+}
+
+.panel-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--sidebar-border);
+  background: var(--sidebar-bg);
   display: flex;
-  flex-direction: column;
-  gap: 15px;
-  margin-bottom: 20px;
+  justify-content: flex-end;
 }
 
 .add-btn {
@@ -255,6 +306,36 @@ body {
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .structures-panel {
+    width: 100%;
+    height: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .panel-header {
+    padding: 12px 16px;
+    border-radius: 0;
+  }
+
+  .structs-list {
+    padding: 16px;
+  }
+
+  .panel-footer {
+    padding: 12px 16px;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .editor-body {
+    flex-direction: column;
+  }
 }
 
 .fade-enter-active, .fade-leave-active {

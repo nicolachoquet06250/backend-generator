@@ -8,6 +8,10 @@ const props = defineProps<{
   isStackZone?: boolean;
 }>();
 
+import BlockPickerModal from '../editor/BlockPickerModal.vue';
+
+const showPicker = ref(false);
+
 const { functions, activeFunctionId, addBlockToFunction, removeBlockFromFunction, getBlockById } = useFunctions();
 
 const findVarDeclaration = (blocks: any[], name: string): any => {
@@ -29,6 +33,7 @@ const findVarDeclaration = (blocks: any[], name: string): any => {
   return null;
 };
 
+const { isMobile } = useDevice();
 const inLoop = inject('inLoop', ref(false));
 const isDraggingOver = ref(false);
 
@@ -61,8 +66,8 @@ const isAccepted = (type: string) => {
   if (type === 'literal') {
     if (isArrayElement) return true;
     if (parentBlock && (parentBlock.type === 'var' || parentBlock.type === 'set_var') && props.slotName === 'value') return true;
-    if (expandedAccepted.includes('expression')) return true;
-    return false;
+    return expandedAccepted.includes('expression');
+
   }
 
   if (isArrayElement) {
@@ -134,11 +139,9 @@ const isAccepted = (type: string) => {
     }
   }
 
-  const result = expandedAccepted.includes(normalizedType) || 
-         (expandedAccepted.includes('math-op') && normalizedType.startsWith('math-')) ||
-         (expandedAccepted.includes('compare-op') && normalizedType.startsWith('compare-'));
-  
-  return result;
+  return expandedAccepted.includes(normalizedType) ||
+      (expandedAccepted.includes('math-op') && normalizedType.startsWith('math-')) ||
+      (expandedAccepted.includes('compare-op') && normalizedType.startsWith('compare-'));
 };
 
 const onDrop = (e: DragEvent) => {
@@ -336,22 +339,10 @@ const onDragOver = (e: DragEvent) => {
   e.stopPropagation();
   
   if (e.dataTransfer) {
-    const isExisting = e.dataTransfer.types.includes('existingblockid');
+    // Sur certains navigateurs mobiles, e.dataTransfer.types est un DOMStringList et non un Array
+    const types = Array.from(e.dataTransfer.types);
+    const isExisting = types.some(t => t.toLowerCase() === 'existingblockid');
     e.dataTransfer.dropEffect = isExisting ? 'move' : 'copy';
-    
-    // Tentative de récupération du type pendant le dragover pour le feedback visuel
-    // Note: getData() ne fonctionne souvent pas pendant le dragover pour des raisons de sécurité
-    // Sauf si on utilise des types MIME spécifiques ou si on est sur le même élément.
-    const type = e.dataTransfer.getData('blockType') || e.dataTransfer.getData('text/plain');
-    
-    let detectedType = type;
-    if (detectedType) {
-      if (!isAccepted(detectedType)) {
-        e.dataTransfer.dropEffect = 'none';
-        isDraggingOver.value = false;
-        return;
-      }
-    }
   }
   
   isDraggingOver.value = true;
@@ -371,6 +362,83 @@ const onDragStart = (e: DragEvent) => {
     e.dataTransfer.effectAllowed = 'move';
   }
 };
+
+const handlePickerSelect = (type: string) => {
+  if (!activeFunctionId.value) return;
+  
+  // Logic almost identical to onDrop but simplified for new blocks only
+  let initialConfig: any = {};
+  
+  // Adapt if it's a math or compare op
+  let blockType = type;
+  if (type.startsWith('math-')) {
+    blockType = 'math';
+    initialConfig = { symbol: type.split('-')[1] };
+  } else if (type.startsWith('compare-')) {
+    blockType = 'comparison';
+    initialConfig = { symbol: type.split('-')[1] };
+  } else if (type === 'equal') {
+    blockType = 'equal';
+    initialConfig = { symbol: '==' };
+  } else if (type === 'true' || type === 'false') {
+    blockType = 'boolean';
+    initialConfig = { value: type === 'true' };
+  }
+
+  // Handle special case for array elements if it has an elementType
+  const parentBlock = props.parentBlockId ? getBlockById(activeFunctionId.value, props.parentBlockId) : null;
+  if (parentBlock && parentBlock.type === 'array' && parentBlock.config?.elementType) {
+    const targetKind = typeof parentBlock.config.elementType === 'string' ? 
+                 parentBlock.config.elementType : parentBlock.config.elementType.kind;
+    const targetStructId = typeof parentBlock.config.elementType === 'object' ? 
+                 parentBlock.config.elementType.structId : null;
+    
+    if (targetKind !== 'any') {
+      if (blockType === 'string' && targetKind === 'string') initialConfig = { ...initialConfig, value: '' };
+      if (blockType === 'number' && targetKind === 'number') initialConfig = { ...initialConfig, value: 0 };
+      if (blockType === 'boolean' && targetKind === 'boolean') initialConfig = { ...initialConfig, value: true };
+      if (blockType === 'object' && targetKind === 'object' && targetStructId) {
+        initialConfig = { ...initialConfig, structId: targetStructId };
+      }
+    }
+  }
+
+  addBlockToFunction(activeFunctionId.value, blockType, props.parentBlockId, props.slotName, undefined, props.afterBlockId, initialConfig);
+};
+
+const onZoneClick = () => {
+  if (!props.block && isMobile.value) {
+    showPicker.value = true;
+  }
+};
+
+const onMobileDragOver = (e: any) => {
+  const dataTransfer = e.detail.dataTransfer;
+  const blockType = dataTransfer.getData('blockType');
+  const existingBlockId = dataTransfer.getData('existingBlockId');
+  
+  if (blockType && isAccepted(blockType)) {
+    isDraggingOver.value = true;
+  } else if (existingBlockId) {
+    isDraggingOver.value = true;
+  }
+};
+
+const onMobileDrop = (e: any) => {
+  isDraggingOver.value = false;
+  const dataTransfer = e.detail.dataTransfer;
+  // On simule un DragEvent avec les fonctions preventDefault/stopPropagation
+  // pour éviter les erreurs d'exécution dans onDrop
+  onDrop({ 
+    dataTransfer,
+    preventDefault: () => {},
+    stopPropagation: () => {}
+  } as any);
+};
+
+const onMobileDragLeave = () => {
+  isDraggingOver.value = false;
+};
 </script>
 
 <template>
@@ -382,9 +450,22 @@ const onDragStart = (e: DragEvent) => {
     @drop="onDrop"
     :draggable="!!block"
     @dragstart="onDragStart"
+    @mobile-dragover="onMobileDragOver"
+    @mobile-dragleave="onMobileDragLeave"
+    @mobile-drop="onMobileDrop"
+    @click.stop="onZoneClick"
+    @pointerdown.stop
+    :style="{ cursor: (!block && !isMobile) ? 'default' : 'pointer' }"
   >
     <slot v-if="block" />
     <span v-else class="placeholder">?</span>
+
+    <BlockPickerModal 
+      :show="showPicker" 
+      :accepted-types="acceptedBlockTypes"
+      @close="showPicker = false"
+      @select="handlePickerSelect"
+    />
   </div>
 </template>
 
@@ -402,14 +483,34 @@ const onDragStart = (e: DragEvent) => {
   transition: all 0.2s ease;
   margin: 2px;
   box-sizing: border-box;
+  touch-action: none;
+}
+
+@media (max-width: 768px) {
+  .block-drop-zone {
+    min-height: 56px; /* Increased from 48px */
+    min-width: 72px;  /* Increased from 60px */
+    margin: 8px 4px;  /* Slightly more spacing */
+    border-width: 3px; /* More visible border */
+  }
 }
 
 .block-drop-zone.is-stack-zone {
-  min-height: 12px;
+  min-height: 8px;
   margin: 0;
-  border-radius: 3px;
+  width: 100%;
+  border-radius: 0;
   background: transparent;
-  border: 1px dashed rgba(var(--text-color-rgb, 255, 255, 255), 0.15);
+  border: 1px dashed rgba(var(--text-color-rgb, 255, 255, 255), 0.1);
+  border-left: none;
+  border-right: none;
+}
+
+@media (max-width: 768px) {
+  .block-drop-zone.is-stack-zone {
+    min-height: 16px;
+    margin: 0;
+  }
 }
 
 .block-drop-zone.is-stack-zone:hover, .block-drop-zone.is-stack-zone.is-dragging-over {

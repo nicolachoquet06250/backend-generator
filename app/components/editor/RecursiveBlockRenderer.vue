@@ -27,6 +27,7 @@ import ArrayPushBlock from '../blocks/ArrayPushBlock.vue';
 import ArrayRemoveBlock from '../blocks/ArrayRemoveBlock.vue';
 import ArraySetKeyBlock from '../blocks/ArraySetKeyBlock.vue';
 import BlockDropZone from '../blocks/BlockDropZone.vue';
+import { useMobileDragDrop } from '~/composables/useMobileDragDrop';
 
 const inLoop = inject('inLoop', ref(false));
 
@@ -37,6 +38,7 @@ const props = defineProps<{
 }>();
 
 const { activeFunctionId, addBlockToFunction, getBlockById, removeBlockFromFunction } = useFunctions();
+const { onTouchStart, onTouchMove, onTouchEnd } = useMobileDragDrop();
 
 const getBlockComponent = (type: string) => {
   if (type === 'start') return StartBlock;
@@ -71,17 +73,34 @@ const getBlockComponent = (type: string) => {
 
 const onBlockDragStart = (e: DragEvent, block: any) => {
   if (e.dataTransfer && activeFunctionId.value) {
-    console.log('Drag start', block.id, block.type);
     e.dataTransfer.setData('existingBlockId', block.id);
     e.dataTransfer.setData('blockType', block.type);
+    e.dataTransfer.setData('text/plain', block.type);
     e.dataTransfer.setData('sourceFunctionId', activeFunctionId.value);
+    e.dataTransfer.setData('application/x-block-type', block.type);
     e.dataTransfer.effectAllowed = 'move';
+  }
+};
+
+const handleTouchStart = (e: TouchEvent, block: any) => {
+  if (activeFunctionId.value) {
+    onTouchStart(e, { 
+      existingBlockId: block.id, 
+      blockType: block.type, 
+      'text/plain': block.type, 
+      sourceFunctionId: activeFunctionId.value,
+      'application/x-block-type': block.type 
+    });
   }
 };
 </script>
 
 <template>
-  <div class="blocks-stack" :class="{ 'is-root': isRoot }">
+  <div class="blocks-stack" :class="{ 'is-root': isRoot }" 
+       @touchmove="onTouchMove" 
+       @touchend="onTouchEnd"
+       @touchcancel="onTouchEnd"
+  >
     <div v-if="isRoot" class="block-item">
       <StartBlock />
       <BlockDropZone 
@@ -103,8 +122,9 @@ const onBlockDragStart = (e: DragEvent, block: any) => {
          class="block-item"
          draggable="true"
          @dragstart.stop="onBlockDragStart($event, block)"
+         @touchstart.passive="handleTouchStart($event, block)"
     >
-      <component 
+      <component
         :is="getBlockComponent(block.type)" 
         v-bind="block.type.startsWith('math-') || block.type.startsWith('compare-') ? 
           { symbol: block.type.split('-')[1], blockId: block.id, config: block.config, ...block.config.slots } : 
@@ -157,17 +177,23 @@ const onBlockDragStart = (e: DragEvent, block: any) => {
 }
 
 .blocks-stack.is-root {
-  min-width: calc(100% - 42px);
-  min-height: 200px;
-  height: 100vh;
+  min-width: 100%;
+  min-height: 100%;
   background: var(--bg-color);
   background-image: 
     radial-gradient(var(--sidebar-border) 1px, transparent 1px);
   background-size: 20px 20px;
   padding: 20px;
   margin: 0;
-  box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
-  border: 1px solid var(--sidebar-border);
+  box-shadow: none;
+  border: none;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .blocks-stack.is-root {
+    padding: 10px;
+  }
 }
 
 .block-item {

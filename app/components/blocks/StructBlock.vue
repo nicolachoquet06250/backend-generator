@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import BaseBlock from './BaseBlock.vue';
-import type { DataStructure, DataStructureField } from '~/composables/useDataStructures';
+import type { DataStructureField } from '~/composables/useDataStructures';
 import TypeSelector from './TypeSelector.vue';
 
 const props = defineProps<{
@@ -26,7 +26,7 @@ const onInput = (e: Event) => {
 </script>
 
 <template>
-  <BaseBlock color="#FF4500" :label="$t('blocks.struct.label')">
+  <BaseBlock color="#FF4500" :label="$t('blocks.struct.label')" class="full-width">
     <div class="struct-header">
       <input 
         class="block-input" 
@@ -34,7 +34,6 @@ const onInput = (e: Event) => {
         @input="onInput"
         :placeholder="$t('blocks.struct.placeholder_name')" 
       />
-      <button class="remove-btn" @click="$emit('remove')">×</button>
     </div>
 
     <template #bottom>
@@ -96,18 +95,6 @@ const onInput = (e: Event) => {
   background: var(--input-bg);
   color: var(--input-text);
 }
-.remove-btn {
-  background: none;
-  border: none;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  margin-left: 8px;
-  padding: 0 4px;
-}
-.remove-btn:hover {
-  color: #ffcccc;
-}
 
 .fields-container {
   display: flex;
@@ -115,6 +102,17 @@ const onInput = (e: Event) => {
   gap: 8px;
   padding: 8px 0;
   width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.fields-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.fields-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
 }
 
 .field-row {
