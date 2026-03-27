@@ -10,12 +10,19 @@ const props = defineProps<{
   children?: any[];
 }>();
 
-const { activeFunctionId, updateBlockConfig } = useFunctions();
+const { activeFunctionId, updateBlockConfig, updateFunctionMetadata, findReturnParent } = useFunctions();
 
 // On s'assure que la config est initialisée avec la valeur du bloc
 onMounted(() => {
   if (props.blockId && props.config && props.config.value === undefined && activeFunctionId.value) {
     updateBlockConfig(activeFunctionId.value, props.blockId, { value: props.value });
+  }
+
+  if (props.blockId && activeFunctionId.value) {
+    const returnBlock = findReturnParent(activeFunctionId.value, props.blockId);
+    if (returnBlock) {
+      updateFunctionMetadata(activeFunctionId.value, { returnType: 'boolean' });
+    }
   }
 });
 </script>

@@ -12,7 +12,9 @@ const props = defineProps<{
   children?: any[];
 }>();
 
-const { functions, activeFunctionId, updateBlockConfig } = useFunctions();
+const { functions, activeFunctionId, updateBlockConfig, updateFunctionMetadata, findReturnParent } = useFunctions();
+
+const { formatType } = useTypeFormatter();
 
 const currentFunction = computed(() => {
   return functions.value.find(f => f.id === activeFunctionId.value);
@@ -22,13 +24,13 @@ const currentFunction = computed(() => {
 const availableParameters = computed(() => {
   if (!currentFunction.value) return [];
   
-  const params: string[] = [];
+  const params: { name: string, type: any }[] = [];
   const findParams = (blocks: any[]) => {
     blocks.forEach(block => {
       // Un bloc 'parameter' au niveau racine (ou dans children) est considéré comme une déclaration
       // si il a un nom défini dans sa config
       if (block.type === 'parameter' && block.config?.name) {
-        params.push(block.config.name);
+        params.push({ name: block.config.name, type: block.config.type });
       }
       if (block.children) findParams(block.children);
       if (block.config?.slots) {
@@ -39,7 +41,16 @@ const availableParameters = computed(() => {
     });
   };
   findParams(currentFunction.value.blocks);
-  return [...new Set(params)]; // Unicité
+  // Unicité par nom
+  const uniqueParams = [];
+  const names = new Set();
+  for (const p of params) {
+    if (!names.has(p.name)) {
+      names.add(p.name);
+      uniqueParams.push(p);
+    }
+  }
+  return uniqueParams;
 });
 
 const paramName = ref(props.config?.name || '');
@@ -68,9 +79,51 @@ watch(paramName, (val) => {
   }
 });
 
+const updateReturnTypeIfNeeded = (selectedVal: string) => {
+  if (!props.blockId || !activeFunctionId.value || !props.isExpression) return;
+
+  const parent = findReturnParent(activeFunctionId.value, props.blockId);
+  if (parent && parent.type === 'return') {
+    const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
+    const findParamDeclaration = (blocks: any[], name: string): any => {
+      for (const block of blocks) {
+        if (block.type === 'parameter' && block.config?.name === name && !block.config?.selectedParam) return block;
+        if (block.children) {
+          const found = findParamDeclaration(block.children, name);
+          if (found) return found;
+        }
+        if (block.config?.slots) {
+          for (const s of Object.values(block.config.slots)) {
+            if (s) {
+              const found = findParamDeclaration(Array.isArray(s) ? s : [s], name);
+              if (found) return found;
+            }
+          }
+        }
+      }
+      return null;
+    };
+
+    const declaration = currentFunction ? findParamDeclaration(currentFunction.blocks, selectedVal) : null;
+    if (declaration) {
+      const typeCfg = declaration.config?.type;
+      updateFunctionMetadata(activeFunctionId.value, { returnType: typeCfg });
+    } else {
+      updateFunctionMetadata(activeFunctionId.value, { returnType: 'any' });
+    }
+  }
+};
+
 watch(selectedParam, (val) => {
   if (props.blockId && activeFunctionId.value) {
     updateBlockConfig(activeFunctionId.value, props.blockId, { selectedParam: val });
+    updateReturnTypeIfNeeded(val);
+  }
+});
+
+onMounted(() => {
+  if (selectedParam.value) {
+    updateReturnTypeIfNeeded(selectedParam.value);
   }
 });
 
@@ -118,7 +171,9 @@ watch(() => props.config?.slots?.defaultValue, (newVal) => {
     <template v-if="isExpression && !minimal">
       <select v-model="selectedParam" class="block-select">
         <option value="" disabled>{{ $t('blocks.parameter.select_param') }}</option>
-        <option v-for="p in availableParameters" :key="p" :value="p">{{ p }}</option>
+        <option v-for="p in availableParameters" :key="p.name" :value="p.name">
+          {{ p.name }} : {{ formatType(p.type) }}
+        </option>
       </select>
     </template>
     <template v-else-if="!minimal">

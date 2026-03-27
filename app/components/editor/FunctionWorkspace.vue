@@ -6,6 +6,7 @@ import { useMobileDragDrop } from '~/composables/useMobileDragDrop';
 const { t } = useI18n();
 const { functions, activeFunctionId, isDragging, addFunction, removeFunction, addBlockToFunction, removeBlockFromFunction, getBlockById } = useFunctions();
 const { onTouchMove, onTouchEnd } = useMobileDragDrop();
+const { formatType } = useTypeFormatter();
 
 const showCreateModal = ref(false);
 const newFunctionName = ref('');
@@ -133,7 +134,7 @@ const onMobileTrashDragLeave = () => {
            @click="activeFunctionId = func.id"
       >
         <span class="tab-name">{{ func.name }}</span>
-        <span class="tab-return-type">({{ func.metadata?.returnType || 'any' }})</span>
+        <span class="tab-return-type">({{ formatType(func.metadata?.returnType) }})</span>
         <span v-if="func.name !== 'main'" class="close-tab" @click.stop="removeFunction(func.id)">×</span>
       </div>
     </div>

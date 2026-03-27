@@ -44,8 +44,8 @@
         "string": "String",
         "number": "Number",
         "boolean": "Boolean",
-        "array": "Array",
-        "object": "Object",
+        "array": "array",
+        "object": "object",
         "any": "Any"
       },
       "select_struct": "Select structure"

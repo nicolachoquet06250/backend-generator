@@ -12,7 +12,7 @@ const props = defineProps<{
 }>();
 
 const { structures } = useDataStructures();
-const { activeFunctionId, updateBlockConfig } = useFunctions();
+const { activeFunctionId, updateBlockConfig, updateFunctionMetadata, findReturnParent } = useFunctions();
 
 const structId = computed(() => props.config?.structId);
 const selectedStructure = computed(() => {
@@ -43,6 +43,17 @@ const getFieldType = (field: any) => {
   if (typeof field.type === 'string') return field.type;
   return field.type.kind;
 };
+
+onMounted(() => {
+  if (props.blockId && activeFunctionId.value) {
+    const returnBlock = findReturnParent(activeFunctionId.value, props.blockId);
+    if (returnBlock) {
+      updateFunctionMetadata(activeFunctionId.value, { 
+        returnType: structId.value ? { kind: 'object', structId: structId.value } : 'object' 
+      });
+    }
+  }
+});
 </script>
 
 <template>

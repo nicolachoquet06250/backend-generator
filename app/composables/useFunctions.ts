@@ -157,8 +157,17 @@ export const useFunctions = () => {
     const f = functions.value.find(func => func.id === functionId);
     if (f) {
       const blockToDelete = getBlockById(functionId, blockId);
-      if (blockToDelete && blockToDelete.type === 'return') {
-        updateFunctionMetadata(functionId, { returnType: 'any' });
+      if (blockToDelete) {
+        if (blockToDelete.type === 'return') {
+          updateFunctionMetadata(functionId, { returnType: 'any' });
+        } else {
+          // Si le bloc est supprimé alors qu'il est dans un slot 'value' d'un bloc 'return', 
+          // on doit réinitialiser le type de retour à 'any' car le slot devient vide.
+          const parent = getParentBlock(functionId, blockId);
+          if (parent && parent.type === 'return') {
+            updateFunctionMetadata(functionId, { returnType: 'any' });
+          }
+        }
       }
 
       const recursiveRemove = (blocks: BlockInstance[]): BlockInstance[] => {
@@ -203,7 +212,7 @@ export const useFunctions = () => {
     }
   };
 
-  const updateFunctionMetadata = (functionId: string, metadata: { returnType: string }) => {
+  const updateFunctionMetadata = (functionId: string, metadata: { returnType: any }) => {
     const f = functions.value.find(func => func.id === functionId);
     if (f) {
       f.metadata = { ...f.metadata, ...metadata };
@@ -221,8 +230,9 @@ export const useFunctions = () => {
         if (fromChildren) return fromChildren;
         if (b.config.slots) {
           for (const slot in b.config.slots) {
-            if (b.config.slots[slot]) {
-              const fromSlot = findRecursive([b.config.slots[slot]]);
+            const slotBlock = b.config.slots[slot];
+            if (slotBlock) {
+              const fromSlot = findRecursive([slotBlock]);
               if (fromSlot) return fromSlot;
             }
           }
@@ -232,6 +242,39 @@ export const useFunctions = () => {
     };
     
     return findRecursive(f.blocks);
+  };
+
+  const getParentBlock = (functionId: string, blockId: string): BlockInstance | null => {
+    const f = functions.value.find(func => func.id === functionId);
+    if (!f) return null;
+
+    const findParentRecursive = (blocks: BlockInstance[], targetId: string): BlockInstance | null => {
+      if (!blocks) return null;
+      for (const b of blocks) {
+        if (b?.children.some(child => child.id === targetId)) return b;
+        if (b?.config.slots) {
+          for (const slot in b.config.slots) {
+            if (b.config.slots[slot]?.id === targetId) return b;
+            const fromSlot = findParentRecursive([b.config.slots[slot]], targetId);
+            if (fromSlot) return fromSlot;
+          }
+        }
+        const fromChildren = findParentRecursive(b?.children, targetId);
+        if (fromChildren) return fromChildren;
+      }
+      return null;
+    };
+
+    return findParentRecursive(f.blocks, blockId);
+  };
+
+  const findReturnParent = (functionId: string, blockId: string): BlockInstance | null => {
+    let current = getParentBlock(functionId, blockId);
+    while (current) {
+      if (current.type === 'return') return current;
+      current = getParentBlock(functionId, current.id);
+    }
+    return null;
   };
 
   const resetFunctions = () => {
@@ -252,6 +295,8 @@ export const useFunctions = () => {
     updateBlockConfig,
     updateFunctionMetadata,
     getBlockById,
+    getParentBlock,
+    findReturnParent,
     resetFunctions
   };
 };

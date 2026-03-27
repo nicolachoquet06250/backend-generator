@@ -25,7 +25,16 @@ const props = defineProps<{
   children?: any[];
 }>();
 
-const { activeFunctionId } = useFunctions();
+const { activeFunctionId, updateFunctionMetadata, findReturnParent } = useFunctions();
+
+onMounted(() => {
+  if (props.blockId && activeFunctionId.value) {
+    const returnBlock = findReturnParent(activeFunctionId.value, props.blockId);
+    if (returnBlock) {
+      updateFunctionMetadata(activeFunctionId.value, { returnType: 'number' });
+    }
+  }
+});
 
 const opLabel = computed(() => {
   switch (props.symbol) {

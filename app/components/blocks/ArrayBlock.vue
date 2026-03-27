@@ -11,7 +11,7 @@ const props = defineProps<{
   children?: any[];
 }>();
 
-const { activeFunctionId, addBlockToFunction } = useFunctions();
+const { activeFunctionId, addBlockToFunction, updateFunctionMetadata, findReturnParent } = useFunctions();
 
 const onBlockDragStart = (e: DragEvent, block: any) => {
   if (e.dataTransfer && activeFunctionId.value) {
@@ -67,6 +67,15 @@ const resetNewItem = () => {
 // Initialiser
 onMounted(() => {
   resetNewItem();
+
+  if (props.blockId && activeFunctionId.value) {
+    const returnBlock = findReturnParent(activeFunctionId.value, props.blockId);
+    if (returnBlock) {
+      updateFunctionMetadata(activeFunctionId.value, { 
+        returnType: elementType.value ? { kind: 'array', elementType: elementType.value } : 'array' 
+      });
+    }
+  }
 });
 
 const addNewItem = () => {

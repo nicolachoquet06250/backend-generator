@@ -27,7 +27,26 @@ const findVarDeclaration = (blocks: any[], name: string): any => {
     if (block.config?.slots) {
       for (const s of Object.values(block.config.slots)) {
         if (s) {
-          const found = findVarDeclaration([s as any], name);
+          const found = findVarDeclaration(Array.isArray(s) ? s : [s as any], name);
+          if (found) return found;
+        }
+      }
+    }
+  }
+  return null;
+};
+
+const findParamDeclaration = (blocks: any[], name: string): any => {
+  for (const block of blocks) {
+    if (block.type === 'parameter' && block.config?.name === name && !block.config?.selectedParam) return block;
+    if (block.children) {
+      const found = findParamDeclaration(block.children, name);
+      if (found) return found;
+    }
+    if (block.config?.slots) {
+      for (const s of Object.values(block.config.slots)) {
+        if (s) {
+          const found = findParamDeclaration(Array.isArray(s) ? s : [s as any], name);
           if (found) return found;
         }
       }
@@ -495,8 +514,18 @@ const onDrop = (e: DragEvent) => {
               const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
               const declaration = currentFunction ? findVarDeclaration(currentFunction.blocks, initialConfig.selectedVar) : null;
               if (declaration) {
-                const typeCfg = declaration.config?.typeConfig;
-                returnType = typeof typeCfg === 'string' ? typeCfg : (typeCfg?.kind || 'any');
+                returnType = declaration.config?.typeConfig || 'any';
+              }
+            } else if (blockToCreate === 'parameter' && initialConfig.selectedParam) {
+              const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
+              const declaration = currentFunction ? findParamDeclaration(currentFunction.blocks, initialConfig.selectedParam) : null;
+              if (declaration) {
+                returnType = declaration.config?.type || 'any';
+              }
+            } else if (blockToCreate === 'function' && initialConfig.functionId) {
+              const targetFunc = functions.value.find(f => f.id === initialConfig.functionId);
+              if (targetFunc) {
+                returnType = targetFunc.metadata?.returnType || 'any';
               }
             }
             updateFunctionMetadata(activeFunctionId.value, { returnType });
@@ -556,12 +585,20 @@ const onDrop = (e: DragEvent) => {
             const parentBlock = getBlockById(activeFunctionId.value, props.parentBlockId);
             if (parentBlock && parentBlock.type === 'return' && props.slotName === 'value') {
               let returnType = block.type;
-              if (block.type === 'true' || block.type === 'false') {
+              if (block.type === 'string') {
+                returnType = 'string';
+              } else if (block.type === 'number') {
+                returnType = 'number';
+              } else if (block.type === 'true' || block.type === 'false' || block.type === 'boolean') {
                 returnType = 'boolean';
               } else if (block.type.startsWith('math-')) {
                 returnType = 'number';
               } else if (block.type.startsWith('compare-') || block.type === 'equal') {
                 returnType = 'boolean';
+              } else if (block.type === 'array') {
+                returnType = initialConfig.elementType ? { kind: 'array', elementType: initialConfig.elementType } : 'array';
+              } else if (block.type === 'object') {
+                returnType = initialConfig.structId ? { kind: 'object', structId: initialConfig.structId } : 'object';
               } else if (block.type === 'var') {
                 returnType = 'any';
               }
@@ -569,8 +606,18 @@ const onDrop = (e: DragEvent) => {
                 const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
                 const declaration = currentFunction ? findVarDeclaration(currentFunction.blocks, initialConfig.selectedVar) : null;
                 if (declaration) {
-                  const typeCfg = declaration.config?.typeConfig;
-                  returnType = typeof typeCfg === 'string' ? typeCfg : (typeCfg?.kind || 'any');
+                  returnType = declaration.config?.typeConfig || 'any';
+                }
+              } else if (block.type === 'parameter' && initialConfig.selectedParam) {
+                const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
+                const declaration = currentFunction ? findParamDeclaration(currentFunction.blocks, initialConfig.selectedParam) : null;
+                if (declaration) {
+                  returnType = declaration.config?.type || 'any';
+                }
+              } else if (block.type === 'function' && initialConfig.functionId) {
+                const targetFunc = functions.value.find(f => f.id === initialConfig.functionId);
+                if (targetFunc) {
+                  returnType = targetFunc.metadata?.returnType || 'any';
                 }
               }
               updateFunctionMetadata(activeFunctionId.value, { returnType });

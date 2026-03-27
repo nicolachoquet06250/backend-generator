@@ -44,8 +44,8 @@
         "string": "Chaîne de caractères",
         "number": "Nombre",
         "boolean": "Booléen",
-        "array": "Tableau",
-        "object": "Objet",
+        "array": "array",
+        "object": "object",
         "any": "N'importe lequel"
       },
       "select_struct": "Choisir structure"

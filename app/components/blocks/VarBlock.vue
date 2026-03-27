@@ -27,7 +27,8 @@ const props = defineProps<{
 }>();
 
 const { structures } = useDataStructures();
-const { functions, activeFunctionId, updateBlockConfig } = useFunctions();
+const { functions, activeFunctionId, updateBlockConfig, updateFunctionMetadata, getBlockById, findReturnParent } = useFunctions();
+const { formatType } = useTypeFormatter();
 
 const currentFunction = computed(() => {
   return functions.value.find(f => f.id === activeFunctionId.value);
@@ -37,13 +38,13 @@ const currentFunction = computed(() => {
 const availableVariables = computed(() => {
   if (!currentFunction.value) return [];
   
-  const vars: string[] = [];
+  const vars: { name: string, type: any }[] = [];
   const findVars = (blocks: any[]) => {
     blocks.forEach(block => {
       // Un bloc 'var' au niveau racine (ou dans children) est considéré comme une déclaration
       // si il a un nom défini dans sa config
       if (block.type === 'var' && block.config?.name) {
-        vars.push(block.config.name);
+        vars.push({ name: block.config.name, type: block.config.typeConfig });
       }
       if (block.children) findVars(block.children);
       if (block.config?.slots) {
@@ -54,44 +55,27 @@ const availableVariables = computed(() => {
     });
   };
   findVars(currentFunction.value.blocks);
-  return [...new Set(vars)]; // Unicité
+  // Unicité par nom
+  const uniqueVars = [];
+  const names = new Set();
+  for (const v of vars) {
+    if (!names.has(v.name)) {
+      names.add(v.name);
+      uniqueVars.push(v);
+    }
+  }
+  return uniqueVars;
 });
 
 const typeConfig = ref<any>(props.config?.typeConfig || 'any');
 const varName = ref(props.config?.name || '');
 const selectedVar = ref(props.config?.selectedVar || '');
-
-const { updateFunctionMetadata, getBlockById } = useFunctions();
-
-const findReturnParent = (blockId: string): any => {
-  const currentFunc = functions.value.find(f => f.id === activeFunctionId.value);
-  if (!currentFunc) return null;
-
-  const findInBlocks = (blocks: any[], targetId: string): any => {
-    for (const b of blocks) {
-      if (b.config?.slots) {
-        for (const slotName in b.config.slots) {
-          const slotBlock = b.config.slots[slotName];
-          if (slotBlock && slotBlock.id === targetId) return b;
-          const found = findInBlocks([slotBlock], targetId);
-          if (found) return found;
-        }
-      }
-      if (b.children) {
-        const found = findInBlocks(b.children, targetId);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-
-  return findInBlocks(currentFunc.blocks, blockId);
-};
+const showProperties = ref(!!props.config?.showProperties);
 
 const updateReturnTypeIfNeeded = (varNameValue: string) => {
   if (!props.blockId || !activeFunctionId.value || !props.isExpression) return;
 
-  const parent = findReturnParent(props.blockId);
+  const parent = findReturnParent(activeFunctionId.value, props.blockId);
   if (parent && parent.type === 'return') {
     const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
     const findVarDeclaration = (blocks: any[], name: string): any => {
@@ -116,8 +100,7 @@ const updateReturnTypeIfNeeded = (varNameValue: string) => {
     const declaration = currentFunction ? findVarDeclaration(currentFunction.blocks, varNameValue) : null;
     if (declaration) {
       const typeCfg = declaration.config?.typeConfig;
-      const returnType = typeof typeCfg === 'string' ? typeCfg : (typeCfg?.kind || 'any');
-      updateFunctionMetadata(activeFunctionId.value, { returnType });
+      updateFunctionMetadata(activeFunctionId.value, { returnType: typeCfg });
     } else {
       updateFunctionMetadata(activeFunctionId.value, { returnType: 'any' });
     }
@@ -141,6 +124,18 @@ watch(selectedVar, (val) => {
   if (props.blockId && activeFunctionId.value) {
     updateBlockConfig(activeFunctionId.value, props.blockId, { selectedVar: val });
     updateReturnTypeIfNeeded(val);
+  }
+});
+
+onMounted(() => {
+  if (selectedVar.value) {
+    updateReturnTypeIfNeeded(selectedVar.value);
+  }
+});
+
+watch(showProperties, (val) => {
+  if (props.blockId && activeFunctionId.value) {
+    updateBlockConfig(activeFunctionId.value, props.blockId, { showProperties: val });
   }
 });
 
@@ -204,7 +199,9 @@ watch(() => props.value, (newVal) => {
     <template v-if="isExpression && !minimal">
       <select v-model="selectedVar" class="block-select">
         <option value="" disabled>{{ $t('blocks.var.select_var') }}</option>
-        <option v-for="v in availableVariables" :key="v" :value="v">{{ v }}</option>
+        <option v-for="v in availableVariables" :key="v.name" :value="v.name">
+          {{ v.name }} : {{ formatType(v.type) }}
+        </option>
       </select>
     </template>
     <template v-else>
@@ -212,20 +209,28 @@ watch(() => props.value, (newVal) => {
       <span class="type-sep">:</span>
       
       <TypeSelector v-model="typeConfig" />
-
-      <span class="assign-sep">=</span>
-      <BlockDropZone 
-        v-if="!minimal"
-        slotName="value" 
-        :parentBlockId="blockId!" 
+      
+      <label v-if="selectedType === 'object' && selectedStructure" class="struct-toggle">
+        <input type="checkbox" v-model="showProperties" />
+        <span class="checkmark"></span>
+      </label>
+      
+      <template v-if="!(selectedType === 'object' && selectedStructure) || showProperties">
+        <span class="assign-sep">=</span>
+      </template>
+      
+      <BlockDropZone
+        v-if="!minimal && selectedType !== 'object' && !showProperties"
+        slotName="value"
+        :parentBlockId="blockId!"
         :block="value"
         :acceptedBlockTypes="acceptedTypes"
       >
         <BlockRenderer v-if="value" :block="value" isExpression />
       </BlockDropZone>
     </template>
-
-    <template #bottom v-if="selectedType === 'object' && selectedStructure && !minimal">
+    
+    <template #bottom v-if="selectedType === 'object' && selectedStructure && !minimal && showProperties">
       <div class="struct-defaults">
         <div v-for="field in selectedStructure.fields" :key="field.id" class="struct-field-row">
           <span class="field-name">{{ field.name }}</span>
@@ -292,6 +297,56 @@ watch(() => props.value, (newVal) => {
   gap: 8px;
   font-size: 0.8em;
   color: white;
+}
+
+.struct-toggle {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  margin-left: 8px;
+}
+
+.struct-toggle input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  height: 18px;
+  width: 18px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.struct-toggle:hover input ~ .checkmark {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.struct-toggle input:checked ~ .checkmark {
+  background-color: #4CAF50;
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.struct-toggle input:checked ~ .checkmark:after {
+  display: block;
 }
 
 .field-name {

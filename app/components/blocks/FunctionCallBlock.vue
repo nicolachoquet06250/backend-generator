@@ -24,7 +24,9 @@ const props = defineProps<{
 }>();
 
 const { structures } = useDataStructures();
-const { functions, activeFunctionId, getBlockById, updateBlockConfig } = useFunctions();
+const { functions, activeFunctionId, getBlockById, updateBlockConfig, updateFunctionMetadata, findReturnParent } = useFunctions();
+
+const { formatType } = useTypeFormatter();
 
 const parentBlock = props.parentBlockId ? getBlockById(activeFunctionId.value, props.parentBlockId) : null;
 const isParentNewRoute = computed(() => parentBlock?.type === 'new_route');
@@ -54,9 +56,30 @@ const filterRouteFunction = (f: FunctionDefinition) => {
 
 const selectedFunctionId = ref(props.config?.functionId || '');
 
+const updateReturnTypeIfNeeded = (selectedFuncId: string) => {
+  if (!props.blockId || !activeFunctionId.value) return;
+
+  const parent = findReturnParent(activeFunctionId.value, props.blockId);
+  if (parent && parent.type === 'return') {
+    const targetFunc = functions.value.find(f => f.id === selectedFuncId);
+    if (targetFunc) {
+      updateFunctionMetadata(activeFunctionId.value, { returnType: targetFunc.metadata?.returnType || 'any' });
+    } else {
+      updateFunctionMetadata(activeFunctionId.value, { returnType: 'any' });
+    }
+  }
+};
+
 watch(selectedFunctionId, (val) => {
   if (props.blockId && activeFunctionId.value) {
     updateBlockConfig(activeFunctionId.value, props.blockId, { functionId: val });
+    updateReturnTypeIfNeeded(val);
+  }
+});
+
+onMounted(() => {
+  if (selectedFunctionId.value) {
+    updateReturnTypeIfNeeded(selectedFunctionId.value);
   }
 });
 
@@ -149,28 +172,6 @@ const typeToAccepted = (t: any): string[] => {
 
 // Affichage lisible du type
 const { t } = useI18n();
-const formatType = (tpe: any): string => {
-  if (!tpe) return t('blocks.var.types.any');
-  const kind = typeof tpe === 'object' ? (tpe.kind || 'object') : tpe;
-  if (kind === 'array') {
-    const el = typeof tpe === 'object' ? tpe.elementType : 'any';
-    return `${t('blocks.var.types.array')}<${formatType(el)}>`;
-  }
-  if (kind === 'object') {
-    const structId = typeof tpe === 'object' ? tpe.structId : (typeof tpe === 'string' && tpe !== 'object' ? tpe : '');
-    const struct = structures.value.find(s => s.id === structId || s.name === structId);
-    if (struct) {
-      return `${t('blocks.var.types.object')}<${struct.name}>`;
-    }
-    // Cas spécial pour les structures par défaut req/res si elles ne sont pas dans structures
-    if (structId === 'req' || structId === 'Request') return `${t('blocks.var.types.object')}<Request>`;
-    if (structId === 'res' || structId === 'Response') return `${t('blocks.var.types.object')}<Response>`;
-    
-    return t('blocks.var.types.object');
-  }
-  return t(`blocks.var.types.${kind || 'any'}`);
-};
-
 // Résolution de composant pour afficher l'argument déposé
 const getValueComponent = (block: any) => {
   if (!block) return null;

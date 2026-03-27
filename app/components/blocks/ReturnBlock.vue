@@ -9,18 +9,24 @@ import ObjectPropertyBlock from './ObjectPropertyBlock.vue';
 import MathBlock from './MathBlock.vue';
 import VarBlock from './VarBlock.vue';
 import BooleanBlock from './BooleanBlock.vue';
-import EqualBlock from './EqualBlock.vue';
 import ComparisonBlock from './ComparisonBlock.vue';
 import FunctionCallBlock from './FunctionCallBlock.vue';
 import ParameterBlock from './ParameterBlock.vue';
 import PrintBlock from "~/components/blocks/PrintBlock.vue";
 
-defineProps<{
+const props = defineProps<{
   minimal?: boolean;
   blockId?: string;
   config?: any;
   children?: any[];
 }>();
+
+const { functions, activeFunctionId, updateFunctionMetadata } = useFunctions();
+const { formatType } = useTypeFormatter();
+
+const activeFunction = computed(() => functions.value.find(f => f.id === activeFunctionId.value));
+
+const returnType = computed(() => activeFunction.value?.metadata?.returnType || 'any');
 
 const getValueComponent = (block: any) => {
   if (!block) return null;
@@ -42,7 +48,13 @@ const getValueComponent = (block: any) => {
 </script>
 
 <template>
-  <BaseBlock color="#AF5198" :label="$t('blocks.return.label')" :minimal="minimal">
+  <BaseBlock color="#AF5198" :minimal="minimal">
+    <template #label>
+      <div class="return-label-container">
+        <span class="block-label">{{ $t('blocks.return.label') }}</span>
+        <span class="return-type-display">({{ formatType(returnType) }})</span>
+      </div>
+    </template>
     <template v-if="!minimal">
       <BlockDropZone 
         :parentBlockId="blockId!" 
@@ -64,3 +76,19 @@ const getValueComponent = (block: any) => {
     </template>
   </BaseBlock>
 </template>
+
+<style scoped>
+.return-label-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.block-label {
+  white-space: nowrap;
+}
+.return-type-display {
+  color: white;
+  opacity: 0.8;
+  font-size: 0.9em;
+}
+</style>
