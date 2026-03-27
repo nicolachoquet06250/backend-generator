@@ -132,6 +132,10 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
   height: max-content;
 }
 
+.block-container.is-root, .block-container.no-hover {
+  cursor: default;
+}
+
 .block-container.is-full-width {
   width: calc(100% - 8px);
 }

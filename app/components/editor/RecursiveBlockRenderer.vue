@@ -230,7 +230,13 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
   position: relative;
 }
 
-.block-item:active {
+.block-item:has(.is-root),
+.block-item:has(.no-hover),
+.block-item:has(.block-drop-zone.is-stack-zone) {
+  cursor: default;
+}
+
+.block-item:not(:has(.is-root)):not(:has(.no-hover)):not(:has(.block-drop-zone.is-stack-zone)):active {
   cursor: grabbing;
 }
 </style>
