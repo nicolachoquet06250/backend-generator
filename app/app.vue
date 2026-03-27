@@ -3,9 +3,11 @@ import BlockSidebar from './components/editor/BlockSidebar.vue';
 import FunctionWorkspace from './components/editor/FunctionWorkspace.vue';
 import StructBlock from './components/blocks/StructBlock.vue';
 import PWAManager from './components/common/PWAManager.vue';
+import AppModal from './components/common/AppModal.vue';
 
 const { locale, locales, setLocale, t } = useI18n();
-const { structures, addStructure, removeStructure } = useDataStructures();
+const { structures, addStructure, removeStructure, resetStructures } = useDataStructures();
+const { resetFunctions } = useFunctions();
 const { isMobile } = useDevice();
 
 useHead({
@@ -13,6 +15,13 @@ useHead({
 })
 
 const showStructures = ref(false);
+const showResetModal = ref(false);
+
+const resetStorage = () => {
+  resetStructures();
+  resetFunctions();
+  showResetModal.value = false;
+};
 
 function getPWADisplayMode() {
   if (document.referrer.startsWith('android-app://'))
@@ -39,6 +48,12 @@ function getPWADisplayMode() {
         <h1>{{ $t('welcome') }}</h1>
       </div>
       <div class="header-actions">
+        <button class="reset-btn" :title="$t('common.reset')" @click="showResetModal = true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
         <button class="struct-toggle" @click="showStructures = !showStructures">
           {{ $t('sections.structures') }} <template v-if="!isMobile">({{ structures.length }})</template>
         </button>
@@ -92,6 +107,16 @@ function getPWADisplayMode() {
       </Transition>
 
       <PWAManager />
+
+      <AppModal 
+        :show="showResetModal" 
+        :title="$t('common.reset')"
+        has-padding
+        @close="showResetModal = false"
+        @confirm="resetStorage"
+      >
+        <p>{{ $t('common.reset') }} ?</p>
+      </AppModal>
     </main>
   </div>
 </template>
@@ -222,6 +247,28 @@ body {
   display: flex;
   align-items: center;
   gap: 20px;
+}
+
+.reset-btn {
+  background: #ff4c4c;
+  border: 1px solid #ff4c4c;
+  color: white;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s;
+}
+
+.reset-btn:hover {
+  background: #e60000;
+  border-color: #e60000;
 }
 
 .struct-toggle {

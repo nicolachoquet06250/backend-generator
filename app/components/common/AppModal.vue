@@ -2,6 +2,7 @@
 defineProps<{
   title?: string;
   show?: boolean;
+  hasPadding?: boolean;
 }>();
 
 const emit = defineEmits(['close', 'confirm']);
@@ -24,7 +25,7 @@ const onConfirm = () => {
             <h3>{{ title }}</h3>
             <button class="close-btn" @click="onClose">×</button>
           </div>
-          <div class="modal-body">
+          <div class="modal-body" :class="{ 'has-padding': hasPadding }">
             <slot></slot>
           </div>
           <div class="modal-actions">
@@ -122,15 +123,21 @@ const onConfirm = () => {
 }
 
 .modal-body {
-  padding: 24px;
   color: var(--text-color);
   overflow-y: auto;
   flex: 1;
 }
 
+.modal-body.has-padding {
+  padding: 24px;
+}
+
 @media (max-width: 768px) {
   .modal-body {
     padding: 0;
+  }
+  .modal-body.has-padding {
+    padding: 16px;
   }
 }
 

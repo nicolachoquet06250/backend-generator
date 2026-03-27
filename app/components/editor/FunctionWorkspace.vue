@@ -172,6 +172,7 @@ const onMobileTrashDragLeave = () => {
     <AppModal
       :show="showCreateModal"
       :title="$t('workspace.add_function')"
+      has-padding
       @close="showCreateModal = false"
       @confirm="confirmCreateFunction"
     >

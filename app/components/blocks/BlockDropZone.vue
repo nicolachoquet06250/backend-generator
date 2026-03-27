@@ -386,11 +386,11 @@ const handlePickerSelect = (type: string) => {
   // Adapt if it's a math or compare op
   let blockType = type;
   if (type.startsWith('math-')) {
-    blockType = 'math';
-    initialConfig = { symbol: type.split('-')[1] };
+    blockType = `math-${type.split('-')[1]}`;
+    initialConfig = {};
   } else if (type.startsWith('compare-')) {
-    blockType = 'comparison';
-    initialConfig = { symbol: type.split('-')[1] };
+    blockType = `compare-${type.split('-')[1]}`;
+    initialConfig = {};
   } else if (type === 'equal') {
     blockType = 'equal';
     initialConfig = { symbol: '==' };

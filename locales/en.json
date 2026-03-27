@@ -25,7 +25,8 @@
   },
   "common": {
     "cancel": "Cancel",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "reset": "Reset Storage"
   },
   "blocks": {
     "true": "True",

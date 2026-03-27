@@ -110,6 +110,37 @@ export const useDataStructures = () => {
     }
   };
 
+  const resetStructures = () => {
+    structures.value = [
+      { 
+        id: 'req', 
+        name: 'Request',
+        fields: []
+      },
+      { 
+        id: 'res', 
+        name: 'Response',
+        fields: []
+      },
+      { 
+        id: '1', 
+        name: 'User',
+        fields: [
+          { id: 'f1', name: 'id', type: 'number', nullable: false, defaultValue: 0 },
+          { id: 'f2', name: 'email', type: 'string', nullable: false, defaultValue: '' }
+        ]
+      },
+      { 
+        id: '2', 
+        name: 'Product',
+        fields: [
+          { id: 'f3', name: 'name', type: 'string', nullable: false, defaultValue: '' },
+          { id: 'f4', name: 'price', type: 'number', nullable: false, defaultValue: 0 }
+        ]
+      }
+    ];
+  };
+
   return {
     structures,
     addStructure,
@@ -117,6 +148,7 @@ export const useDataStructures = () => {
     updateStructure,
     addField,
     removeField,
-    updateField
+    updateField,
+    resetStructures
   };
 };

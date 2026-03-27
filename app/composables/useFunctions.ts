@@ -202,6 +202,13 @@ export const useFunctions = () => {
     return findRecursive(f.blocks);
   };
 
+  const resetFunctions = () => {
+    functions.value = [
+      { id: 'f1', name: 'main', blocks: [] }
+    ];
+    activeFunctionId.value = 'f1';
+  };
+
   return {
     functions,
     activeFunctionId,
@@ -210,6 +217,7 @@ export const useFunctions = () => {
     addBlockToFunction,
     removeBlockFromFunction,
     updateBlockConfig,
-    getBlockById
+    getBlockById,
+    resetFunctions
   };
 };
