@@ -124,6 +124,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
         :parentBlockId="''"
         :afterBlockId="'start'"
         isStackZone
+        :isBetweenBlocks="blocks.length > 0"
       />
     </div>
     <div v-if="!isRoot && blocks.length > 0" class="block-item">
@@ -131,6 +132,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
         slotName="" 
         :parentBlockId="parentBlockId || ''"
         isStackZone
+        isBetweenBlocks
       />
     </div>
     <div v-for="(block, index) in blocks" 
@@ -169,6 +171,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
         :parentBlockId="parentBlockId || ''"
         :afterBlockId="block.id"
         isStackZone
+        :isBetweenBlocks="index < blocks.length - 1 || (isRoot && blocks.length > 0)"
       />
     </div>
 

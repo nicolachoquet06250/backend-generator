@@ -6,6 +6,7 @@ const props = defineProps<{
   block?: any;
   acceptedBlockTypes?: string[];
   isStackZone?: boolean;
+  isBetweenBlocks?: boolean;
   filterContext?: string;
 }>();
 
@@ -458,7 +459,11 @@ const onMobileDragLeave = () => {
 <template>
   <div 
     class="block-drop-zone"
-    :class="{ 'is-dragging-over': isDraggingOver, 'is-stack-zone': isStackZone }"
+    :class="{ 
+      'is-dragging-over': isDraggingOver, 
+      'is-stack-zone': isStackZone,
+      'is-between-blocks': isBetweenBlocks
+    }"
     @dragover="onDragOver"
     @dragleave="onDragLeave"
     @drop="onDrop"
@@ -503,12 +508,45 @@ const onMobileDragLeave = () => {
   touch-action: none;
 }
 
+.block-drop-zone.is-between-blocks {
+  min-height: 10px;
+  height: 10px;
+  margin: 0;
+  padding: 0;
+  border-width: 1px;
+  opacity: 0.5;
+
+  .placeholder {
+    font-size: .8em;
+  }
+}
+
+.block-drop-zone.is-between-blocks.is-dragging-over {
+  min-height: 40px;
+  height: auto;
+  opacity: 1;
+  margin: 4px 0;
+  padding: 4px;
+  border-width: 2px;
+}
+
 @media (max-width: 768px) {
+  .block-drop-zone.is-between-blocks {
+    min-height: 15px;
+    height: 15px;
+  }
+  
+  .block-drop-zone.is-between-blocks.is-dragging-over {
+    min-height: 56px;
+    height: auto;
+  }
+
   .block-drop-zone {
     min-height: 56px; /* Increased from 48px */
     min-width: 72px;  /* Increased from 60px */
     margin: 8px 4px;  /* Slightly more spacing */
     border-width: 3px; /* More visible border */
+    transition: font-size 0.2s ease;
   }
 }
 
@@ -525,7 +563,7 @@ const onMobileDragLeave = () => {
 
 @media (max-width: 768px) {
   .block-drop-zone.is-stack-zone {
-    min-height: 16px;
+    min-height: 26px;
     margin: 0;
   }
 }
@@ -535,6 +573,10 @@ const onMobileDragLeave = () => {
   background: rgba(var(--text-color-rgb, 255, 255, 255), 0.1);
   border-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.4);
   margin: 2px 0;
+
+  .placeholder {
+    font-size: 1.5em;
+  }
 }
 
 .block-drop-zone.is-dragging-over {
