@@ -9,11 +9,21 @@ export interface FunctionDefinition {
   id: string;
   name: string;
   blocks: BlockInstance[];
+  metadata?: {
+    returnType: string;
+  };
 }
 
 export const useFunctions = () => {
   const functions = useState<FunctionDefinition[]>('editor-functions', () => [
-    { id: 'f1', name: 'main', blocks: [] }
+    { 
+      id: 'f1', 
+      name: 'main', 
+      blocks: [],
+      metadata: {
+        returnType: 'any'
+      }
+    }
   ]);
   
   const activeFunctionId = useState<string>('active-function-id', () => 'f1');
@@ -56,7 +66,14 @@ export const useFunctions = () => {
 
   const addFunction = (name: string) => {
     const id = Math.random().toString(36).substring(2, 9);
-    functions.value.push({ id, name, blocks: [] });
+    functions.value.push({ 
+      id, 
+      name, 
+      blocks: [],
+      metadata: {
+        returnType: 'any'
+      }
+    });
     activeFunctionId.value = id;
   };
 
@@ -139,6 +156,11 @@ export const useFunctions = () => {
   const removeBlockFromFunction = (functionId: string, blockId: string) => {
     const f = functions.value.find(func => func.id === functionId);
     if (f) {
+      const blockToDelete = getBlockById(functionId, blockId);
+      if (blockToDelete && blockToDelete.type === 'return') {
+        updateFunctionMetadata(functionId, { returnType: 'any' });
+      }
+
       const recursiveRemove = (blocks: BlockInstance[]): BlockInstance[] => {
         return blocks.filter(b => {
           if (b.id === blockId) return false;
@@ -178,6 +200,13 @@ export const useFunctions = () => {
         return false;
       };
       recursiveUpdate(f.blocks);
+    }
+  };
+
+  const updateFunctionMetadata = (functionId: string, metadata: { returnType: string }) => {
+    const f = functions.value.find(func => func.id === functionId);
+    if (f) {
+      f.metadata = { ...f.metadata, ...metadata };
     }
   };
 
@@ -221,6 +250,7 @@ export const useFunctions = () => {
     addBlockToFunction,
     removeBlockFromFunction,
     updateBlockConfig,
+    updateFunctionMetadata,
     getBlockById,
     resetFunctions
   };

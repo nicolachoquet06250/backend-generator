@@ -132,7 +132,8 @@ const onMobileTrashDragLeave = () => {
            :class="{ active: activeFunctionId === func.id }"
            @click="activeFunctionId = func.id"
       >
-        {{ func.name }}
+        <span class="tab-name">{{ func.name }}</span>
+        <span class="tab-return-type">({{ func.metadata?.returnType || 'any' }})</span>
         <span v-if="func.name !== 'main'" class="close-tab" @click.stop="removeFunction(func.id)">×</span>
       </div>
     </div>
@@ -222,13 +223,13 @@ const onMobileTrashDragLeave = () => {
 }
 
 .tab {
-  padding: 10px 20px;
+  padding: 10px 16px;
   background: var(--tab-bg);
   border-radius: 8px 8px 0 0;
   cursor: pointer;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: baseline;
+  gap: 6px;
   font-weight: 600;
   color: var(--tab-text);
   transition: all 0.2s ease;
@@ -237,6 +238,13 @@ const onMobileTrashDragLeave = () => {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 14px;
   white-space: nowrap;
+}
+
+.tab-return-type {
+  font-size: 0.85em;
+  opacity: 0.7;
+  font-weight: normal;
+  font-style: italic;
 }
 
 .tab:hover {

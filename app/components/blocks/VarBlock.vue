@@ -61,6 +61,69 @@ const typeConfig = ref<any>(props.config?.typeConfig || 'any');
 const varName = ref(props.config?.name || '');
 const selectedVar = ref(props.config?.selectedVar || '');
 
+const { updateFunctionMetadata, getBlockById } = useFunctions();
+
+const findReturnParent = (blockId: string): any => {
+  const currentFunc = functions.value.find(f => f.id === activeFunctionId.value);
+  if (!currentFunc) return null;
+
+  const findInBlocks = (blocks: any[], targetId: string): any => {
+    for (const b of blocks) {
+      if (b.config?.slots) {
+        for (const slotName in b.config.slots) {
+          const slotBlock = b.config.slots[slotName];
+          if (slotBlock && slotBlock.id === targetId) return b;
+          const found = findInBlocks([slotBlock], targetId);
+          if (found) return found;
+        }
+      }
+      if (b.children) {
+        const found = findInBlocks(b.children, targetId);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  return findInBlocks(currentFunc.blocks, blockId);
+};
+
+const updateReturnTypeIfNeeded = (varNameValue: string) => {
+  if (!props.blockId || !activeFunctionId.value || !props.isExpression) return;
+
+  const parent = findReturnParent(props.blockId);
+  if (parent && parent.type === 'return') {
+    const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
+    const findVarDeclaration = (blocks: any[], name: string): any => {
+      for (const block of blocks) {
+        if (block.type === 'var' && block.config?.name === name) return block;
+        if (block.children) {
+          const found = findVarDeclaration(block.children, name);
+          if (found) return found;
+        }
+        if (block.config?.slots) {
+          for (const s of Object.values(block.config.slots)) {
+            if (s) {
+              const found = findVarDeclaration([s], name);
+              if (found) return found;
+            }
+          }
+        }
+      }
+      return null;
+    };
+
+    const declaration = currentFunction ? findVarDeclaration(currentFunction.blocks, varNameValue) : null;
+    if (declaration) {
+      const typeCfg = declaration.config?.typeConfig;
+      const returnType = typeof typeCfg === 'string' ? typeCfg : (typeCfg?.kind || 'any');
+      updateFunctionMetadata(activeFunctionId.value, { returnType });
+    } else {
+      updateFunctionMetadata(activeFunctionId.value, { returnType: 'any' });
+    }
+  }
+};
+
 // Persistance des changements dans le state global
 watch(typeConfig, (val) => {
   if (props.blockId && activeFunctionId.value) {
@@ -77,6 +140,7 @@ watch(varName, (val) => {
 watch(selectedVar, (val) => {
   if (props.blockId && activeFunctionId.value) {
     updateBlockConfig(activeFunctionId.value, props.blockId, { selectedVar: val });
+    updateReturnTypeIfNeeded(val);
   }
 });
 

@@ -15,7 +15,7 @@ import BlockPickerModal from '../editor/BlockPickerModal.vue';
 
 const showPicker = ref(false);
 
-const { functions, activeFunctionId, addBlockToFunction, removeBlockFromFunction, getBlockById } = useFunctions();
+const { functions, activeFunctionId, addBlockToFunction, removeBlockFromFunction, getBlockById, updateFunctionMetadata } = useFunctions();
 
 const findVarDeclaration = (blocks: any[], name: string): any => {
   for (const block of blocks) {
@@ -476,6 +476,32 @@ const onDrop = (e: DragEvent) => {
         }
 
         addBlockToFunction(activeFunctionId.value, blockToCreate, props.parentBlockId, props.slotName, undefined, props.afterBlockId, initialConfig);
+
+        // Update function metadata if drop in a return block
+        if (props.parentBlockId) {
+          const parentBlock = getBlockById(activeFunctionId.value, props.parentBlockId);
+          if (parentBlock && parentBlock.type === 'return' && props.slotName === 'value') {
+            let returnType = blockToCreate;
+            if (blockToCreate === 'true' || blockToCreate === 'false') {
+              returnType = 'boolean';
+            } else if (blockToCreate.startsWith('math-')) {
+              returnType = 'number';
+            } else if (blockToCreate.startsWith('compare-') || blockToCreate === 'equal') {
+              returnType = 'boolean';
+            } else if (blockToCreate === 'var') {
+              returnType = 'any';
+            }
+            if (blockToCreate === 'var' && initialConfig.selectedVar) {
+              const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
+              const declaration = currentFunction ? findVarDeclaration(currentFunction.blocks, initialConfig.selectedVar) : null;
+              if (declaration) {
+                const typeCfg = declaration.config?.typeConfig;
+                returnType = typeof typeCfg === 'string' ? typeCfg : (typeCfg?.kind || 'any');
+              }
+            }
+            updateFunctionMetadata(activeFunctionId.value, { returnType });
+          }
+        }
       } else if (existingBlockId) {
         // Re-nesting existing block (seulement pour le premier si multi-drop improbable ici)
         const block = getBlockById(sourceFunctionId, existingBlockId);
@@ -504,7 +530,7 @@ const onDrop = (e: DragEvent) => {
                 targetStructId = typeCfg?.structId;
               } else if (parentBlock.type === 'set_var') {
                 // Recherche de la déclaration pour trouver le type de la variable
-                const varBlock = parentBlock.config.slots?.variable;
+                const varBlock = parentBlock.config?.slots?.variable || parentBlock.config?.variable;
                 const selectedVar = varBlock?.config?.selectedVar;
                 if (selectedVar) {
                   const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
@@ -524,6 +550,32 @@ const onDrop = (e: DragEvent) => {
           }
           
           addBlockToFunction(activeFunctionId.value, block.type, props.parentBlockId, props.slotName, { ...block, config: initialConfig }, props.afterBlockId);
+          
+          // Update function metadata if drop in a return block
+          if (props.parentBlockId) {
+            const parentBlock = getBlockById(activeFunctionId.value, props.parentBlockId);
+            if (parentBlock && parentBlock.type === 'return' && props.slotName === 'value') {
+              let returnType = block.type;
+              if (block.type === 'true' || block.type === 'false') {
+                returnType = 'boolean';
+              } else if (block.type.startsWith('math-')) {
+                returnType = 'number';
+              } else if (block.type.startsWith('compare-') || block.type === 'equal') {
+                returnType = 'boolean';
+              } else if (block.type === 'var') {
+                returnType = 'any';
+              }
+              if (block.type === 'var' && initialConfig.selectedVar) {
+                const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
+                const declaration = currentFunction ? findVarDeclaration(currentFunction.blocks, initialConfig.selectedVar) : null;
+                if (declaration) {
+                  const typeCfg = declaration.config?.typeConfig;
+                  returnType = typeof typeCfg === 'string' ? typeCfg : (typeCfg?.kind || 'any');
+                }
+              }
+              updateFunctionMetadata(activeFunctionId.value, { returnType });
+            }
+          }
         }
         break; // On ne traite qu'un seul bloc existant
       }
@@ -601,6 +653,32 @@ const handlePickerSelect = (type: string) => {
   }
 
   addBlockToFunction(activeFunctionId.value, blockType, props.parentBlockId, props.slotName, undefined, props.afterBlockId, initialConfig);
+  
+  // Update function metadata if drop in a return block
+  if (props.parentBlockId) {
+    const parentBlock = getBlockById(activeFunctionId.value, props.parentBlockId);
+    if (parentBlock && parentBlock.type === 'return' && props.slotName === 'value') {
+      let returnType = blockType;
+      if (blockType === 'true' || blockType === 'false') {
+        returnType = 'boolean';
+      } else if (blockType.startsWith('math-')) {
+        returnType = 'number';
+      } else if (blockType.startsWith('compare-') || blockType === 'equal') {
+        returnType = 'boolean';
+      } else if (blockType === 'var') {
+        returnType = 'any';
+      }
+      if (blockType === 'var' && initialConfig.selectedVar) {
+        const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
+        const declaration = currentFunction ? findVarDeclaration(currentFunction.blocks, initialConfig.selectedVar) : null;
+        if (declaration) {
+          const typeCfg = declaration.config?.typeConfig;
+          returnType = typeof typeCfg === 'string' ? typeCfg : (typeCfg?.kind || 'any');
+        }
+      }
+      updateFunctionMetadata(activeFunctionId.value, { returnType });
+    }
+  }
 };
 
 const onZoneClick = () => {

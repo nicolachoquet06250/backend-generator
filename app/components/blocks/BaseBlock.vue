@@ -85,6 +85,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
   >
     <div class="block-content">
       <span v-if="label" class="block-label">{{ label }}</span>
+      <slot name="label" />
       <slot v-if="!minimal" />
     </div>
     <div v-if="$slots.bottom && !minimal" class="block-bottom-container">

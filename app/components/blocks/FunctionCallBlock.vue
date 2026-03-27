@@ -193,13 +193,19 @@ const getValueComponent = (block: any) => {
 
 <template>
   <BaseBlock color="#FF6680" :label="$t('blocks.function.call')" :minimal="minimal">
+    <template #label v-if="selectedFunction">
+      <span class="minimal-return-type" v-if="minimal">({{ selectedFunction.metadata?.returnType || 'any' }})</span>
+    </template>
     <template v-if="!minimal">
       <select v-model="selectedFunctionId" class="block-select">
         <option value="" disabled>{{ $t('blocks.function.select') }}</option>
         <option v-for="f in otherFunctions" :key="f.id" :value="f.id">
-          {{ f.name }}
+          {{ f.name }} ({{ formatType(f.metadata?.returnType) }})
         </option>
       </select>
+      <span v-if="selectedFunction" class="return-type-display">
+        : {{ formatType(selectedFunction.metadata?.returnType) }}
+      </span>
     </template>
     <template #bottom v-if="(parentBlock?.type !== 'new_route' || parameters.filter(p => !['res', 'req'].includes(p.type.structId)).length > 0) && !minimal && selectedFunction">
       <div class="params-container">
@@ -281,5 +287,19 @@ const getValueComponent = (block: any) => {
   outline: none;
   font-size: 0.9em;
   min-width: 120px;
+}
+.return-type-display {
+  font-size: 0.85em;
+  opacity: 0.8;
+  font-style: italic;
+  font-weight: 500;
+  margin-left: 4px;
+}
+.minimal-return-type {
+  font-size: 0.85em;
+  opacity: 0.8;
+  font-style: italic;
+  margin-left: 4px;
+  font-weight: normal;
 }
 </style>
