@@ -554,5 +554,6 @@ const onMobileDragLeave = () => {
   opacity: 0.6;
   font-size: 1.2em;
   font-weight: bold;
+  user-select: none;
 }
 </style>

@@ -120,5 +120,6 @@ const getOperandComponent = (block: any) => {
 .placeholder {
   opacity: 0.5;
   font-size: 0.8em;
+  user-select: none;
 }
 </style>

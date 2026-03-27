@@ -145,7 +145,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
   box-shadow: 0 4px 8px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.4);
 }
 
-.block-container:active {
+.block-container:not(.is-root):not(.no-hover):active {
   cursor: grabbing;
   transform: translateY(1px);
 }
