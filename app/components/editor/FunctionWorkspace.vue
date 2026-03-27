@@ -383,7 +383,7 @@ const onMobileTrashDragLeave = () => {
 }
 
 .trash-icon {
-  font-size: 2em;
+  font-size: 24px;
   user-select: none;
 }
 
