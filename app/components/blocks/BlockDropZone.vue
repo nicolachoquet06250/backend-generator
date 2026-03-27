@@ -7,6 +7,7 @@ const props = defineProps<{
   acceptedBlockTypes?: string[];
   isStackZone?: boolean;
   isBetweenBlocks?: boolean;
+  isBetweenIfChain?: boolean;
   filterContext?: string;
 }>();
 
@@ -47,12 +48,100 @@ const isAccepted = (type: string) => {
   // Le type 'literal' est un joker pour le type attendu par le parent (utile pour le multi-drop)
   // Il est traité plus bas dans la logique spécifique aux parents
 
-  if (!props.acceptedBlockTypes || props.acceptedBlockTypes.length === 0) return true;
-  
   let normalizedType = type;
   if (type === 'true' || type === 'false') {
     normalizedType = 'boolean';
   }
+
+  if (normalizedType === 'elseif' || normalizedType === 'else') {
+    if (!props.isStackZone) return false;
+    
+    const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
+    if (!currentFunction) return false;
+
+    let siblings: any[] = [];
+    if (props.parentBlockId) {
+      const parent = getBlockById(activeFunctionId.value, props.parentBlockId);
+      if (parent) siblings = parent.children || [];
+    } else {
+      siblings = currentFunction.blocks;
+    }
+
+    // On cherche le bloc qui précède le point d'insertion (afterBlockId)
+    const prevIndex = props.afterBlockId === 'start' ? -1 : siblings.findIndex(b => b.id === props.afterBlockId);
+    const previousBlock = prevIndex === -1 ? null : siblings[prevIndex];
+    const nextBlock = siblings[prevIndex + 1];
+
+    if (normalizedType === 'elseif') {
+      // Un elseif doit être précédé d'un if ou d'un elseif
+      const isPrecededByIfChain = previousBlock && (previousBlock.type === 'if' || previousBlock.type === 'elseif');
+      if (!isPrecededByIfChain) return false;
+
+      // On ne peut pas insérer un elseif APRES un else (ça casserait la chaîne)
+      return previousBlock?.type !== 'else';
+
+
+    }
+
+    if (normalizedType === 'else') {
+      // Un else doit être précédé d'un if ou d'un elseif
+      const isPrecededByIfChain = previousBlock && (previousBlock.type === 'if' || previousBlock.type === 'elseif');
+      if (!isPrecededByIfChain) return false;
+
+      // On ne peut pas avoir deux "else" à la suite
+      if (nextBlock && nextBlock.type === 'else') return false;
+
+      // On ne peut pas mettre un block "else" avant un block "elseif"
+      return !(nextBlock && nextBlock.type === 'elseif');
+
+
+    }
+  }
+
+  // Si on essaie de dropper n'importe quel bloc (autre que elseif/else) 
+  // dans une position qui casserait la chaîne conditionnelle.
+  if (normalizedType !== 'elseif' && normalizedType !== 'else' && props.isStackZone) {
+    const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
+    if (currentFunction) {
+      let siblings: any[] = [];
+      if (props.parentBlockId) {
+        const parent = getBlockById(activeFunctionId.value, props.parentBlockId);
+        if (parent) siblings = parent.children || [];
+      } else {
+        siblings = currentFunction.blocks;
+      }
+
+      const prevIndex = props.afterBlockId === 'start' ? -1 : siblings.findIndex(b => b.id === props.afterBlockId);
+      const previousBlock = prevIndex === -1 ? null : siblings[prevIndex];
+      const nextBlock = siblings[prevIndex + 1];
+
+      const isPrevIfChain = previousBlock && (previousBlock.type === 'if' || previousBlock.type === 'elseif');
+      const isNextIfChainPart = nextBlock && (nextBlock.type === 'elseif' || nextBlock.type === 'else');
+
+      // Si on est ENTRE deux morceaux d'une même chaîne (if-elseif ou elseif-else ou if-else)
+      // SEUL un elseif est autorisé ici.
+      if (isPrevIfChain && isNextIfChainPart) {
+        return normalizedType === 'elseif';
+
+      }
+
+      // Si on est JUSTE AVANT un elseif ou un else existant.
+      if (isNextIfChainPart) {
+        if (!previousBlock) {
+          return normalizedType === 'if';
+
+        } else {
+          if (normalizedType !== 'if' && normalizedType !== 'elseif') return false;
+          // Si c'est un if ou un elseif, on autorise, mais ATTENTION: 
+          // si previousBlock était déjà un if/elseif, on est tombé dans le cas précédent (isPrevIfChain && isNextIfChainPart).
+          // Sinon, on autorise l'insertion d'un if/elseif pour "réparer" ou "insérer" une chaîne.
+          return true;
+        }
+      }
+    }
+  }
+
+  if (!props.acceptedBlockTypes || props.acceptedBlockTypes.length === 0) return true;
 
   const expressionTypes = ['string', 'number', 'boolean', 'true', 'false', 'var', 'parameter', 'math-op', 'compare-op', 'equal', 'array', 'object', 'object_property', 'function', 'print', 'json', 'html'];
   
@@ -149,9 +238,102 @@ const isAccepted = (type: string) => {
     return expandedAccepted.includes(normalizedType);
   }
 
-  return expandedAccepted.includes(normalizedType) ||
+  if (normalizedType === 'elseif' || normalizedType === 'else') {
+    if (!props.isStackZone) return false;
+    
+    const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
+    if (!currentFunction) return false;
+
+    let siblings: any[] = [];
+    if (props.parentBlockId) {
+      const parent = getBlockById(activeFunctionId.value, props.parentBlockId);
+      if (parent) siblings = parent.children || [];
+    } else {
+      siblings = currentFunction.blocks;
+    }
+
+    // On cherche le bloc qui précède le point d'insertion (afterBlockId)
+    const prevIndex = props.afterBlockId === 'start' ? -1 : siblings.findIndex(b => b.id === props.afterBlockId);
+    const previousBlock = prevIndex === -1 ? null : siblings[prevIndex];
+    const nextBlock = siblings[prevIndex + 1];
+
+    if (normalizedType === 'elseif') {
+      // Un elseif doit être précédé d'un if ou d'un elseif
+      const isPrecededByIfChain = previousBlock && (previousBlock.type === 'if' || previousBlock.type === 'elseif');
+      if (!isPrecededByIfChain) return false;
+
+      // On ne peut pas insérer un elseif APRES un else (ça casserait la chaîne)
+      return previousBlock?.type !== 'else';
+
+
+    }
+
+    if (normalizedType === 'else') {
+      // Un else doit être précédé d'un if ou d'un elseif
+      const isPrecededByIfChain = previousBlock && (previousBlock.type === 'if' || previousBlock.type === 'elseif');
+      if (!isPrecededByIfChain) return false;
+
+      // On ne peut pas avoir deux "else" à la suite
+      if (nextBlock && nextBlock.type === 'else') return false;
+
+      // On ne peut pas mettre un block "else" avant un block "elseif"
+      return !(nextBlock && nextBlock.type === 'elseif');
+
+
+    }
+  }
+
+  // Si on essaie de dropper n'importe quel bloc (autre que elseif/else) 
+  // dans une position qui casserait la chaîne conditionnelle.
+  if (normalizedType !== 'elseif' && normalizedType !== 'else' && props.isStackZone) {
+    const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
+    if (currentFunction) {
+      let siblings: any[] = [];
+      if (props.parentBlockId) {
+        const parent = getBlockById(activeFunctionId.value, props.parentBlockId);
+        if (parent) siblings = parent.children || [];
+      } else {
+        siblings = currentFunction.blocks;
+      }
+
+      const prevIndex = props.afterBlockId === 'start' ? -1 : siblings.findIndex(b => b.id === props.afterBlockId);
+      const previousBlock = prevIndex === -1 ? null : siblings[prevIndex];
+      const nextBlock = siblings[prevIndex + 1];
+
+      const isPrevIfChain = previousBlock && (previousBlock.type === 'if' || previousBlock.type === 'elseif');
+      const isNextIfChainPart = nextBlock && (nextBlock.type === 'elseif' || nextBlock.type === 'else');
+
+      // Si on est ENTRE deux morceaux d'une même chaîne (if-elseif ou elseif-else ou if-else)
+      // SEUL un elseif est autorisé ici.
+      if (isPrevIfChain && isNextIfChainPart) {
+        return normalizedType === 'elseif';
+
+      }
+
+      // Si on est JUSTE AVANT un elseif ou un else existant.
+      if (isNextIfChainPart) {
+        if (!previousBlock) {
+          return normalizedType === 'if';
+
+        } else {
+          if (normalizedType !== 'if' && normalizedType !== 'elseif') return false;
+          // Si c'est un if ou un elseif, on autorise, mais ATTENTION: 
+          // si previousBlock était déjà un if/elseif, on est tombé dans le cas précédent (isPrevIfChain && isNextIfChainPart).
+          // Sinon, on autorise l'insertion d'un if/elseif pour "réparer" ou "insérer" une chaîne.
+          return true;
+        }
+      }
+    }
+  }
+
+  // Cas spécifique : ne pas pouvoir dropper quoi que ce soit entre un elseif et un else, 
+  // ou entre un if et un elseif, SAUF un elseif.
+  // C'est déjà couvert par la logique ci-dessus.
+
+  return (expandedAccepted.includes(normalizedType) ||
       (expandedAccepted.includes('math-op') && normalizedType.startsWith('math-')) ||
-      (expandedAccepted.includes('compare-op') && normalizedType.startsWith('compare-'));
+      (expandedAccepted.includes('compare-op') && normalizedType.startsWith('compare-'))) && 
+      normalizedType !== 'elseif' && normalizedType !== 'else';
 };
 
 const onDrop = (e: DragEvent) => {
@@ -462,7 +644,8 @@ const onMobileDragLeave = () => {
     :class="{ 
       'is-dragging-over': isDraggingOver, 
       'is-stack-zone': isStackZone,
-      'is-between-blocks': isBetweenBlocks
+      'is-between-blocks': isBetweenBlocks,
+      'is-between-if-chain': isBetweenIfChain
     }"
     @dragover="onDragOver"
     @dragleave="onDragLeave"
@@ -551,7 +734,7 @@ const onMobileDragLeave = () => {
 }
 
 .block-drop-zone.is-stack-zone {
-  min-height: 8px;
+  min-height: 12px;
   margin: 0;
   width: 100%;
   border-radius: 0;
@@ -559,6 +742,23 @@ const onMobileDragLeave = () => {
   border: 1px dashed rgba(var(--text-color-rgb, 255, 255, 255), 0.1);
   border-left: none;
   border-right: none;
+}
+
+.block-drop-zone.is-stack-zone.is-between-if-chain {
+  min-height: 20px;
+  height: 20px;
+  background: rgba(var(--text-color-rgb, 255, 255, 255), 0.05);
+  border-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.2);
+  margin: 0;
+  opacity: 1;
+}
+
+.block-drop-zone.is-stack-zone.is-between-if-chain:hover,
+.block-drop-zone.is-stack-zone.is-between-if-chain.is-dragging-over {
+  min-height: 40px;
+  height: auto;
+  background: rgba(var(--text-color-rgb, 255, 255, 255), 0.15);
+  margin: 4px 0;
 }
 
 @media (max-width: 768px) {

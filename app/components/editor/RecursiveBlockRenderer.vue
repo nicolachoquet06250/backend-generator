@@ -120,19 +120,23 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
     <div v-if="isRoot" class="block-item">
       <StartBlock />
       <BlockDropZone 
+        v-if="isRoot"
         slotName="" 
         :parentBlockId="''"
         :afterBlockId="'start'"
         isStackZone
         :isBetweenBlocks="blocks.length > 0"
+        :isBetweenIfChain="blocks[0]?.type === 'elseif' || blocks[0]?.type === 'else'"
       />
     </div>
     <div v-if="!isRoot && blocks.length > 0" class="block-item">
       <BlockDropZone 
         slotName="" 
         :parentBlockId="parentBlockId || ''"
+        :afterBlockId="'start'"
         isStackZone
         isBetweenBlocks
+        :isBetweenIfChain="blocks[0]?.type === 'elseif' || blocks[0]?.type === 'else'"
       />
     </div>
     <div v-for="(block, index) in blocks" 
@@ -166,12 +170,13 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
         />
       </component>
       <BlockDropZone 
-        v-if="block.type !== 'break' && block.type !== 'continue' && block.type !== 'return' && !((block.type === 'if' || block.type === 'elseif') && (blocks[index+1]?.type === 'elseif' || blocks[index+1]?.type === 'else'))"
+        v-if="block.type !== 'break' && block.type !== 'continue' && block.type !== 'return'"
         slotName="" 
         :parentBlockId="parentBlockId || ''"
         :afterBlockId="block.id"
         isStackZone
         :isBetweenBlocks="index < blocks.length - 1 || (isRoot && blocks.length > 0)"
+        :isBetweenIfChain="(block.type === 'if' || block.type === 'elseif') && (blocks[index+1]?.type === 'elseif' || blocks[index+1]?.type === 'else')"
       />
     </div>
 
