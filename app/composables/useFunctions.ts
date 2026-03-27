@@ -12,33 +12,34 @@ export interface FunctionDefinition {
 }
 
 export const useFunctions = () => {
-  const functions = useState<FunctionDefinition[]>('editor-functions', () => {
+  const functions = useState<FunctionDefinition[]>('editor-functions', () => [
+    { id: 'f1', name: 'main', blocks: [] }
+  ]);
+  
+  const activeFunctionId = useState<string>('active-function-id', () => 'f1');
+
+  const isDragging = useState<boolean>('is-dragging', () => false);
+
+  // Initialize from localStorage only on client
+  onMounted(() => {
     if (import.meta.client) {
-      const saved = localStorage.getItem('editor-functions');
-      if (saved) {
+      const savedFunctions = localStorage.getItem('editor-functions');
+      if (savedFunctions) {
         try {
-          return JSON.parse(saved);
+          functions.value = JSON.parse(savedFunctions);
         } catch (e) {
           console.error('Failed to parse saved functions', e);
         }
       }
-    }
-    return [
-      { id: 'f1', name: 'main', blocks: [] }
-    ];
-  });
-  
-  const activeFunctionId = useState<string>('active-function-id', () => {
-    if (import.meta.client) {
-      const saved = localStorage.getItem('active-function-id');
-      if (saved && functions.value.some(f => f.id === saved)) {
-        return saved;
+
+      const savedActiveId = localStorage.getItem('active-function-id');
+      if (savedActiveId && functions.value.some(f => f.id === savedActiveId)) {
+        activeFunctionId.value = savedActiveId;
+      } else if (functions.value.length > 0) {
+        activeFunctionId.value = functions.value[0]!.id;
       }
     }
-    return functions.value.length > 0 ? functions.value[0]!.id : 'f1';
   });
-
-  const isDragging = useState<boolean>('is-dragging', () => false);
 
   // Persist state when it changes
   watch(functions, (newFunctions) => {
