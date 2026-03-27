@@ -55,13 +55,13 @@ export const useMobileDragDrop = () => {
     updateDragImagePosition(touch!.clientX, touch!.clientY);
 
     // Find element under touch
-    // On s'assure que le dragImage n'est pas détecté par pointer-events: none (déjà configuré lors du start)
-    // Mais elementFromPoint ne détecte pas les éléments avec pointer-events: none par défaut
+    // On s'assure que le dragImage n'est pas détecté par pointer events: none (déjà configuré lors du start)
+    // Mais elementFromPoint ne détecte pas les éléments avec pointer events: none par défaut
     // sauf sur certains navigateurs si le parent l'autorise.
     
     // On cherche l'élément cible
     // On cache temporairement le dragImage pour identifier l'élément en-dessous
-    // C'est la méthode la plus fiable car pointer-events: none n'est pas toujours respecté par elementFromPoint
+    // C'est la méthode la plus fiable, car pointer events : none n'est pas toujours respecté par elementFromPoint
     // selon le navigateur et le contexte.
     const oldDisplay = dragImage.value.style.display;
     dragImage.value.style.display = 'none';
@@ -124,7 +124,7 @@ export const useMobileDragDrop = () => {
       }
     }
 
-    // Empêcher le défilement de la page par défaut pendant le drag & drop
+    // Empêcher le défilement de la page par défaut pendant le drag et drop
     if (e.cancelable) {
       e.preventDefault();
     }

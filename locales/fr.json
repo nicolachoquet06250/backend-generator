@@ -46,6 +46,7 @@
         "boolean": "Booléen",
         "array": "array",
         "object": "object",
+        "ternary": "ternaire",
         "any": "N'importe lequel"
       },
       "select_struct": "Choisir structure"
@@ -119,6 +120,9 @@
     },
     "else": {
       "label": "sinon"
+    },
+    "ternary": {
+      "label": "ternaire"
     },
     "for": {
       "label": "pour",

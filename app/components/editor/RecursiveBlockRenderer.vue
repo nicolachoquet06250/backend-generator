@@ -20,6 +20,7 @@ import PrintBlock from '../blocks/PrintBlock.vue';
 import SetVarBlock from '../blocks/SetVarBlock.vue';
 import EqualBlock from '../blocks/EqualBlock.vue';
 import ComparisonBlock from '../blocks/ComparisonBlock.vue';
+import TernaryBlock from '../blocks/TernaryBlock.vue';
 import ReturnBlock from '../blocks/ReturnBlock.vue';
 import FunctionCallBlock from '../blocks/FunctionCallBlock.vue';
 import ParameterBlock from '../blocks/ParameterBlock.vue';
@@ -63,6 +64,7 @@ const getBlockComponent = (type: string) => {
   if (type === 'print') return PrintBlock;
   if (type === 'set_var') return SetVarBlock;
   if (type === 'equal') return EqualBlock;
+  if (type === 'ternary') return TernaryBlock;
   if (type === 'return') return ReturnBlock;
   if (type === 'function') return FunctionCallBlock;
   if (type === 'parameter') return ParameterBlock;

@@ -12,6 +12,7 @@ import BooleanBlock from './BooleanBlock.vue';
 import ComparisonBlock from './ComparisonBlock.vue';
 import FunctionCallBlock from './FunctionCallBlock.vue';
 import ParameterBlock from './ParameterBlock.vue';
+import TernaryBlock from './TernaryBlock.vue';
 import PrintBlock from "~/components/blocks/PrintBlock.vue";
 
 const props = defineProps<{
@@ -41,6 +42,7 @@ const getValueComponent = (block: any) => {
   if (type === 'parameter') return ParameterBlock;
   if (type === 'function') return FunctionCallBlock;
   if (type === 'print') return PrintBlock;
+  if (type === 'ternary') return TernaryBlock;
   if (type.startsWith('compare-')) return ComparisonBlock;
   if (type.startsWith('math-')) return MathBlock;
   return null;
@@ -69,7 +71,10 @@ const getValueComponent = (block: any) => {
             { symbol: config.slots.value.type.split('-')[1], blockId: config.slots.value.id, config: config.slots.value.config, ...config.slots.value.config.slots, isExpression: true } : 
             (config.slots.value.type === 'boolean' || config.slots.value.type === 'true' || config.slots.value.type === 'false' || config.slots.value.type === 'equal' ? 
               { value: config.slots.value.type === 'true' || (config.slots.value.config && (config.slots.value.config.value === true || config.slots.value.config.value === 'true')), blockId: config.slots.value.id, config: config.slots.value.config, ...config.slots.value.config.slots, isExpression: true } : 
-              { blockId: config.slots.value.id, config: config.slots.value.config, ...config.slots.value.config.slots, isExpression: true }
+              (config.slots.value.type === 'ternary' ? 
+                { blockId: config.slots.value.id, config: config.slots.value.config, condition: config.slots.value.config?.slots?.condition, isTrue: config.slots.value.config?.slots?.isTrue, isFalse: config.slots.value.config?.slots?.isFalse, isExpression: true } : 
+                { blockId: config.slots.value.id, config: config.slots.value.config, ...config.slots.value.config.slots, isExpression: true }
+              )
             )"
         />
       </BlockDropZone>

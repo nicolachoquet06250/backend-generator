@@ -28,7 +28,7 @@ const availableParameters = computed(() => {
   const findParams = (blocks: any[]) => {
     blocks.forEach(block => {
       // Un bloc 'parameter' au niveau racine (ou dans children) est considéré comme une déclaration
-      // si il a un nom défini dans sa config
+      // s'il a un nom défini dans sa config.
       if (block.type === 'parameter' && block.config?.name) {
         params.push({ name: block.config.name, type: block.config.type });
       }
@@ -133,7 +133,7 @@ watch(typeConfig, (val) => {
     if (typeof val === 'object' && val.structId) {
       configUpdate.structId = val.structId;
     } else if (typeof val === 'string' && (val === 'req' || val === 'res')) {
-      // Cas particuliers pour Request/Response si stockés en string directe
+      // Cas particuliers pour Request/Response si stockés en string direct
       configUpdate.structId = val;
     }
     updateBlockConfig(activeFunctionId.value, props.blockId, configUpdate);

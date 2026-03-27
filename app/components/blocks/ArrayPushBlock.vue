@@ -43,11 +43,11 @@ const acceptedValueTypes = computed(() => {
       if (declaration?.config?.typeConfig?.kind === 'array') {
         const elementType = declaration.config.typeConfig.elementType;
         const kind = typeof elementType === 'string' ? elementType : elementType.kind;
-        if (kind === 'string') return ['string', 'var', 'function'];
-        if (kind === 'number') return ['number', 'math-op', 'var', 'function'];
-        if (kind === 'boolean') return ['boolean', 'var', 'equal', 'compare-op', 'function'];
-        if (kind === 'array') return ['array', 'var', 'function'];
-        if (kind === 'object') return ['object', 'var', 'function'];
+        if (kind === 'string') return ['string', 'var', 'function', 'ternary'];
+        if (kind === 'number') return ['number', 'math-op', 'var', 'function', 'ternary'];
+        if (kind === 'boolean') return ['boolean', 'var', 'equal', 'compare-op', 'function', 'ternary'];
+        if (kind === 'array') return ['array', 'var', 'function', 'ternary'];
+        if (kind === 'object') return ['object', 'var', 'function', 'ternary'];
       }
     }
   }
@@ -57,7 +57,7 @@ const acceptedValueTypes = computed(() => {
 // Lorsqu'un ArrayBlock est poussé dans un tableau, on lui passe son elementType
 watch(() => props.value, (newVal) => {
   if (newVal?.type === 'array' && activeFunctionId.value && props.blockId) {
-     // Si on drop un tableau dans array_push, il faudrait aussi que ce tableau ait le bon elementType?
+     // Si on drop un tableau dans array_push, il faudrait aussi que ce tableau ait le bon elementType ?
      // En fait, array_push ajoute un élément au tableau. 
      // Si le tableau est de type T[][], alors l'élément ajouté est de type T[].
      // On va extraire l'elementType du tableau cible.
@@ -95,7 +95,7 @@ watch(() => props.value, (newVal) => {
   }
 }, { immediate: true });
 
-// Surveiller l'emplacement 'array' pour ajouter un bloc par défaut dans 'value'
+// surveiller l'emplacement 'array' pour ajouter un bloc par défaut dans 'value'
 watch(() => props.array, (newArray, oldArray) => {
   if (newArray && !oldArray && !props.value && props.blockId && activeFunctionId.value) {
     if (newArray.type === 'var') {

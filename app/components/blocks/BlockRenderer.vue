@@ -19,6 +19,7 @@ import PrintBlock from './PrintBlock.vue';
 import SetVarBlock from './SetVarBlock.vue';
 import EqualBlock from './EqualBlock.vue';
 import ComparisonBlock from './ComparisonBlock.vue';
+import TernaryBlock from './TernaryBlock.vue';
 import ReturnBlock from './ReturnBlock.vue';
 import FunctionCallBlock from './FunctionCallBlock.vue';
 import ParameterBlock from './ParameterBlock.vue';
@@ -55,6 +56,7 @@ const getBlockComponent = (type: string) => {
   if (type === 'print') return PrintBlock;
   if (type === 'set_var') return SetVarBlock;
   if (type === 'equal') return EqualBlock;
+  if (type === 'ternary') return TernaryBlock;
   if (type === 'return') return ReturnBlock;
   if (type === 'function') return FunctionCallBlock;
   if (type === 'parameter') return ParameterBlock;
@@ -90,6 +92,17 @@ const getBlockProps = (block: any) => {
 
   if (block.type === 'array_set_key') {
     return { ...baseProps, targetKey: block.config?.slots?.key, children: block.children, parentBlockId: props.parentBlockId };
+  }
+
+  if (block.type === 'ternary') {
+    return { 
+      ...baseProps, 
+      condition: block.config?.slots?.condition,
+      isTrue: block.config?.slots?.isTrue,
+      isFalse: block.config?.slots?.isFalse,
+      children: block.children, 
+      parentBlockId: props.parentBlockId 
+    };
   }
 
   if (block.type === 'new_route' || block.type === 'json' || block.type === 'html') {

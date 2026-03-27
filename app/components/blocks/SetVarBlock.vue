@@ -47,11 +47,11 @@ const targetVariableType = computed(() => {
 
 const acceptedValueTypes = computed(() => {
   const type = targetVariableType.value;
-  if (type === 'number') return ['number', 'math-op', 'var', 'function'];
-  if (type === 'string') return ['string', 'var', 'function'];
-  if (type === 'boolean') return ['boolean', 'var', 'equal', 'compare-op', 'function'];
-  if (type === 'array') return ['array', 'var', 'function'];
-  if (type === 'object') return ['object', 'var', 'function'];
+  if (type === 'number') return ['number', 'math-op', 'var', 'function', 'ternary'];
+  if (type === 'string') return ['string', 'var', 'function', 'ternary'];
+  if (type === 'boolean') return ['boolean', 'var', 'equal', 'compare-op', 'function', 'ternary'];
+  if (type === 'array') return ['array', 'var', 'function', 'ternary'];
+  if (type === 'object') return ['object', 'var', 'function', 'ternary'];
   return ['expression'];
 });
 

@@ -29,6 +29,7 @@ import PrintBlock from '../blocks/PrintBlock.vue';
 import SetVarBlock from '../blocks/SetVarBlock.vue';
 import EqualBlock from '../blocks/EqualBlock.vue';
 import ComparisonBlock from '../blocks/ComparisonBlock.vue';
+import TernaryBlock from '../blocks/TernaryBlock.vue';
 import { useMobileDragDrop } from '~/composables/useMobileDragDrop';
 
 const { isDragging } = useFunctions();
@@ -191,7 +192,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
     <!-- Contrôle de flux -->
     <div class="sidebar-section">
       <h3>{{ $t('sections.control') }}</h3>
-      <div v-for="type in ['if', 'elseif', 'else', 'while', 'for', 'foreach', 'break', 'continue']" 
+      <div v-for="type in ['if', 'elseif', 'else', 'ternary', 'while', 'for', 'foreach', 'break', 'continue']"
            :key="type"
            class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, type)"
@@ -200,6 +201,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
            @mousedown="onStopPropagation">
         <component :is="type === 'if' ? IfBlock : 
                        type === 'elseif' ? ElseIfBlock :
+                       type === 'ternary' ? TernaryBlock :
                        type === 'else' ? ElseBlock :
                        type === 'while' ? WhileBlock :
                        type === 'for' ? ForBlock :

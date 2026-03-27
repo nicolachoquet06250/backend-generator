@@ -20,7 +20,7 @@ export const useTypeFormatter = () => {
         return `${t('blocks.var.types.object')}<${struct.name}>`;
       }
       
-      // Cas spécial pour les structures par défaut req/res si elles ne sont pas dans structures
+      // Cas spécial pour les structures par défaut req/res si elles ne sont pas dans les structures
       if (structId === 'req' || structId === 'Request') return `${t('blocks.var.types.object')}<Request>`;
       if (structId === 'res' || structId === 'Response') return `${t('blocks.var.types.object')}<Response>`;
       

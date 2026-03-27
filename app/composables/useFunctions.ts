@@ -268,11 +268,47 @@ export const useFunctions = () => {
     return findParentRecursive(f.blocks, blockId);
   };
 
+  const getParentBlockWithSlot = (functionId: string, blockId: string): { parent: BlockInstance, slotName: string } | null => {
+    const f = functions.value.find(func => func.id === functionId);
+    if (!f) return null;
+
+    const findParentRecursive = (blocks: BlockInstance[], targetId: string): { parent: BlockInstance, slotName: string } | null => {
+      if (!blocks) return null;
+      for (const b of blocks) {
+        if (b?.children.some(child => child.id === targetId)) return { parent: b, slotName: 'children' };
+        if (b?.config.slots) {
+          for (const slot in b.config.slots) {
+            if (b.config.slots[slot]?.id === targetId) return { parent: b, slotName: slot };
+            const fromSlot = findParentRecursive([b.config.slots[slot]], targetId);
+            if (fromSlot) return fromSlot;
+          }
+        }
+        const fromChildren = findParentRecursive(b?.children, targetId);
+        if (fromChildren) return fromChildren;
+      }
+      return null;
+    };
+
+    return findParentRecursive(f.blocks, blockId);
+  };
+
   const findReturnParent = (functionId: string, blockId: string): BlockInstance | null => {
-    let current = getParentBlock(functionId, blockId);
-    while (current) {
-      if (current.type === 'return') return current;
-      current = getParentBlock(functionId, current.id);
+    let currentId = blockId;
+    let parentInfo = getParentBlockWithSlot(functionId, currentId);
+    
+    // Slots qui ne propagent pas le type de retour de leur contenu vers le bloc return parent
+    const blockingSlots = ['condition', 'from', 'to', 'list', 'left', 'right'];
+    
+    while (parentInfo) {
+      const { parent, slotName } = parentInfo;
+      
+      // Si on traverse un slot bloquant, on s'arrête : il n'y a pas de propagation du type de retour
+      if (blockingSlots.includes(slotName)) return null;
+      
+      if (parent.type === 'return') return parent;
+      
+      currentId = parent.id;
+      parentInfo = getParentBlockWithSlot(functionId, currentId);
     }
     return null;
   };
@@ -296,6 +332,7 @@ export const useFunctions = () => {
     updateFunctionMetadata,
     getBlockById,
     getParentBlock,
+    getParentBlockWithSlot,
     findReturnParent,
     resetFunctions
   };

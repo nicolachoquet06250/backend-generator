@@ -22,7 +22,7 @@ const acceptedValueTypes = ['expression'];
 const availableKeys = computed(() => {
   if (!props.array) return [];
 
-  // Cas 1: C'est un bloc 'var'
+  // Cas 1 : C'est un bloc 'var'
   if (props.array.type === 'var') {
     const varName = props.array.config?.selectedVar || props.array.config?.name;
     if (!varName) return [];
@@ -69,7 +69,7 @@ const availableKeys = computed(() => {
     }
   }
 
-  // Cas 2: C'est un bloc 'parameter'
+  // Cas 2 : C'est un bloc 'parameter'
   if (props.array.type === 'parameter') {
     // Les paramètres pourraient aussi avoir des types de structures à l'avenir
   }

@@ -42,7 +42,7 @@ const availableVariables = computed(() => {
   const findVars = (blocks: any[]) => {
     blocks.forEach(block => {
       // Un bloc 'var' au niveau racine (ou dans children) est considéré comme une déclaration
-      // si il a un nom défini dans sa config
+      // s'il a un nom défini dans sa config.
       if (block.type === 'var' && block.config?.name) {
         vars.push({ name: block.config.name, type: block.config.typeConfig });
       }
@@ -168,11 +168,11 @@ const getFieldType = (field: any) => {
 const structValues = ref<Record<string, any>>({});
 
 const acceptedTypes = computed(() => {
-  if (selectedType.value === 'number') return ['number', 'math-op', 'var', 'function'];
-  if (selectedType.value === 'string') return ['string', 'var', 'function'];
-  if (selectedType.value === 'boolean') return ['boolean', 'var', 'equal', 'compare-op', 'function'];
-  if (selectedType.value === 'array') return ['array', 'var', 'function'];
-  if (selectedType.value === 'object') return ['object', 'var', 'function'];
+  if (selectedType.value === 'number') return ['number', 'math-op', 'var', 'function', 'ternary'];
+  if (selectedType.value === 'string') return ['string', 'var', 'function', 'ternary'];
+  if (selectedType.value === 'boolean') return ['boolean', 'var', 'equal', 'compare-op', 'function', 'ternary'];
+  if (selectedType.value === 'array') return ['array', 'var', 'function', 'ternary'];
+  if (selectedType.value === 'object') return ['object', 'var', 'function', 'ternary'];
   return ['expression'];
 });
 

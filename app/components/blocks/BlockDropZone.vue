@@ -65,7 +65,7 @@ const isAccepted = (type: string) => {
   }
   
   // Le type 'literal' est un joker pour le type attendu par le parent (utile pour le multi-drop)
-  // Il est traité plus bas dans la logique spécifique aux parents
+  // Il est traité plus bas dans la logique spécifique aux parents.
 
   let normalizedType = type;
   if (type === 'true' || type === 'false') {
@@ -86,7 +86,7 @@ const isAccepted = (type: string) => {
       siblings = currentFunction.blocks;
     }
 
-    // On cherche le bloc qui précède le point d'insertion (afterBlockId)
+    // On cherche le bloc qui précède le point d'insertion (afterBlockId).
     const prevIndex = props.afterBlockId === 'start' ? -1 : siblings.findIndex(b => b.id === props.afterBlockId);
     const previousBlock = prevIndex === -1 ? null : siblings[prevIndex];
     const nextBlock = siblings[prevIndex + 1];
@@ -117,7 +117,7 @@ const isAccepted = (type: string) => {
     }
   }
 
-  // Si on essaie de dropper n'importe quel bloc (autre que elseif/else) 
+  // Si on essaie de dropper n'importe quel bloc (autre qu'elseif/else)
   // dans une position qui casserait la chaîne conditionnelle.
   if (normalizedType !== 'elseif' && normalizedType !== 'else' && props.isStackZone) {
     const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
@@ -137,7 +137,7 @@ const isAccepted = (type: string) => {
       const isPrevIfChain = previousBlock && (previousBlock.type === 'if' || previousBlock.type === 'elseif');
       const isNextIfChainPart = nextBlock && (nextBlock.type === 'elseif' || nextBlock.type === 'else');
 
-      // Si on est ENTRE deux morceaux d'une même chaîne (if-elseif ou elseif-else ou if-else)
+      // Si on est ENTRE deux morceaux d'une même chaîne (if elseif ou elseif else ou if else)
       // SEUL un elseif est autorisé ici.
       if (isPrevIfChain && isNextIfChainPart) {
         return normalizedType === 'elseif';
@@ -151,7 +151,7 @@ const isAccepted = (type: string) => {
 
         } else {
           if (normalizedType !== 'if' && normalizedType !== 'elseif') return false;
-          // Si c'est un if ou un elseif, on autorise, mais ATTENTION: 
+          // Si c'est un if ou un elseif, on autorise, mais ATTENTION :
           // si previousBlock était déjà un if/elseif, on est tombé dans le cas précédent (isPrevIfChain && isNextIfChainPart).
           // Sinon, on autorise l'insertion d'un if/elseif pour "réparer" ou "insérer" une chaîne.
           return true;
@@ -162,11 +162,11 @@ const isAccepted = (type: string) => {
 
   if (!props.acceptedBlockTypes || props.acceptedBlockTypes.length === 0) return true;
 
-  const expressionTypes = ['string', 'number', 'boolean', 'true', 'false', 'var', 'parameter', 'math-op', 'compare-op', 'equal', 'array', 'object', 'object_property', 'function', 'print', 'json', 'html'];
+  const expressionTypes = ['string', 'number', 'boolean', 'true', 'false', 'var', 'parameter', 'math-op', 'compare-op', 'equal', 'array', 'object', 'object_property', 'function', 'print', 'json', 'html', 'ternary'];
   
   const expandedAccepted = props.acceptedBlockTypes.flatMap(t => t === 'expression' ? expressionTypes : [t]);
 
-  // Si on est dans un ArrayBlock avec un elementType, on accepte d'autres types 
+  // Si on est dans un ArrayBlock avec un elementType, on accepte d'autres types,
   // car on va les transformer lors du drop (si c'est un nouveau bloc).
   const parentBlock = props.parentBlockId ? getBlockById(activeFunctionId.value, props.parentBlockId) : null;
   const isArrayElement = parentBlock && parentBlock.type === 'array' && parentBlock.config?.elementType;
@@ -177,11 +177,10 @@ const isAccepted = (type: string) => {
     if (isArrayElement) return true;
     if (parentBlock && (parentBlock.type === 'var' || parentBlock.type === 'set_var') && props.slotName === 'value') return true;
     return expandedAccepted.includes('expression');
-
   }
 
   if (isArrayElement) {
-    // On doit vérifier si le bloc est compatible avec le elementType du tableau
+    // ... existant ...
     const kind = typeof parentBlock.config.elementType === 'string' ? 
                  parentBlock.config.elementType : parentBlock.config.elementType.kind;
     
@@ -213,8 +212,8 @@ const isAccepted = (type: string) => {
       // Si c'est un bloc 'var', on vérifie si son type est compatible
       if (normalizedType === 'var' && kind !== 'any') {
         // Pour les variables existantes, on peut essayer de trouver leur type
-        // Note: ceci est complexe car il faut trouver la déclaration de la variable
-        // Pour l'instant on accepte 'var' car c'est une expression dynamique, 
+        // Note : ceci est complexe, car il faut trouver la déclaration de la variable
+        // Pour l'instant, on accepte 'var' parce que c'est une expression dynamique,
         // mais on pourrait être plus strict si on avait accès au type de la variable.
         return true; 
       }
@@ -223,6 +222,34 @@ const isAccepted = (type: string) => {
     
     // Si ce n'est pas explicitement accepté ou si c'est un mauvais littéral, on refuse
     return false;
+  }
+
+  // Validation spécifique pour le bloc Ternary : forcer isTrue et isFalse à avoir le même type
+  if (parentBlock && parentBlock.type === 'ternary' && (props.slotName === 'isTrue' || props.slotName === 'isFalse')) {
+    const otherSlotName = props.slotName === 'isTrue' ? 'isFalse' : 'isTrue';
+    const otherBlock = parentBlock.config?.slots?.[otherSlotName];
+    
+    if (otherBlock) {
+      // Si l'autre slot est rempli, on doit vérifier la compatibilité
+      const getReturnType = (block: any): string | null => {
+        if (!block) return null;
+        const type = block.type;
+        if (type === 'string' || type === 'number' || type === 'array' || type === 'object') return type;
+        if (type === 'true' || type === 'false' || type === 'boolean' || type === 'equal' || type.startsWith('compare-')) return 'boolean';
+        if (type.startsWith('math-')) return 'number';
+        if (type === 'var' || type === 'parameter') return block.config?.variableType || null;
+        if (type === 'function') return block.config?.returnType || null;
+        if (type === 'ternary') return getReturnType(block.config?.slots?.isTrue) || 'any';
+        return null;
+      };
+
+      const otherType = getReturnType(otherBlock);
+      const currentType = getReturnType({ type: normalizedType });
+
+      if (otherType && currentType && otherType !== 'any' && currentType !== 'any' && otherType !== currentType) {
+        return false;
+      }
+    }
   }
 
   // Ajout pour permettre de dropper un bloc 'array' dans un VarBlock de type array (déclaration ou affectation)
@@ -250,10 +277,10 @@ const isAccepted = (type: string) => {
   }
 
   if (parentBlock && (parentBlock.type === 'json' || parentBlock.type === 'html' || parentBlock.type === 'new_route')) {
-    // Si un bloc est déjà présent dans ce slot et que ce n'est pas une zone de pile, on refuse
+    // Si un bloc est déjà présent dans ce slot et que ce n'est pas une zone de pile, on refuse.
     if (props.block && !props.isStackZone) return false;
 
-    // On n'accepte que les types explicitement fournis dans expandedAccepted (car déjà limités dans JsonBlock/HtmlBlock/NewRouteBlock)
+    // On n'accepte que les types explicitement fournis dans expandedAccepted (car déjà limités dans JsonBlock/HtmlBlock/NewRouteBlock).
     return expandedAccepted.includes(normalizedType);
   }
 
@@ -271,7 +298,7 @@ const isAccepted = (type: string) => {
       siblings = currentFunction.blocks;
     }
 
-    // On cherche le bloc qui précède le point d'insertion (afterBlockId)
+    // On cherche le bloc qui précède le point d'insertion (afterBlockId).
     const prevIndex = props.afterBlockId === 'start' ? -1 : siblings.findIndex(b => b.id === props.afterBlockId);
     const previousBlock = prevIndex === -1 ? null : siblings[prevIndex];
     const nextBlock = siblings[prevIndex + 1];
@@ -302,7 +329,7 @@ const isAccepted = (type: string) => {
     }
   }
 
-  // Si on essaie de dropper n'importe quel bloc (autre que elseif/else) 
+  // Si on essaie de dropper n'importe quel bloc (autre qu'elseif/else)
   // dans une position qui casserait la chaîne conditionnelle.
   if (normalizedType !== 'elseif' && normalizedType !== 'else' && props.isStackZone) {
     const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
@@ -322,7 +349,7 @@ const isAccepted = (type: string) => {
       const isPrevIfChain = previousBlock && (previousBlock.type === 'if' || previousBlock.type === 'elseif');
       const isNextIfChainPart = nextBlock && (nextBlock.type === 'elseif' || nextBlock.type === 'else');
 
-      // Si on est ENTRE deux morceaux d'une même chaîne (if-elseif ou elseif-else ou if-else)
+      // Si on est ENTRE deux morceaux d'une même chaîne (if elseif ou elseif else ou if else)
       // SEUL un elseif est autorisé ici.
       if (isPrevIfChain && isNextIfChainPart) {
         return normalizedType === 'elseif';
@@ -336,7 +363,7 @@ const isAccepted = (type: string) => {
 
         } else {
           if (normalizedType !== 'if' && normalizedType !== 'elseif') return false;
-          // Si c'est un if ou un elseif, on autorise, mais ATTENTION: 
+          // Si c'est un if ou un elseif, on autorise, mais ATTENTION :
           // si previousBlock était déjà un if/elseif, on est tombé dans le cas précédent (isPrevIfChain && isNextIfChainPart).
           // Sinon, on autorise l'insertion d'un if/elseif pour "réparer" ou "insérer" une chaîne.
           return true;
@@ -368,13 +395,13 @@ const onDrop = (e: DragEvent) => {
     
     // On doit vérifier chaque type dans le cas d'un multi-drop (mais isAccepted ne prend qu'un type)
     // On fait un check rapide ici pour le feedback visuel du dragover, 
-    // mais pour le drop on va filtrer individuellement.
+    // mais pour le drop, on va filtrer individuellement.
     if (blockTypeToDrop && !blockTypeToDrop.includes(',') && !blockTypeToDrop.includes('*') && !isAccepted(blockTypeToDrop)) {
       return;
     }
 
     // Gestion du multi-drop : si typeFromData contient des virgules, c'est une liste de types
-    // On supporte aussi le format "type*count" (ex: "string*3")
+    // On supporte aussi le format "type*count" (ex : "string*3")
     let typesToCreate: string[] = [];
     if (typeFromData?.includes(',')) {
       typesToCreate = typeFromData.split(',');
@@ -393,7 +420,7 @@ const onDrop = (e: DragEvent) => {
 
         // New block from sidebar
         let blockToCreate = currentType;
-        let initialConfig = {};
+        let initialConfig: Record<string, any> = {};
         
         // Mapping des types littéraux vers les types de base
         const literalToKind: Record<string, string> = {
@@ -401,7 +428,7 @@ const onDrop = (e: DragEvent) => {
           'true': 'boolean', 'false': 'boolean', 'array': 'array', 'object': 'object'
         };
 
-        // Logic pour ArrayBlock: si on drop un bloc "générique" ou un bloc litéral, 
+        // Logic pour ArrayBlock : si on drop un bloc "générique" ou un bloc litéral,
         // on vérifie si le parent est un array avec un elementType défini.
         if (props.parentBlockId) {
           const parentBlock = getBlockById(activeFunctionId.value, props.parentBlockId);
@@ -423,12 +450,12 @@ const onDrop = (e: DragEvent) => {
               }
             }
 
-            // Si le nouveau bloc est aussi un tableau, on lui transmet le elementType si nécessaire
+            // Si le nouveau bloc est aussi un tableau, on lui transmet l'elementType si nécessaire
             if (blockToCreate === 'array' && parentBlock.config.elementType.kind === 'array') {
               initialConfig = { elementType: parentBlock.config.elementType.elementType };
             }
           } else if (parentBlock && (parentBlock.type === 'json' || parentBlock.type === 'html')) {
-            // Pour le bloc JSON/HTML, si on drop un littéral générique, on crée une string par défaut
+            // Pour le bloc JSON/HTML, si on drop un littéral générique, on crée un string par défaut
             if (currentType === 'literal') {
               blockToCreate = 'string';
             }
@@ -527,6 +554,8 @@ const onDrop = (e: DragEvent) => {
               if (targetFunc) {
                 returnType = targetFunc.metadata?.returnType || 'any';
               }
+            } else if (blockToCreate === 'ternary') {
+              returnType = 'any';
             }
             updateFunctionMetadata(activeFunctionId.value, { returnType });
           }
@@ -584,7 +613,7 @@ const onDrop = (e: DragEvent) => {
           if (props.parentBlockId) {
             const parentBlock = getBlockById(activeFunctionId.value, props.parentBlockId);
             if (parentBlock && parentBlock.type === 'return' && props.slotName === 'value') {
-              let returnType = block.type;
+              let returnType: any = block.type;
               if (block.type === 'string') {
                 returnType = 'string';
               } else if (block.type === 'number') {
@@ -601,6 +630,19 @@ const onDrop = (e: DragEvent) => {
                 returnType = initialConfig.structId ? { kind: 'object', structId: initialConfig.structId } : 'object';
               } else if (block.type === 'var') {
                 returnType = 'any';
+              } else if (block.type === 'ternary') {
+                const getReturnType = (b: any): string | null => {
+                  if (!b) return null;
+                  const type = b.type;
+                  if (type === 'string' || type === 'number' || type === 'array' || type === 'object') return type;
+                  if (type === 'true' || type === 'false' || type === 'boolean' || type === 'equal' || type.startsWith('compare-')) return 'boolean';
+                  if (type.startsWith('math-')) return 'number';
+                  if (type === 'var' || type === 'parameter') return b.config?.variableType || null;
+                  if (type === 'function') return b.config?.returnType || null;
+                  if (type === 'ternary') return getReturnType(b.config?.slots?.isTrue) || 'any';
+                  return null;
+                };
+                returnType = getReturnType(block) || 'any';
               }
               if (block.type === 'var' && initialConfig.selectedVar) {
                 const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
@@ -665,7 +707,7 @@ const handlePickerSelect = (type: string) => {
   // Logic almost identical to onDrop but simplified for new blocks only
   let initialConfig: any = {};
   
-  // Adapt if it's a math or compare op
+  // Adapt if it's math or compare op
   let blockType = type;
   if (type.startsWith('math-')) {
     blockType = `math-${type.split('-')[1]}`;
@@ -713,6 +755,8 @@ const handlePickerSelect = (type: string) => {
       } else if (blockType.startsWith('compare-') || blockType === 'equal') {
         returnType = 'boolean';
       } else if (blockType === 'var') {
+        returnType = 'any';
+      } else if (blockType === 'ternary') {
         returnType = 'any';
       }
       if (blockType === 'var' && initialConfig.selectedVar) {

@@ -98,7 +98,7 @@ interface ParamInfo { name: string; type: any; hasDefault: boolean }
 
 const findParamsInBlocks = (blocks: any[], acc: ParamInfo[]) => {
   blocks.forEach((b) => {
-    // Un bloc 'parameter' est une déclaration s'il a un nom et n'est pas une utilisation (selectedParam absent)
+    // Un bloc 'parameter' est une déclaration s'il a un nom et n'est pas une utilisation (selectedParam absent).
     if (b.type === 'parameter' && b.config?.name && !b.config?.selectedParam) {
       acc.push({ 
         name: b.config.name, 
