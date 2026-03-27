@@ -162,9 +162,13 @@ const isAccepted = (type: string) => {
 
   if (!props.acceptedBlockTypes || props.acceptedBlockTypes.length === 0) return true;
 
-  const expressionTypes = ['string', 'number', 'boolean', 'true', 'false', 'var', 'parameter', 'math-op', 'compare-op', 'equal', 'array', 'object', 'object_property', 'function', 'print', 'json', 'html', 'ternary'];
+  const expressionTypes = ['string', 'number', 'boolean', 'true', 'false', 'var', 'parameter', 'math-op', 'compare-op', 'equal', 'array', 'object', 'object_property', 'function', 'print', 'json', 'html', 'ternary', 'if', 'while', 'for', 'foreach'];
   
-  const expandedAccepted = props.acceptedBlockTypes.flatMap(t => t === 'expression' ? expressionTypes : [t]);
+  const expandedAccepted = props.acceptedBlockTypes.flatMap(t => {
+    if (t === 'expression') return expressionTypes;
+    if (t === 'boolean') return ['boolean', 'true', 'false', 'equal', 'compare-', 'ternary', 'var', 'parameter', 'function', 'if', 'while'];
+    return [t];
+  });
 
   // Si on est dans un ArrayBlock avec un elementType, on accepte d'autres types,
   // car on va les transformer lors du drop (si c'est un nouveau bloc).

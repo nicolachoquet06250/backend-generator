@@ -59,7 +59,7 @@ watch([() => props.isTrue, () => props.isFalse], () => {
         slotName="condition" 
         :parentBlockId="blockId!" 
         :block="condition"
-        :acceptedBlockTypes="['boolean', 'true', 'false', 'equal', 'compare-']"
+        :acceptedBlockTypes="['boolean', 'equal', 'compare-<', 'compare->', 'compare-<=', 'compare->=', 'compare-!=']"
       >
         <BlockRenderer v-if="condition" :block="condition" isExpression />
       </BlockDropZone>

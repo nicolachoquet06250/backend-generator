@@ -19,7 +19,7 @@ const props = defineProps<{
       slotName="condition" 
       :parentBlockId="blockId!" 
       :block="condition"
-      :acceptedBlockTypes="['expression']"
+      :acceptedBlockTypes="['boolean']"
     >
       <BlockRenderer v-if="condition" :block="condition" isExpression />
     </BlockDropZone>

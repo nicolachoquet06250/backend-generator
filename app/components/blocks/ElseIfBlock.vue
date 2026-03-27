@@ -45,7 +45,7 @@ const getConditionComponent = (block: any) => {
       slotName="condition" 
       :parentBlockId="blockId!" 
       :block="condition"
-      :acceptedBlockTypes="['expression']"
+      :acceptedBlockTypes="['boolean']"
     >
       <component 
         v-if="condition" 
