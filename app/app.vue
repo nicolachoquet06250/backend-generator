@@ -48,14 +48,25 @@ function getPWADisplayMode() {
         <h1>{{ $t('welcome') }}</h1>
       </div>
       <div class="header-actions">
+        <button class="reload-btn" :title="$t('common.reload')" @click="window.location.reload()">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+        </button>
         <button class="reset-btn" :title="$t('common.reset')" @click="showResetModal = true">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"></polyline>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
           </svg>
         </button>
-        <button class="struct-toggle" @click="showStructures = !showStructures">
-          {{ $t('sections.structures') }} <template v-if="!isMobile">({{ structures.length }})</template>
+        <button class="struct-toggle" :title="$t('sections.structures')" @click="showStructures = !showStructures">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+          </svg>
+          <span class="struct-count" v-if="structures.length > 0">{{ structures.length }}</span>
         </button>
         <div class="lang-switcher">
           <button 
@@ -271,13 +282,67 @@ body {
   border-color: #e60000;
 }
 
-.struct-toggle {
-  background: var(--btn-struct);
-  border: 1px solid white;
+.reload-btn {
+  background: #4caf50;
+  border: 1px solid #4caf50;
   color: white;
-  padding: 6px 12px;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 4px;
   cursor: pointer;
+  padding: 0;
+  transition: all 0.2s;
+}
+
+.reload-btn:hover {
+  background: #45a049;
+  border-color: #45a049;
+}
+
+.struct-toggle {
+  background: var(--btn-struct);
+  border: 1px solid var(--btn-struct);
+  color: white;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.struct-toggle:hover {
+  background: #ff5e1a;
+  border-color: #ff5e1a;
+}
+
+.struct-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #ff4c4c;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: bold;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
 .lang-switcher {

@@ -20,8 +20,11 @@
         </div>
       </div>
       <div class="actions">
-        <button v-if="$pwa?.needRefresh" class="btn-primary" @click="$pwa?.updateServiceWorker()">
-          {{ $t('pwa.reload') }}
+        <button v-if="$pwa?.needRefresh" class="btn-primary" :title="$t('pwa.reload')" @click="$pwa?.updateServiceWorker()">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
         </button>
         <button class="btn-secondary" @click="$pwa?.cancelPrompt()">
           {{ $t('pwa.close') }}
@@ -105,6 +108,10 @@ button:focus-visible {
   background: var(--header-bg);
   color: white;
   box-shadow: 0 4px 12px rgba(76, 151, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
 }
 
 .btn-primary:hover {
