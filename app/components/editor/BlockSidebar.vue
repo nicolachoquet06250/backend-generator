@@ -20,6 +20,7 @@ import ParameterBlock from '../blocks/ParameterBlock.vue';
 import ArrayPushBlock from '../blocks/ArrayPushBlock.vue';
 import ArrayRemoveBlock from '../blocks/ArrayRemoveBlock.vue';
 import ArraySetKeyBlock from '../blocks/ArraySetKeyBlock.vue';
+import FinBlock from '../blocks/FinBlock.vue';
 import ReturnBlock from '../blocks/ReturnBlock.vue';
 import JsonBlock from '../blocks/JsonBlock.vue';
 import HtmlBlock from '../blocks/HtmlBlock.vue';
@@ -30,6 +31,7 @@ import EqualBlock from '../blocks/EqualBlock.vue';
 import ComparisonBlock from '../blocks/ComparisonBlock.vue';
 import { useMobileDragDrop } from '~/composables/useMobileDragDrop';
 
+const { isDragging } = useFunctions();
 const { onTouchStart, onTouchMove, onTouchEnd } = useMobileDragDrop();
 
 const activeDomain = ref('base');
@@ -40,6 +42,7 @@ const domains = [
 
 const onDragStart = (e: DragEvent, type: string) => {
   if (e.dataTransfer) {
+    isDragging.value = true;
     e.dataTransfer.setData('blockType', type);
     e.dataTransfer.setData('text/plain', type);
     e.dataTransfer.setData('application/x-block-type', type);
@@ -47,12 +50,22 @@ const onDragStart = (e: DragEvent, type: string) => {
   }
 };
 
+const onDragEnd = () => {
+  isDragging.value = false;
+};
+
 const handleTouchStart = (e: TouchEvent, type: string) => {
   const target = e.target as HTMLElement;
   if (target && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(target.tagName)) {
     return;
   }
+  isDragging.value = true;
   onTouchStart(e, { blockType: type, 'text/plain': type, 'application/x-block-type': type });
+};
+
+const handleTouchEnd = (e: TouchEvent) => {
+  isDragging.value = false;
+  onTouchEnd(e);
 };
 
 const onStopPropagation = (e: MouseEvent | TouchEvent) => {
@@ -66,8 +79,8 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
 <template>
   <div class="block-sidebar"
        @touchmove="onTouchMove" 
-       @touchend="onTouchEnd"
-       @touchcancel="onTouchEnd"
+       @touchend="handleTouchEnd"
+       @touchcancel="handleTouchEnd"
   >
     <div class="domain-tabs">
       <button 
@@ -87,12 +100,14 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
       <h3>{{ $t('sections.variables') }}</h3>
       <div class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'var')"
+           @dragend="onDragEnd"
            @touchstart="handleTouchStart($event, 'var')"
            @mousedown="onStopPropagation">
         <VarBlock minimal />
       </div>
       <div class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'set_var')"
+           @dragend="onDragEnd"
            @touchstart="handleTouchStart($event, 'set_var')"
            @mousedown="onStopPropagation">
         <SetVarBlock minimal />
@@ -105,6 +120,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
       <div v-for="op in ['+', '-', '*', '/', '%']" :key="op" 
            class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'math-' + op)"
+           @dragend="onDragEnd"
            @touchstart="handleTouchStart($event, 'math-' + op)"
            @mousedown="onStopPropagation">
         <MathBlock :symbol="op" minimal />
@@ -116,6 +132,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
       <h3>{{ $t('sections.logic') }}</h3>
       <div class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'equal')"
+           @dragend="onDragEnd"
            @touchstart="handleTouchStart($event, 'equal')"
            @mousedown="onStopPropagation">
         <EqualBlock minimal />
@@ -123,6 +140,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
       <div v-for="op in ['<', '>', '<=', '>=', '!=']" :key="op"
            class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'compare-' + op)"
+           @dragend="onDragEnd"
            @touchstart="handleTouchStart($event, 'compare-' + op)"
            @mousedown="onStopPropagation">
         <ComparisonBlock :symbol="op" minimal />
@@ -144,6 +162,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
              :key="type"
              class="draggable-wrapper" draggable="true" 
              @dragstart="onDragStart($event, type)"
+             @dragend="onDragEnd"
              @touchstart="handleTouchStart($event, type)"
              @mousedown="onStopPropagation">
           <component :is="type === 'string' ? StringBlock : 
@@ -176,6 +195,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
            :key="type"
            class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, type)"
+           @dragend="onDragEnd"
            @touchstart="handleTouchStart($event, type)"
            @mousedown="onStopPropagation">
         <component :is="type === 'if' ? IfBlock : 
@@ -196,24 +216,28 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
       <h3>{{ $t('sections.actions') }}</h3>
       <div class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'print')"
+           @dragend="onDragEnd"
            @touchstart="handleTouchStart($event, 'print')"
            @mousedown="onStopPropagation">
         <PrintBlock minimal />
       </div>
       <div class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'array_push')"
+           @dragend="onDragEnd"
            @touchstart="handleTouchStart($event, 'array_push')"
            @mousedown="onStopPropagation">
         <ArrayPushBlock minimal />
       </div>
       <div class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'array_remove')"
+           @dragend="onDragEnd"
            @touchstart="handleTouchStart($event, 'array_remove')"
            @mousedown="onStopPropagation">
         <ArrayRemoveBlock minimal />
       </div>
       <div class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'array_set_key')"
+           @dragend="onDragEnd"
            @touchstart="handleTouchStart($event, 'array_set_key')"
            @mousedown="onStopPropagation">
         <ArraySetKeyBlock minimal :targetKey="null" />
@@ -225,18 +249,21 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
       <h3>{{ $t('sections.functions') }}</h3>
       <div class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'parameter')"
+           @dragend="onDragEnd"
            @touchstart="handleTouchStart($event, 'parameter')"
            @mousedown="onStopPropagation">
         <ParameterBlock minimal />
       </div>
       <div class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'function')"
+           @dragend="onDragEnd"
            @touchstart="handleTouchStart($event, 'function')"
            @mousedown="onStopPropagation">
         <FunctionCallBlock minimal />
       </div>
       <div class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'return')"
+           @dragend="onDragEnd"
            @touchstart="handleTouchStart($event, 'return')"
            @mousedown="onStopPropagation">
         <ReturnBlock minimal />
@@ -248,12 +275,14 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
       <h3>{{ $t('sections.data_formats') }}</h3>
       <div class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'json')"
+           @dragend="onDragEnd"
            @touchstart="handleTouchStart($event, 'json')"
            @mousedown="onStopPropagation">
         <JsonBlock minimal />
       </div>
       <div class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'html')"
+           @dragend="onDragEnd"
            @touchstart="handleTouchStart($event, 'html')"
            @mousedown="onStopPropagation">
         <HtmlBlock minimal />
@@ -266,6 +295,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
         <h3>{{ $t('sections.web') }}</h3>
         <div class="draggable-wrapper" draggable="true" 
              @dragstart="onDragStart($event, 'new_route')"
+             @dragend="onDragEnd"
              @touchstart="handleTouchStart($event, 'new_route')"
              @mousedown="onStopPropagation">
           <NewRouteBlock minimal />

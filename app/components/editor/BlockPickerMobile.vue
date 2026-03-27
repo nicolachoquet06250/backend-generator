@@ -20,6 +20,7 @@ import ParameterBlock from '../blocks/ParameterBlock.vue';
 import ArrayPushBlock from '../blocks/ArrayPushBlock.vue';
 import ArrayRemoveBlock from '../blocks/ArrayRemoveBlock.vue';
 import ArraySetKeyBlock from '../blocks/ArraySetKeyBlock.vue';
+import FinBlock from '../blocks/FinBlock.vue';
 import ReturnBlock from '../blocks/ReturnBlock.vue';
 import JsonBlock from '../blocks/JsonBlock.vue';
 import HtmlBlock from '../blocks/HtmlBlock.vue';
@@ -30,6 +31,7 @@ import EqualBlock from '../blocks/EqualBlock.vue';
 import ComparisonBlock from '../blocks/ComparisonBlock.vue';
 import { useMobileDragDrop } from '~/composables/useMobileDragDrop';
 
+const { isDragging } = useFunctions();
 const { onTouchStart, onTouchMove, onTouchEnd } = useMobileDragDrop();
 
 const props = defineProps<{
@@ -55,7 +57,13 @@ const handleTouchStart = (e: TouchEvent, type: string) => {
   if (target && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(target.tagName)) {
     return;
   }
+  isDragging.value = true;
   onTouchStart(e, { blockType: type, 'text/plain': type, 'application/x-block-type': type });
+};
+
+const handleTouchEnd = (e: TouchEvent) => {
+  isDragging.value = false;
+  onTouchEnd(e);
 };
 
 const inLoop = inject('inLoop', ref(false));
@@ -115,8 +123,8 @@ watch(activeDomain, () => {
 <template>
   <div class="block-picker-mobile"
        @touchmove="onTouchMove" 
-       @touchend="onTouchEnd"
-       @touchcancel="onTouchEnd"
+       @touchend="handleTouchEnd"
+       @touchcancel="handleTouchEnd"
   >
     <div class="domain-tabs">
       <button 
@@ -207,7 +215,7 @@ watch(activeDomain, () => {
 
       <!-- Contrôle de flux -->
       <div v-if="activeCategory === 'control'" class="mobile-section">
-        <template v-for="type in ['if', 'elseif', 'else', 'while', 'for', 'foreach', 'break', 'continue']" :key="type">
+        <template v-for="type in ['if', 'elseif', 'else', 'while', 'for', 'foreach', 'break', 'continue', 'fin']" :key="type">
           <div v-if="isAccepted(type)" class="mobile-clickable-block" 
                @click="onSelect(type)"
                @touchstart="handleTouchStart($event, type)">
@@ -218,7 +226,8 @@ watch(activeDomain, () => {
                            type === 'for' ? ForBlock :
                            type === 'foreach' ? ForEachBlock :
                            type === 'break' ? BreakBlock :
-                           ContinueBlock" 
+                           type === 'continue' ? ContinueBlock :
+                           FinBlock" 
                        minimal
             />
           </div>

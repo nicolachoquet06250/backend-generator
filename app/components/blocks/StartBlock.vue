@@ -6,7 +6,7 @@ defineProps<{
 </script>
 
 <template>
-  <BaseBlock color="#FFBF00" :label="$t('blocks.start.label')" :draggable="false">
+  <BaseBlock color="#FFBF00" :label="$t('blocks.start.label')" :draggable="false" is-root>
     <div class="start-icon">🏁</div>
   </BaseBlock>
 </template>

@@ -4,7 +4,7 @@ import AppModal from '../common/AppModal.vue';
 import { useMobileDragDrop } from '~/composables/useMobileDragDrop';
 
 const { t } = useI18n();
-const { functions, activeFunctionId, addFunction, removeFunction, addBlockToFunction, removeBlockFromFunction, getBlockById } = useFunctions();
+const { functions, activeFunctionId, isDragging, addFunction, removeFunction, addBlockToFunction, removeBlockFromFunction, getBlockById } = useFunctions();
 const { onTouchMove, onTouchEnd } = useMobileDragDrop();
 
 const showCreateModal = ref(false);
@@ -152,7 +152,7 @@ const onMobileTrashDragLeave = () => {
 
       <div 
         class="trash-bin" 
-        :class="{ active: isDraggingOverTrash }"
+        :class="{ active: isDraggingOverTrash, 'enable-hover': isDragging }"
         @dragover="onTrashDragOver"
         @dragleave="onTrashDragLeave"
         @drop="onTrashDrop"
@@ -348,18 +348,18 @@ const onMobileTrashDragLeave = () => {
   }
 }
 
-.trash-bin:hover, .trash-bin.active {
+.trash-bin.enable-hover:hover, .trash-bin.active {
   transform: scale(1.1);
 }
 
 @media (max-width: 768px) {
-  .trash-bin:hover, .trash-bin.active {
+  .trash-bin.enable-hover:hover, .trash-bin.active {
     transform: scale(1.1);
   }
 }
 
 @media (min-width: 769px) {
-  .trash-bin:hover, .trash-bin.active {
+  .trash-bin.enable-hover:hover, .trash-bin.active {
     transform: scale(1.1);
   }
 }

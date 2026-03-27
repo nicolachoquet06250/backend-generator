@@ -38,6 +38,8 @@ export const useFunctions = () => {
     return functions.value.length > 0 ? functions.value[0]!.id : 'f1';
   });
 
+  const isDragging = useState<boolean>('is-dragging', () => false);
+
   // Persist state when it changes
   watch(functions, (newFunctions) => {
     if (import.meta.client) {
@@ -212,6 +214,7 @@ export const useFunctions = () => {
   return {
     functions,
     activeFunctionId,
+    isDragging,
     addFunction,
     removeFunction,
     addBlockToFunction,

@@ -147,6 +147,9 @@
     "start": {
       "label": "au démarrage"
     },
+    "end": {
+      "label": "fin \uD83C\uDFC1"
+    },
     "function": {
       "call": "appeler",
       "select": "Choisir fonction"

@@ -147,6 +147,9 @@
     "start": {
       "label": "when started"
     },
+    "end": {
+      "label": "end \uD83C\uDFC1"
+    },
     "function": {
       "call": "call",
       "select": "Select function"

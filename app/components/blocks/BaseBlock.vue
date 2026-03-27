@@ -6,17 +6,22 @@ const props = withDefaults(defineProps<{
   blockId?: string;
   blockType?: string;
   draggable?: boolean;
+  noHover?: boolean;
   children?: any[];
+  isRoot?: boolean;
 }>(), {
-  draggable: true
+  draggable: true,
+  noHover: false,
+  isRoot: false,
 });
 
-const { activeFunctionId } = useFunctions();
+const { activeFunctionId, isDragging } = useFunctions();
 const { onTouchStart, onTouchMove, onTouchEnd } = useMobileDragDrop();
 
 const onDragStart = (e: DragEvent) => {
   if (props.minimal) return; // Don't drag from sidebar via this handler
   if (e.dataTransfer && props.blockId && activeFunctionId.value) {
+    isDragging.value = true;
     e.stopPropagation();
     e.dataTransfer.setData('existingBlockId', props.blockId);
     if (props.blockType) {
@@ -27,6 +32,10 @@ const onDragStart = (e: DragEvent) => {
   }
 };
 
+const onDragEnd = () => {
+  isDragging.value = false;
+};
+
 const handleTouchStart = (e: TouchEvent) => {
   if (props.minimal) return;
   const target = e.target as HTMLElement;
@@ -35,6 +44,7 @@ const handleTouchStart = (e: TouchEvent) => {
   }
   
   if (props.blockId && activeFunctionId.value) {
+    isDragging.value = true;
     const data: Record<string, string> = {
       existingBlockId: props.blockId,
       sourceFunctionId: activeFunctionId.value
@@ -44,6 +54,11 @@ const handleTouchStart = (e: TouchEvent) => {
     }
     onTouchStart(e, data);
   }
+};
+
+const handleTouchEnd = (e: TouchEvent) => {
+  isDragging.value = false;
+  onTouchEnd(e);
 };
 
 const onStopPropagation = (e: MouseEvent | TouchEvent) => {
@@ -57,15 +72,16 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
 <template>
   <div 
     class="block-container" 
-    :class="{ minimal, 'is-full-width': $attrs.class && ($attrs.class as string).includes('full-width') }"
+    :class="{ minimal, 'is-full-width': $attrs.class && ($attrs.class as string).includes('full-width'), 'is-root': isRoot, 'no-hover': noHover }"
     :style="{ backgroundColor: color || '#4C97FF' }"
     v-bind="draggable ? { draggable: true } : {}"
     @dragstart="onDragStart"
+    @dragend="onDragEnd"
     @mousedown="onStopPropagation"
     @touchstart="(e) => { onStopPropagation(e); handleTouchStart(e); }"
     @touchmove="onTouchMove"
-    @touchend="onTouchEnd"
-    @touchcancel="onTouchEnd"
+    @touchend="handleTouchEnd"
+    @touchcancel="handleTouchEnd"
   >
     <div class="block-content">
       <span v-if="label" class="block-label">{{ label }}</span>
@@ -120,7 +136,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
   width: calc(100% - 8px);
 }
 
-.block-container:hover {
+.block-container:not(.is-root):not(.no-hover):hover {
   filter: brightness(1.05);
   box-shadow: 0 4px 8px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.4);
 }

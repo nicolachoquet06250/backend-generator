@@ -29,6 +29,7 @@ import ArraySetKeyBlock from '../blocks/ArraySetKeyBlock.vue';
 import JsonBlock from '../blocks/JsonBlock.vue';
 import HtmlBlock from '../blocks/HtmlBlock.vue';
 import NewRouteBlock from '../blocks/NewRouteBlock.vue';
+import FinBlock from '../blocks/FinBlock.vue';
 import BlockDropZone from '../blocks/BlockDropZone.vue';
 import { useMobileDragDrop } from '~/composables/useMobileDragDrop';
 
@@ -169,6 +170,10 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
         :afterBlockId="block.id"
         isStackZone
       />
+    </div>
+
+    <div v-if="isRoot" class="block-item">
+      <FinBlock />
     </div>
 
     <!-- Drop zone to add blocks at the end of this stack if empty -->
