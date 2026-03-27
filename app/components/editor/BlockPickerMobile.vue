@@ -30,6 +30,7 @@ import SetVarBlock from '../blocks/SetVarBlock.vue';
 import EqualBlock from '../blocks/EqualBlock.vue';
 import ComparisonBlock from '../blocks/ComparisonBlock.vue';
 import { useMobileDragDrop } from '~/composables/useMobileDragDrop';
+import TernaryBlock from "~/components/blocks/TernaryBlock.vue";
 
 const { isDragging } = useFunctions();
 const { onTouchStart, onTouchMove, onTouchEnd } = useMobileDragDrop();
@@ -215,13 +216,14 @@ watch(activeDomain, () => {
 
       <!-- Contrôle de flux -->
       <div v-if="activeCategory === 'control'" class="mobile-section">
-        <template v-for="type in ['if', 'elseif', 'else', 'while', 'for', 'foreach', 'break', 'continue', 'fin']" :key="type">
+        <template v-for="type in ['if', 'elseif', 'else', 'ternary', 'while', 'for', 'foreach', 'break', 'continue']" :key="type">
           <div v-if="isAccepted(type)" class="mobile-clickable-block" 
                @click="onSelect(type)"
                @touchstart="handleTouchStart($event, type)">
             <component :is="type === 'if' ? IfBlock : 
                            type === 'elseif' ? ElseIfBlock :
                            type === 'else' ? ElseBlock :
+                           type === 'ternary' ? TernaryBlock :
                            type === 'while' ? WhileBlock :
                            type === 'for' ? ForBlock :
                            type === 'foreach' ? ForEachBlock :

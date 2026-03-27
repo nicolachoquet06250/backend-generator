@@ -28,6 +28,7 @@ import HtmlBlock from '../blocks/HtmlBlock.vue';
 import NewRouteBlock from '../blocks/NewRouteBlock.vue';
 import EqualBlock from '../blocks/EqualBlock.vue';
 import ComparisonBlock from '../blocks/ComparisonBlock.vue';
+import TernaryBlock from "~/components/blocks/TernaryBlock.vue";
 
 const props = defineProps<{
   show: boolean;
@@ -148,14 +149,15 @@ const isAccepted = (type: string) => {
       </div>
 
       <!-- Contrôle de flux -->
-      <div class="picker-section" v-if="['if', 'elseif', 'else', 'while', 'for', 'foreach', 'break', 'continue'].map(type => isAccepted(type)).filter(t => t).length > 0">
+      <div class="picker-section" v-if="['if', 'elseif', 'else', 'ternary', 'while', 'for', 'foreach', 'break', 'continue'].map(type => isAccepted(type)).filter(t => t).length > 0">
         <h3>{{ $t('sections.control') }}</h3>
         <div class="blocks-list">
-          <template v-for="type in ['if', 'elseif', 'else', 'while', 'for', 'foreach', 'break', 'continue']" :key="type">
+          <template v-for="type in ['if', 'elseif', 'else', 'ternary', 'while', 'for', 'foreach', 'break', 'continue']" :key="type">
             <div v-if="isAccepted(type)" class="clickable-block" @click="onSelect(type)">
               <component :is="type === 'if' ? IfBlock :
                              type === 'elseif' ? ElseIfBlock :
                              type === 'else' ? ElseBlock :
+                             type === 'ternary' ? TernaryBlock :
                              type === 'while' ? WhileBlock :
                              type === 'for' ? ForBlock :
                              type === 'foreach' ? ForEachBlock :
