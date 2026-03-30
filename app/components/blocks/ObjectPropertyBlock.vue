@@ -32,8 +32,14 @@ const { formatType } = useTypeFormatter();
 
 const selectedProperty = ref(props.config?.property || '');
 
+watch(() => props.config?.property, (newVal) => {
+  if (newVal !== undefined && newVal !== selectedProperty.value) {
+    selectedProperty.value = newVal;
+  }
+});
+
 watch(selectedProperty, (val) => {
-  if (props.blockId && activeFunctionId.value) {
+  if (props.blockId && activeFunctionId.value && val !== props.config?.property) {
     updateBlockConfig(activeFunctionId.value, props.blockId, { property: val });
   }
 });
@@ -133,17 +139,19 @@ const availableProperties = computed(() => {
     });
   });
   
-  // Ajouter les fonctions associées à cette structure
-  functions.value
-    .filter(f => f.metadata?.structureId === sourceStructure.value?.id)
-    .forEach(f => {
-      properties.push({
-        id: `func_${f.id}`,
-        name: f.name,
-        type: 'function',
-        metadata: f
+  // Ajouter les fonctions associées à cette structure uniquement si le contexte ne force pas les propriétés
+  if (filterContext.value !== 'object_only') {
+    functions.value
+      .filter(f => f.metadata?.structureId === sourceStructure.value?.id)
+      .forEach(f => {
+        properties.push({
+          id: `func_${f.id}`,
+          name: f.name,
+          type: 'function',
+          metadata: f
+        });
       });
-    });
+  }
     
   return properties;
 });
@@ -154,14 +162,16 @@ const selectedPropInfo = computed(() => {
 
 // Mise à jour du type de retour si dans un bloc return
 watch([selectedPropInfo, () => props.blockId], ([info, blockId]) => {
-  if (blockId && activeFunctionId.value && info) {
+  if (blockId && activeFunctionId.value) {
     const returnBlock = findReturnParent(activeFunctionId.value, blockId);
     if (returnBlock) {
       let type: any = 'any';
-      if (info.type === 'field') {
-        type = info.metadata;
-      } else if (info.type === 'function') {
-        type = info.metadata?.metadata?.returnType || 'any';
+      if (info) {
+        if (info.type === 'field') {
+          type = info.metadata;
+        } else if (info.type === 'function') {
+          type = info.metadata?.metadata?.returnType || 'any';
+        }
       }
       
       updateFunctionMetadata(activeFunctionId.value, { returnType: type });

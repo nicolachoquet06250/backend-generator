@@ -166,8 +166,10 @@ export const useFunctions = () => {
           // Si le bloc est supprimé alors qu'il est dans un slot 'value' d'un bloc 'return', 
           // on doit réinitialiser le type de retour à 'any' car le slot devient vide.
           const parent = getParentBlock(functionId, blockId);
-          if (parent && parent.type === 'return') {
-            updateFunctionMetadata(functionId, { returnType: 'any' });
+          if (parent) {
+            if (parent.type === 'return') {
+              updateFunctionMetadata(functionId, { returnType: 'any' });
+            }
           }
         }
       }
@@ -179,6 +181,17 @@ export const useFunctions = () => {
           if (b.config.slots) {
             for (const slot in b.config.slots) {
               if (b.config.slots[slot]?.id === blockId) {
+                // Si on retire le premier élément (source) du bloc property, on reset le select et le return type si nécessaire
+                if (b.type === 'object_property' && slot === 'source') {
+                  b.config.property = '';
+                  
+                  // Si le bloc object_property est dans un slot 'value' d'un bloc 'return', 
+                  // on doit aussi reset le return type de la fonction
+                  const parent = getParentBlock(functionId, b.id);
+                  if (parent && parent.type === 'return') {
+                    updateFunctionMetadata(functionId, { returnType: 'any' });
+                  }
+                }
                 delete b.config.slots[slot];
               } else if (b.config.slots[slot]) {
                 b.config.slots[slot] = recursiveRemove([b.config.slots[slot]])[0];
