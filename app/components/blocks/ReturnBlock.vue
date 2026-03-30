@@ -54,7 +54,7 @@ const getValueComponent = (block: any) => {
     <template #label>
       <div class="return-label-container">
         <span class="block-label">{{ $t('blocks.return.label') }}</span>
-        <span class="return-type-display">({{ formatType(returnType) }})</span>
+        <span class="return-type-display" v-if="!minimal">({{ formatType(returnType) }})</span>
       </div>
     </template>
     <template v-if="!minimal">
