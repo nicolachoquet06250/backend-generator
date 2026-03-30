@@ -14,6 +14,7 @@ import ParameterBlock from './ParameterBlock.vue';
 import ThisBlock from './ThisBlock.vue';
 import PrintBlock from './PrintBlock.vue';
 import FunctionCallBlock from "~/components/blocks/FunctionCallBlock.vue";
+import ObjectPropertyBlock from "~/components/blocks/ObjectPropertyBlock.vue";
 
 const props = defineProps<{
   minimal?: boolean;
