@@ -3,6 +3,7 @@ import RecursiveBlockRenderer from './RecursiveBlockRenderer.vue';
 import AppModal from '../common/AppModal.vue';
 import { useMobileDragDrop } from '~/composables/useMobileDragDrop';
 
+const { isCompact } = useSettings();
 const { t } = useI18n();
 const { functions, activeFunctionId, isDragging, addFunction, removeFunction, addBlockToFunction, removeBlockFromFunction, getBlockById } = useFunctions();
 const { structures } = useDataStructures();
@@ -165,7 +166,7 @@ const onMobileTrashDragLeave = () => {
 </script>
 
 <template>
-  <div class="workspace">
+  <div class="workspace" :class="{ 'is-compact': isCompact }">
     <div class="tabs-container">
       <div v-for="group in groupedFunctions" :key="group.id" class="tab-group">
         <div class="tab-group-label" v-if="groupedFunctions.length > 1">
@@ -257,6 +258,7 @@ const onMobileTrashDragLeave = () => {
   height: 100%;
   background: var(--workspace-bg);
   overflow: auto;
+  transition: all 0.2s ease-in-out;
 }
 
 @media (max-width: 768px) {
@@ -268,8 +270,9 @@ const onMobileTrashDragLeave = () => {
 .tabs-container {
   display: flex;
   background: var(--tabs-bg);
-  padding: 8px 8px 0 8px;
-  gap: 16px;
+  padding: calc(var(--block-padding) / 2);
+  padding-bottom: 0;
+  gap: var(--block-gap);
   overflow-x: auto;
   scrollbar-width: thin;
   border-bottom: 1px solid var(--sidebar-border);
@@ -287,6 +290,7 @@ const onMobileTrashDragLeave = () => {
   color: var(--tab-text);
   opacity: 0.6;
   font-weight: bold;
+  padding-top: 5px;
   padding-left: 4px;
   letter-spacing: 0.5px;
 }
@@ -310,8 +314,12 @@ const onMobileTrashDragLeave = () => {
   border: 1px solid transparent;
   border-bottom: none;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  font-size: 14px;
+  font-size: var(--block-font-size);
   white-space: nowrap;
+}
+
+.is-compact .tab {
+  padding: 6px 12px;
 }
 
 .tab-return-type {
@@ -352,8 +360,8 @@ const onMobileTrashDragLeave = () => {
   position: absolute;
   bottom: 20px;
   right: 20px;
-  width: 56px;
-  height: 56px;
+  width: calc(var(--header-height) * 0.9);
+  height: calc(var(--header-height) * 0.9);
   background: var(--header-bg);
   color: white;
   border: none;
@@ -362,7 +370,7 @@ const onMobileTrashDragLeave = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 24px;
+  font-size: calc(var(--block-font-size) * 1.5);
   box-shadow: 0 4px 10px rgba(0,0,0,0.3);
   z-index: 10001;
   transition: all 0.2s ease;

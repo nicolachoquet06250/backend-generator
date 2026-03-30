@@ -29,7 +29,8 @@
     "cancel": "Annuler",
     "confirm": "Confirmer",
     "reset": "Réinitialiser le stockage",
-    "reload": "Recharger"
+    "reload": "Recharger",
+    "compact": "Mode compact"
   },
   "blocks": {
     "true": "Vrai",

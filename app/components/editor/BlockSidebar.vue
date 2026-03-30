@@ -85,17 +85,17 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
 
 <template>
   <div class="block-sidebar"
-       @touchmove="onTouchMove" 
+       @touchmove="onTouchMove"
        @touchend="handleTouchEnd"
        @touchcancel="handleTouchEnd"
   >
     <div class="domain-tabs">
-      <button 
-        v-for="domain in domains" 
-        :key="domain.id"
-        class="domain-tab"
-        :class="{ active: activeDomain === domain.id }"
-        @click="activeDomain = domain.id"
+      <button
+          v-for="domain in domains"
+          :key="domain.id"
+          class="domain-tab"
+          :class="{ active: activeDomain === domain.id }"
+          @click="activeDomain = domain.id"
       >
         {{ $t(domain.label) }}
       </button>
@@ -103,116 +103,116 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
 
     <div v-if="activeDomain === 'base'" class="domain-content">
       <!-- Variables -->
-    <div class="sidebar-section">
-      <h3>{{ $t('sections.variables') }}</h3>
-      <div class="draggable-wrapper" draggable="true" 
-           @dragstart="onDragStart($event, 'var')"
-           @dragend="onDragEnd"
-           @touchstart="handleTouchStart($event, 'var')"
-           @mousedown="onStopPropagation">
-        <VarBlock minimal />
-      </div>
-      <div v-if="currentFunction?.metadata?.structureId" class="draggable-wrapper" draggable="true"
-           @dragstart="onDragStart($event, 'this')"
-           @dragend="onDragEnd"
-           @touchstart="handleTouchStart($event, 'this')"
-           @mousedown="onStopPropagation">
-        <ThisBlock minimal />
-      </div>
-      <div class="draggable-wrapper" draggable="true" 
-           @dragstart="onDragStart($event, 'set_var')"
-           @dragend="onDragEnd"
-           @touchstart="handleTouchStart($event, 'set_var')"
-           @mousedown="onStopPropagation">
-        <SetVarBlock minimal />
-      </div>
-    </div>
-
-    <!-- Mathématiques -->
-    <div class="sidebar-section">
-      <h3>{{ $t('sections.math') }}</h3>
-      <div v-for="op in ['+', '-', '*', '/', '%']" :key="op" 
-           class="draggable-wrapper" draggable="true" 
-           @dragstart="onDragStart($event, 'math-' + op)"
-           @dragend="onDragEnd"
-           @touchstart="handleTouchStart($event, 'math-' + op)"
-           @mousedown="onStopPropagation">
-        <MathBlock :symbol="op" minimal />
-      </div>
-    </div>
-
-    <!-- Logique & Comparaison -->
-    <div class="sidebar-section">
-      <h3>{{ $t('sections.logic') }}</h3>
-      <div class="draggable-wrapper" draggable="true" 
-           @dragstart="onDragStart($event, 'equal')"
-           @dragend="onDragEnd"
-           @touchstart="handleTouchStart($event, 'equal')"
-           @mousedown="onStopPropagation">
-        <EqualBlock minimal />
-      </div>
-      <div v-for="op in ['<', '>', '<=', '>=', '!=']" :key="op"
-           class="draggable-wrapper" draggable="true" 
-           @dragstart="onDragStart($event, 'compare-' + op)"
-           @dragend="onDragEnd"
-           @touchstart="handleTouchStart($event, 'compare-' + op)"
-           @mousedown="onStopPropagation">
-        <ComparisonBlock :symbol="op" minimal />
-      </div>
-    </div>
-
-    <!-- Littéraux & Objets -->
-    <div class="sidebar-section">
-      <h3>{{ $t('sections.literals') }}</h3>
-      <div class="literals-grid">
-        <div v-for="val in [true, false]" :key="String(val)"
-             class="draggable-wrapper" draggable="true" 
-             @dragstart="onDragStart($event, val ? 'true' : 'false')"
-             @touchstart="handleTouchStart($event, val ? 'true' : 'false')"
+      <div class="sidebar-section">
+        <h3>{{ $t('sections.variables') }}</h3>
+        <div class="draggable-wrapper" draggable="true"
+             @dragstart="onDragStart($event, 'var')"
+             @dragend="onDragEnd"
+             @touchstart="handleTouchStart($event, 'var')"
              @mousedown="onStopPropagation">
-          <BooleanBlock :value="val" minimal />
+          <VarBlock minimal />
         </div>
-        <div v-for="type in ['string', 'number', 'array', 'object', 'object_property']" 
+        <div v-if="currentFunction?.metadata?.structureId" class="draggable-wrapper" draggable="true"
+             @dragstart="onDragStart($event, 'this')"
+             @dragend="onDragEnd"
+             @touchstart="handleTouchStart($event, 'this')"
+             @mousedown="onStopPropagation">
+          <ThisBlock minimal />
+        </div>
+        <div class="draggable-wrapper" draggable="true"
+             @dragstart="onDragStart($event, 'set_var')"
+             @dragend="onDragEnd"
+             @touchstart="handleTouchStart($event, 'set_var')"
+             @mousedown="onStopPropagation">
+          <SetVarBlock minimal />
+        </div>
+      </div>
+
+      <!-- Mathématiques -->
+      <div class="sidebar-section">
+        <h3>{{ $t('sections.math') }}</h3>
+        <div v-for="op in ['+', '-', '*', '/', '%']" :key="op"
+             class="draggable-wrapper" draggable="true"
+             @dragstart="onDragStart($event, 'math-' + op)"
+             @dragend="onDragEnd"
+             @touchstart="handleTouchStart($event, 'math-' + op)"
+             @mousedown="onStopPropagation">
+          <MathBlock :symbol="op" minimal />
+        </div>
+      </div>
+
+      <!-- Logique & Comparaison -->
+      <div class="sidebar-section">
+        <h3>{{ $t('sections.logic') }}</h3>
+        <div class="draggable-wrapper" draggable="true"
+             @dragstart="onDragStart($event, 'equal')"
+             @dragend="onDragEnd"
+             @touchstart="handleTouchStart($event, 'equal')"
+             @mousedown="onStopPropagation">
+          <EqualBlock minimal />
+        </div>
+        <div v-for="op in ['<', '>', '<=', '>=', '!=']" :key="op"
+             class="draggable-wrapper" draggable="true"
+             @dragstart="onDragStart($event, 'compare-' + op)"
+             @dragend="onDragEnd"
+             @touchstart="handleTouchStart($event, 'compare-' + op)"
+             @mousedown="onStopPropagation">
+          <ComparisonBlock :symbol="op" minimal />
+        </div>
+      </div>
+
+      <!-- Littéraux & Objets -->
+      <div class="sidebar-section">
+        <h3>{{ $t('sections.literals') }}</h3>
+        <div class="literals-grid">
+          <div v-for="val in [true, false]" :key="String(val)"
+               class="draggable-wrapper" draggable="true"
+               @dragstart="onDragStart($event, val ? 'true' : 'false')"
+               @touchstart="handleTouchStart($event, val ? 'true' : 'false')"
+               @mousedown="onStopPropagation">
+            <BooleanBlock :value="val" minimal />
+          </div>
+          <div v-for="type in ['string', 'number', 'array', 'object', 'object_property']"
+               :key="type"
+               class="draggable-wrapper" draggable="true"
+               @dragstart="onDragStart($event, type)"
+               @dragend="onDragEnd"
+               @touchstart="handleTouchStart($event, type)"
+               @mousedown="onStopPropagation">
+            <component :is="type === 'string' ? StringBlock :
+                         type === 'number' ? NumberBlock :
+                         type === 'array' ? ArrayBlock :
+                         type === 'object' ? ObjectBlock :
+                         ObjectPropertyBlock"
+                       minimal
+                       v-bind="type === 'array_set_key' ? { targetKey: null } : {}"
+            />
+          </div>
+          <!-- Multi-drop helpers -->
+          <div class="multi-drop-helpers">
+            <div class="draggable-wrapper multi" draggable="true"
+                 @dragstart="onDragStart($event, 'literal*3')"
+                 @touchstart="handleTouchStart($event, 'literal*3')"
+                 @mousedown="onStopPropagation">
+              <div class="multi-icon">
+                <div class="mini-block" v-for="i in 3" :key="i"/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contrôle de flux -->
+      <div class="sidebar-section">
+        <h3>{{ $t('sections.control') }}</h3>
+        <div v-for="type in ['if', 'elseif', 'else', 'ternary', 'while', 'for', 'foreach', 'break', 'continue']"
              :key="type"
-             class="draggable-wrapper" draggable="true" 
+             class="draggable-wrapper" draggable="true"
              @dragstart="onDragStart($event, type)"
              @dragend="onDragEnd"
              @touchstart="handleTouchStart($event, type)"
              @mousedown="onStopPropagation">
-          <component :is="type === 'string' ? StringBlock : 
-                         type === 'number' ? NumberBlock :
-                         type === 'array' ? ArrayBlock :
-                         type === 'object' ? ObjectBlock :
-                         ObjectPropertyBlock" 
-                     minimal
-                     v-bind="type === 'array_set_key' ? { targetKey: null } : {}"
-          />
-        </div>
-        <!-- Multi-drop helpers -->
-        <div class="multi-drop-helpers">
-           <div class="draggable-wrapper multi" draggable="true" 
-                @dragstart="onDragStart($event, 'literal*3')"
-                @touchstart="handleTouchStart($event, 'literal*3')"
-                @mousedown="onStopPropagation">
-             <div class="multi-icon">
-               <div class="mini-block" v-for="i in 3" :key="i"/>
-             </div>
-           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Contrôle de flux -->
-    <div class="sidebar-section">
-      <h3>{{ $t('sections.control') }}</h3>
-      <div v-for="type in ['if', 'elseif', 'else', 'ternary', 'while', 'for', 'foreach', 'break', 'continue']"
-           :key="type"
-           class="draggable-wrapper" draggable="true" 
-           @dragstart="onDragStart($event, type)"
-           @dragend="onDragEnd"
-           @touchstart="handleTouchStart($event, type)"
-           @mousedown="onStopPropagation">
-        <component :is="type === 'if' ? IfBlock : 
+          <component :is="type === 'if' ? IfBlock :
                        type === 'elseif' ? ElseIfBlock :
                        type === 'ternary' ? TernaryBlock :
                        type === 'else' ? ElseBlock :
@@ -220,95 +220,95 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
                        type === 'for' ? ForBlock :
                        type === 'foreach' ? ForEachBlock :
                        type === 'break' ? BreakBlock :
-                       ContinueBlock" 
-                   minimal
-        />
+                       ContinueBlock"
+                     minimal
+          />
+        </div>
       </div>
-    </div>
 
-    <!-- Actions -->
-    <div class="sidebar-section">
-      <h3>{{ $t('sections.actions') }}</h3>
-      <div class="draggable-wrapper" draggable="true" 
-           @dragstart="onDragStart($event, 'print')"
-           @dragend="onDragEnd"
-           @touchstart="handleTouchStart($event, 'print')"
-           @mousedown="onStopPropagation">
-        <PrintBlock minimal />
+      <!-- Actions -->
+      <div class="sidebar-section">
+        <h3>{{ $t('sections.actions') }}</h3>
+        <div class="draggable-wrapper" draggable="true"
+             @dragstart="onDragStart($event, 'print')"
+             @dragend="onDragEnd"
+             @touchstart="handleTouchStart($event, 'print')"
+             @mousedown="onStopPropagation">
+          <PrintBlock minimal />
+        </div>
+        <div class="draggable-wrapper" draggable="true"
+             @dragstart="onDragStart($event, 'array_push')"
+             @dragend="onDragEnd"
+             @touchstart="handleTouchStart($event, 'array_push')"
+             @mousedown="onStopPropagation">
+          <ArrayPushBlock minimal />
+        </div>
+        <div class="draggable-wrapper" draggable="true"
+             @dragstart="onDragStart($event, 'array_remove')"
+             @dragend="onDragEnd"
+             @touchstart="handleTouchStart($event, 'array_remove')"
+             @mousedown="onStopPropagation">
+          <ArrayRemoveBlock minimal />
+        </div>
+        <div class="draggable-wrapper" draggable="true"
+             @dragstart="onDragStart($event, 'array_set_key')"
+             @dragend="onDragEnd"
+             @touchstart="handleTouchStart($event, 'array_set_key')"
+             @mousedown="onStopPropagation">
+          <ArraySetKeyBlock minimal :targetKey="null" />
+        </div>
       </div>
-      <div class="draggable-wrapper" draggable="true" 
-           @dragstart="onDragStart($event, 'array_push')"
-           @dragend="onDragEnd"
-           @touchstart="handleTouchStart($event, 'array_push')"
-           @mousedown="onStopPropagation">
-        <ArrayPushBlock minimal />
-      </div>
-      <div class="draggable-wrapper" draggable="true" 
-           @dragstart="onDragStart($event, 'array_remove')"
-           @dragend="onDragEnd"
-           @touchstart="handleTouchStart($event, 'array_remove')"
-           @mousedown="onStopPropagation">
-        <ArrayRemoveBlock minimal />
-      </div>
-      <div class="draggable-wrapper" draggable="true" 
-           @dragstart="onDragStart($event, 'array_set_key')"
-           @dragend="onDragEnd"
-           @touchstart="handleTouchStart($event, 'array_set_key')"
-           @mousedown="onStopPropagation">
-        <ArraySetKeyBlock minimal :targetKey="null" />
-      </div>
-    </div>
 
-    <!-- Fonctions -->
-    <div class="sidebar-section">
-      <h3>{{ $t('sections.functions') }}</h3>
-      <div class="draggable-wrapper" draggable="true" 
-           @dragstart="onDragStart($event, 'parameter')"
-           @dragend="onDragEnd"
-           @touchstart="handleTouchStart($event, 'parameter')"
-           @mousedown="onStopPropagation">
-        <ParameterBlock minimal />
+      <!-- Fonctions -->
+      <div class="sidebar-section">
+        <h3>{{ $t('sections.functions') }}</h3>
+        <div class="draggable-wrapper" draggable="true"
+             @dragstart="onDragStart($event, 'parameter')"
+             @dragend="onDragEnd"
+             @touchstart="handleTouchStart($event, 'parameter')"
+             @mousedown="onStopPropagation">
+          <ParameterBlock minimal />
+        </div>
+        <div class="draggable-wrapper" draggable="true"
+             @dragstart="onDragStart($event, 'function')"
+             @dragend="onDragEnd"
+             @touchstart="handleTouchStart($event, 'function')"
+             @mousedown="onStopPropagation">
+          <FunctionCallBlock minimal />
+        </div>
+        <div class="draggable-wrapper" draggable="true"
+             @dragstart="onDragStart($event, 'return')"
+             @dragend="onDragEnd"
+             @touchstart="handleTouchStart($event, 'return')"
+             @mousedown="onStopPropagation">
+          <ReturnBlock minimal />
+        </div>
       </div>
-      <div class="draggable-wrapper" draggable="true" 
-           @dragstart="onDragStart($event, 'function')"
-           @dragend="onDragEnd"
-           @touchstart="handleTouchStart($event, 'function')"
-           @mousedown="onStopPropagation">
-        <FunctionCallBlock minimal />
-      </div>
-      <div class="draggable-wrapper" draggable="true" 
-           @dragstart="onDragStart($event, 'return')"
-           @dragend="onDragEnd"
-           @touchstart="handleTouchStart($event, 'return')"
-           @mousedown="onStopPropagation">
-        <ReturnBlock minimal />
-      </div>
-    </div>
 
-    <!-- Formats de données -->
-    <div class="sidebar-section">
-      <h3>{{ $t('sections.data_formats') }}</h3>
-      <div class="draggable-wrapper" draggable="true" 
-           @dragstart="onDragStart($event, 'json')"
-           @dragend="onDragEnd"
-           @touchstart="handleTouchStart($event, 'json')"
-           @mousedown="onStopPropagation">
-        <JsonBlock minimal />
+      <!-- Formats de données -->
+      <div class="sidebar-section">
+        <h3>{{ $t('sections.data_formats') }}</h3>
+        <div class="draggable-wrapper" draggable="true"
+             @dragstart="onDragStart($event, 'json')"
+             @dragend="onDragEnd"
+             @touchstart="handleTouchStart($event, 'json')"
+             @mousedown="onStopPropagation">
+          <JsonBlock minimal />
+        </div>
+        <div class="draggable-wrapper" draggable="true"
+             @dragstart="onDragStart($event, 'html')"
+             @dragend="onDragEnd"
+             @touchstart="handleTouchStart($event, 'html')"
+             @mousedown="onStopPropagation">
+          <HtmlBlock minimal />
+        </div>
       </div>
-      <div class="draggable-wrapper" draggable="true" 
-           @dragstart="onDragStart($event, 'html')"
-           @dragend="onDragEnd"
-           @touchstart="handleTouchStart($event, 'html')"
-           @mousedown="onStopPropagation">
-        <HtmlBlock minimal />
-      </div>
-    </div>
     </div>
 
     <div v-else-if="activeDomain === 'web'" class="domain-content">
       <div class="sidebar-section">
         <h3>{{ $t('sections.web') }}</h3>
-        <div class="draggable-wrapper" draggable="true" 
+        <div class="draggable-wrapper" draggable="true"
              @dragstart="onDragStart($event, 'new_route')"
              @dragend="onDragEnd"
              @touchstart="handleTouchStart($event, 'new_route')"
@@ -322,16 +322,17 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
 
 <style scoped>
 .block-sidebar {
-  width: 320px;
+  width: var(--sidebar-width);
   flex-shrink: 0;
   background: var(--sidebar-bg);
   border-right: 1px solid var(--sidebar-border);
   overflow-y: auto;
-  padding: 20px;
+  padding: calc(var(--block-padding) * 2);
   height: 100%;
   box-shadow: 2px 0 5px rgba(0,0,0,0.05);
   display: flex;
   flex-direction: column;
+  transition: all 0.2s ease-in-out;
 }
 
 .domain-tabs {
@@ -339,6 +340,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
   gap: 8px;
   margin-bottom: 20px;
   border-bottom: 1px solid var(--sidebar-border);
+  padding: 5px;
   padding-bottom: 8px;
 }
 
@@ -371,9 +373,9 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
 }
 
 .sidebar-section {
-  margin-bottom: 24px;
+  margin-bottom: var(--block-gap);
   background: var(--sidebar-section-bg);
-  padding: 12px;
+  padding: var(--block-padding);
   border-radius: 8px;
   border: 1px solid var(--sidebar-section-border);
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);

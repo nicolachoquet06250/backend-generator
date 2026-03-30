@@ -29,7 +29,8 @@
     "cancel": "Cancel",
     "confirm": "Confirm",
     "reset": "Reset Storage",
-    "reload": "Reload"
+    "reload": "Reload",
+    "compact": "Compact mode"
   },
   "blocks": {
     "true": "True",

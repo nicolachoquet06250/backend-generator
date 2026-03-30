@@ -8,6 +8,7 @@ import AppModal from './components/common/AppModal.vue';
 const { locale, locales, setLocale, t } = useI18n();
 const { structures, addStructure, removeStructure, resetStructures } = useDataStructures();
 const { resetFunctions, removeStructureFromFunctions } = useFunctions();
+const { isCompact, toggleCompact } = useSettings();
 
 const handleRemoveStructure = (id: string) => {
   removeStructure(id);
@@ -53,7 +54,7 @@ function reloadPage() {
 </script>
 
 <template>
-  <div class="editor-layout" :class="[{ 'mobile-mode': isMobile }, getPWADisplayMode()]">
+  <div class="editor-layout" :class="[{ 'mobile-mode': isMobile }, getPWADisplayMode(), { 'is-compact': isCompact }]">
     <header class="main-header">
       <div class="logo">
         <h1>{{ $t('welcome') }}</h1>
@@ -63,6 +64,14 @@ function reloadPage() {
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="23 4 23 10 17 10"></polyline>
             <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+        </button>
+        <button class="compact-toggle" :class="{ active: isCompact }" :title="$t('common.compact')" @click="toggleCompact">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect>
+            <line x1="9" y1="9" x2="15" y2="9"></line>
+            <line x1="9" y1="12" x2="15" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
           </svg>
         </button>
         <button class="reset-btn" :title="$t('common.reset')" @click="showResetModal = true">
@@ -228,10 +237,39 @@ body {
   color: var(--text-color);
 }
 
+:root {
+  --block-padding-v: 8px;
+  --block-padding-h: 12px;
+  --block-padding: var(--block-padding-v) var(--block-padding-h);
+  --block-margin: 4px;
+  --block-gap: 8px;
+  --block-font-size: 14px;
+  --block-bottom-padding: 8px;
+  --header-height: 60px;
+  --header-button-size: 34px;
+  --header-action-gap: 4px;
+  --sidebar-width: 300px;
+}
+
+.is-compact {
+  --block-padding-v: 4px;
+  --block-padding-h: 8px;
+  --block-padding: var(--block-padding-v) var(--block-padding-h);
+  --block-margin: 2px;
+  --block-gap: 4px;
+  --block-font-size: 12px;
+  --block-bottom-padding: 4px;
+  --header-height: 40px;
+  --header-button-size: 28px;
+  --header-action-gap: 4px;
+  --sidebar-width: 240px;
+}
+
 .editor-layout {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  transition: all 0.2s ease-in-out;
 
   &.mobile-mode {
     display: flex;
@@ -253,32 +291,44 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 0 20px;
-  height: 60px;
+  height: var(--header-height);
   background: var(--header-bg);
   color: var(--header-text);
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   z-index: 10;
+  transition: all 0.2s ease-in-out;
+}
+
+.is-compact .main-header {
+  padding: 0 12px;
 }
 
 .main-header h1 {
   margin: 0;
   font-size: 1.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.is-compact .main-header h1 {
+  font-size: 1rem;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: var(--header-action-gap);
 }
 
 .reset-btn {
   background: #ff4c4c;
   border: 1px solid #ff4c4c;
   color: white;
-  width: 34px;
-  min-width: 34px;
-  height: 34px;
-  min-height: 34px;
+  width: var(--header-button-size);
+  min-width: var(--header-button-size);
+  height: var(--header-button-size);
+  min-height: var(--header-button-size);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -297,10 +347,10 @@ body {
   background: #4caf50;
   border: 1px solid #4caf50;
   color: white;
-  width: 34px;
-  min-width: 34px;
-  height: 34px;
-  min-height: 34px;
+  width: var(--header-button-size);
+  min-width: var(--header-button-size);
+  height: var(--header-button-size);
+  min-height: var(--header-button-size);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -315,14 +365,41 @@ body {
   border-color: #45a049;
 }
 
+.compact-toggle {
+  background: #6c757d;
+  border: 1px solid #6c757d;
+  color: white;
+  width: var(--header-button-size);
+  min-width: var(--header-button-size);
+  height: var(--header-button-size);
+  min-height: var(--header-button-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s;
+}
+
+.compact-toggle:hover {
+  background: #5a6268;
+  border-color: #545b62;
+}
+
+.compact-toggle.active {
+  background: #007bff;
+  border-color: #007bff;
+}
+
 .struct-toggle {
   background: var(--btn-struct);
   border: 1px solid var(--btn-struct);
   color: white;
-  width: 34px;
-  min-width: 34px;
-  height: 34px;
-  min-height: 34px;
+  width: var(--header-button-size);
+  min-width: var(--header-button-size);
+  height: var(--header-button-size);
+  min-height: var(--header-button-size);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -356,9 +433,27 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
+.editor-layout:not(.is-compact) {
+  .main-header {
+    gap: 20px;
+    padding: 0 12px;
+  }
+
+  .lang-switcher {
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+
+.editor-layout.is-compact {
+  .lang-switcher {
+    flex-direction: row;
+  }
+}
+
 .lang-switcher {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
 }
 
@@ -370,6 +465,14 @@ body {
   color: white;
   border-radius: 4px;
   cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.is-compact .lang-switcher button {
+  padding: 2px 4px;
+  margin-left: 2px;
+  font-size: 11px;
 }
 
 .lang-switcher button.active {

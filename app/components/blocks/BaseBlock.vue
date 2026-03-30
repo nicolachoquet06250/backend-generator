@@ -114,21 +114,21 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
 .block-container {
   display: flex;
   flex-direction: column;
-  padding: 8px 12px;
+  padding: var(--block-padding);
   border-radius: 8px;
   color: white;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-weight: 600;
-  font-size: 14px;
+  font-size: var(--block-font-size);
   user-select: none;
   cursor: grab;
-  margin: 4px;
+  margin: var(--block-margin);
   min-width: 60px;
   width: auto;
   max-width: 100%;
   box-sizing: border-box;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.3);
-  transition: transform 0.1s, box-shadow 0.1s;
+  transition: all 0.2s ease-in-out;
   overflow-x: auto;
   height: max-content;
 }
@@ -162,7 +162,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
 .block-content {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--block-gap);
   overflow-x: auto;
   padding-bottom: 2px;
   min-height: 24px;
@@ -194,10 +194,10 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
 
 .block-bottom {
   margin-left: 12px;
-  padding: 8px;
+  padding: var(--block-bottom-padding);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--block-gap);
   background: var(--bg-color);
   opacity: 0.85;
   border-radius: 0 0 8px 8px;
@@ -211,7 +211,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
 ::v-deep(.block-input), ::v-deep(.block-select) {
   border: none;
   border-radius: 4px;
-  padding: 4px 8px;
+  padding: calc(var(--block-padding) / 4) 8px;
   outline: none;
   font-family: inherit;
   font-size: 0.9em;
