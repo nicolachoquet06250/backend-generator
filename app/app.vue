@@ -7,7 +7,12 @@ import AppModal from './components/common/AppModal.vue';
 
 const { locale, locales, setLocale, t } = useI18n();
 const { structures, addStructure, removeStructure, resetStructures } = useDataStructures();
-const { resetFunctions } = useFunctions();
+const { resetFunctions, removeStructureFromFunctions } = useFunctions();
+
+const handleRemoveStructure = (id: string) => {
+  removeStructure(id);
+  removeStructureFromFunctions(id);
+};
 const { isMobile } = useDevice();
 
 useHead({
@@ -111,7 +116,7 @@ function reloadPage() {
                 v-model:name="struct.name"
                 :fields="struct.fields"
                 :id="struct.id"
-                @remove="removeStructure(struct.id)"
+                @remove="handleRemoveStructure(struct.id)"
               />
             </div>
             <div class="panel-footer">

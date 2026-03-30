@@ -21,6 +21,8 @@
   "workspace": {
     "add_function": "New function",
     "function_name_prompt": "Enter function name:",
+    "function_structure_prompt": "Assign to structure:",
+    "none": "None",
     "error_no_spaces": "Function name must not contain spaces."
   },
   "common": {
@@ -49,7 +51,8 @@
         "ternary": "ternary",
         "any": "Any"
       },
-      "select_struct": "Select structure"
+      "select_struct": "Select structure",
+      "this": "this"
     },
     "assign": {
       "label": "assign"
@@ -71,7 +74,8 @@
       "add_field": "Add field",
       "field_name": "field name",
       "field_default": "default val.",
-      "nullable": "null ?"
+      "nullable": "null ?",
+      "associated_functions": "Associated functions"
     },
     "math": {
       "placeholder": "0",

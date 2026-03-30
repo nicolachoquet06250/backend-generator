@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import VarBlock from '../blocks/VarBlock.vue';
+import ThisBlock from '../blocks/ThisBlock.vue';
 import MathBlock from '../blocks/MathBlock.vue';
 import IfBlock from '../blocks/IfBlock.vue';
 import ElseIfBlock from '../blocks/ElseIfBlock.vue';
@@ -30,10 +31,15 @@ import SetVarBlock from '../blocks/SetVarBlock.vue';
 import EqualBlock from '../blocks/EqualBlock.vue';
 import ComparisonBlock from '../blocks/ComparisonBlock.vue';
 import TernaryBlock from '../blocks/TernaryBlock.vue';
+import { useFunctions } from '~/composables/useFunctions';
 import { useMobileDragDrop } from '~/composables/useMobileDragDrop';
 
-const { isDragging } = useFunctions();
+const { isDragging, functions, activeFunctionId } = useFunctions();
 const { onTouchStart, onTouchMove, onTouchEnd } = useMobileDragDrop();
+
+const currentFunction = computed(() => {
+  return functions.value.find(f => f.id === activeFunctionId.value);
+});
 
 const activeDomain = ref('base');
 const domains = [
@@ -105,6 +111,13 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
            @touchstart="handleTouchStart($event, 'var')"
            @mousedown="onStopPropagation">
         <VarBlock minimal />
+      </div>
+      <div v-if="currentFunction?.metadata?.structureId" class="draggable-wrapper" draggable="true"
+           @dragstart="onDragStart($event, 'this')"
+           @dragend="onDragEnd"
+           @touchstart="handleTouchStart($event, 'this')"
+           @mousedown="onStopPropagation">
+        <ThisBlock minimal />
       </div>
       <div class="draggable-wrapper" draggable="true" 
            @dragstart="onDragStart($event, 'set_var')"

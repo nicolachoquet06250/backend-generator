@@ -5,11 +5,13 @@ import { useMobileDragDrop } from '~/composables/useMobileDragDrop';
 
 const { t } = useI18n();
 const { functions, activeFunctionId, isDragging, addFunction, removeFunction, addBlockToFunction, removeBlockFromFunction, getBlockById } = useFunctions();
+const { structures } = useDataStructures();
 const { onTouchMove, onTouchEnd } = useMobileDragDrop();
 const { formatType } = useTypeFormatter();
 
 const showCreateModal = ref(false);
 const newFunctionName = ref('');
+const selectedStructureId = ref<string | undefined>(undefined);
 const funcNameInput = ref<HTMLInputElement | null>(null);
 
 const hasSpaces = computed(() => /\s/.test(newFunctionName.value));
@@ -17,6 +19,7 @@ const isValid = computed(() => newFunctionName.value.trim().length > 0 && !hasSp
 
 const createFunction = () => {
   newFunctionName.value = t('workspace.add_function').replace(/\s+/g, '_');
+  selectedStructureId.value = undefined;
   showCreateModal.value = true;
   nextTick(() => {
     funcNameInput.value?.focus();
@@ -26,12 +29,49 @@ const createFunction = () => {
 
 const confirmCreateFunction = () => {
   if (isValid.value) {
-    addFunction(newFunctionName.value.trim());
+    addFunction(newFunctionName.value.trim(), selectedStructureId.value);
     showCreateModal.value = false;
   }
 };
 
 const activeFunction = computed(() => functions.value.find(f => f.id === activeFunctionId.value));
+
+const groupedFunctions = computed(() => {
+  const groups: Record<string, typeof functions.value> = {};
+  
+  // Groupe pour les fonctions sans structure
+  groups['none'] = [];
+  
+  // Créer des groupes pour chaque structure existante
+  structures.value.forEach(s => {
+    groups[s.id] = [];
+  });
+  
+  // Répartir les fonctions dans les groupes
+  functions.value.forEach(f => {
+    const structId = f.metadata?.structureId;
+    if (structId && groups[structId]) {
+      groups[structId].push(f);
+    } else {
+      groups['none'].push(f);
+    }
+  });
+  
+  // Filtrer les groupes vides (sauf le groupe 'none' s'il contient des fonctions)
+  const result: Array<{ id: string, name: string, functions: typeof functions.value }> = [];
+  
+  if (groups['none'].length > 0) {
+    result.push({ id: 'none', name: t('workspace.none'), functions: groups['none'] });
+  }
+  
+  structures.value.forEach(s => {
+    if (groups[s.id].length > 0) {
+      result.push({ id: s.id, name: s.name, functions: groups[s.id] });
+    }
+  });
+  
+  return result;
+});
 
 const isDraggingOverTrash = ref(false);
 
@@ -126,16 +166,23 @@ const onMobileTrashDragLeave = () => {
 
 <template>
   <div class="workspace">
-    <div class="tabs">
-      <div v-for="func in functions" 
-           :key="func.id" 
-           class="tab" 
-           :class="{ active: activeFunctionId === func.id }"
-           @click="activeFunctionId = func.id"
-      >
-        <span class="tab-name">{{ func.name }}</span>
-        <span class="tab-return-type">({{ formatType(func.metadata?.returnType) }})</span>
-        <span v-if="func.name !== 'main'" class="close-tab" @click.stop="removeFunction(func.id)">×</span>
+    <div class="tabs-container">
+      <div v-for="group in groupedFunctions" :key="group.id" class="tab-group">
+        <div class="tab-group-label" v-if="groupedFunctions.length > 1">
+          {{ group.name }}
+        </div>
+        <div class="tabs">
+          <div v-for="func in group.functions" 
+               :key="func.id" 
+               class="tab" 
+               :class="{ active: activeFunctionId === func.id }"
+               @click="activeFunctionId = func.id"
+          >
+            <span class="tab-name">{{ func.name }}</span>
+            <span class="tab-return-type">({{ formatType(func.metadata?.returnType) }})</span>
+            <span v-if="func.name !== 'main'" class="close-tab" @click.stop="removeFunction(func.id)">×</span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -189,6 +236,14 @@ const onMobileTrashDragLeave = () => {
           @keyup.enter="confirmCreateFunction"
         />
         <span v-if="hasSpaces" class="error-text">{{ $t('workspace.error_no_spaces') }}</span>
+
+        <label for="func-struct">{{ $t('workspace.function_structure_prompt') }}</label>
+        <select id="func-struct" v-model="selectedStructureId" class="modal-input">
+          <option :value="undefined">{{ $t('workspace.none') }}</option>
+          <option v-for="struct in structures" :key="struct.id" :value="struct.id">
+            {{ struct.name }}
+          </option>
+        </select>
       </div>
     </AppModal>
   </div>
@@ -210,17 +265,35 @@ const onMobileTrashDragLeave = () => {
   }
 }
 
-.tabs {
+.tabs-container {
   display: flex;
   background: var(--tabs-bg);
   padding: 8px 8px 0 8px;
-  gap: 4px;
+  gap: 16px;
   overflow-x: auto;
-  scrollbar-width: none; /* Firefox */
+  scrollbar-width: thin;
+  border-bottom: 1px solid var(--sidebar-border);
 }
 
-.tabs::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+.tab-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tab-group-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--tab-text);
+  opacity: 0.6;
+  font-weight: bold;
+  padding-left: 4px;
+  letter-spacing: 0.5px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
 }
 
 .tab {
@@ -246,6 +319,10 @@ const onMobileTrashDragLeave = () => {
   opacity: 0.7;
   font-weight: normal;
   font-style: italic;
+}
+
+.tab-prefix {
+  opacity: 0.6;
 }
 
 .tab:hover {

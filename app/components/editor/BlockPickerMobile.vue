@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import VarBlock from '../blocks/VarBlock.vue';
+import ThisBlock from '../blocks/ThisBlock.vue';
 import MathBlock from '../blocks/MathBlock.vue';
 import IfBlock from '../blocks/IfBlock.vue';
 import ElseIfBlock from '../blocks/ElseIfBlock.vue';
@@ -32,7 +33,11 @@ import ComparisonBlock from '../blocks/ComparisonBlock.vue';
 import { useMobileDragDrop } from '~/composables/useMobileDragDrop';
 import TernaryBlock from "~/components/blocks/TernaryBlock.vue";
 
-const { isDragging } = useFunctions();
+const { isDragging, functions, activeFunctionId } = useFunctions();
+
+const currentFunction = computed(() => {
+  return functions.value.find(f => f.id === activeFunctionId.value);
+});
 const { onTouchStart, onTouchMove, onTouchEnd } = useMobileDragDrop();
 
 const props = defineProps<{
@@ -81,7 +86,7 @@ const isAccepted = (type: string) => {
     normalizedType = 'boolean';
   }
 
-  const expressionTypes = ['string', 'number', 'boolean', 'true', 'false', 'var', 'parameter', 'math-op', 'compare-op', 'equal', 'array', 'object', 'object_property', 'function', 'print', 'expression'];
+  const expressionTypes = ['string', 'number', 'boolean', 'true', 'false', 'var', 'this', 'parameter', 'math-op', 'compare-op', 'equal', 'array', 'object', 'object_property', 'function', 'print', 'expression'];
   
   if (type.startsWith('math-')) normalizedType = 'math-op';
   if (type.startsWith('compare-')) normalizedType = 'compare-op';
@@ -92,7 +97,7 @@ const isAccepted = (type: string) => {
 };
 
 const categories = [
-  { id: 'variables', label: 'sections.variables', types: ['var', 'set_var'], domain: 'base' },
+  { id: 'variables', label: 'sections.variables', types: ['var', 'this', 'set_var'], domain: 'base' },
   { id: 'math', label: 'sections.math', types: ['math-+'], domain: 'base' },
   { id: 'logic', label: 'sections.logic', types: ['equal', 'compare-<'], domain: 'base' },
   { id: 'literals', label: 'sections.literals', types: ['true', 'string', 'number', 'array', 'object', 'object_property'], domain: 'base' },
@@ -158,6 +163,11 @@ watch(activeDomain, () => {
              @click="onSelect('var')"
              @touchstart="handleTouchStart($event, 'var')">
           <VarBlock minimal />
+        </div>
+        <div v-if="isAccepted('this') && currentFunction?.structureId" class="mobile-clickable-block" 
+             @click="onSelect('this')"
+             @touchstart="handleTouchStart($event, 'this')">
+          <ThisBlock minimal />
         </div>
         <div v-if="isAccepted('set_var')" class="mobile-clickable-block" 
              @click="onSelect('set_var')"

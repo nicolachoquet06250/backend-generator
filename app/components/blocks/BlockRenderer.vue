@@ -29,15 +29,18 @@ import ArraySetKeyBlock from './ArraySetKeyBlock.vue';
 import JsonBlock from './JsonBlock.vue';
 import HtmlBlock from './HtmlBlock.vue';
 import NewRouteBlock from './NewRouteBlock.vue';
+import ThisBlock from './ThisBlock.vue';
 
 const props = defineProps<{
   parentBlockId?: any;
   block: any;
   isExpression?: boolean;
+  filterContext?: string;
 }>();
 
 const getBlockComponent = (type: string) => {
   if (type === 'var') return VarBlock;
+  if (type === 'this') return ThisBlock;
   if (type.startsWith('math-')) return MathBlock;
   if (type === 'string') return StringBlock;
   if (type === 'number') return NumberBlock;
@@ -77,7 +80,8 @@ const getBlockProps = (block: any) => {
     blockId: block.id,
     config: block.config,
     ...block.config?.slots,
-    isExpression: props.isExpression
+    isExpression: props.isExpression,
+    filterContext: props.filterContext
   };
 
   if (block.type.startsWith('math-') || block.type.startsWith('compare-')) {

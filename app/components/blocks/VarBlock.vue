@@ -24,6 +24,7 @@ const props = defineProps<{
   value?: any;
   config?: any;
   children?: any[];
+  filterContext?: string;
 }>();
 
 const { structures } = useDataStructures();
@@ -60,6 +61,10 @@ const availableVariables = computed(() => {
   const names = new Set();
   for (const v of vars) {
     if (!names.has(v.name)) {
+      if (props.filterContext === 'object_only') {
+        const type = typeof v.type === 'string' ? v.type : (v.type?.kind || 'any');
+        if (type !== 'object') continue;
+      }
       names.add(v.name);
       uniqueVars.push(v);
     }
@@ -98,12 +103,8 @@ const updateReturnTypeIfNeeded = (varNameValue: string) => {
     };
 
     const declaration = currentFunction ? findVarDeclaration(currentFunction.blocks, varNameValue) : null;
-    if (declaration) {
-      const typeCfg = declaration.config?.typeConfig;
-      updateFunctionMetadata(activeFunctionId.value, { returnType: typeCfg });
-    } else {
-      updateFunctionMetadata(activeFunctionId.value, { returnType: 'any' });
-    }
+    const typeCfg = declaration?.config?.typeConfig || 'any';
+    updateFunctionMetadata(activeFunctionId.value, { returnType: typeCfg });
   }
 };
 

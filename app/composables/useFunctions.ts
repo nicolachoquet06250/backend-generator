@@ -11,6 +11,7 @@ export interface FunctionDefinition {
   blocks: BlockInstance[];
   metadata?: {
     returnType: string;
+    structureId?: string;
   };
 }
 
@@ -64,14 +65,15 @@ export const useFunctions = () => {
     }
   });
 
-  const addFunction = (name: string) => {
+  const addFunction = (name: string, structureId?: string) => {
     const id = Math.random().toString(36).substring(2, 9);
     functions.value.push({ 
       id, 
       name, 
       blocks: [],
       metadata: {
-        returnType: 'any'
+        returnType: 'any',
+        structureId
       }
     });
     activeFunctionId.value = id;
@@ -215,7 +217,13 @@ export const useFunctions = () => {
   const updateFunctionMetadata = (functionId: string, metadata: { returnType: any }) => {
     const f = functions.value.find(func => func.id === functionId);
     if (f) {
-      f.metadata = { ...f.metadata, ...metadata };
+      // Ne mettre à jour que si les métadonnées ont réellement changé pour éviter les boucles de réactivité
+      const currentMetadata = f.metadata || {};
+      const newMetadata = { ...currentMetadata, ...metadata };
+      
+      if (JSON.stringify(currentMetadata) !== JSON.stringify(newMetadata)) {
+        f.metadata = newMetadata;
+      }
     }
   };
 
@@ -320,6 +328,14 @@ export const useFunctions = () => {
     activeFunctionId.value = 'f1';
   };
 
+  const removeStructureFromFunctions = (structureId: string) => {
+    functions.value.forEach(f => {
+      if (f.metadata?.structureId === structureId) {
+        f.metadata.structureId = undefined;
+      }
+    });
+  };
+
   return {
     functions,
     activeFunctionId,
@@ -334,6 +350,7 @@ export const useFunctions = () => {
     getParentBlock,
     getParentBlockWithSlot,
     findReturnParent,
-    resetFunctions
+    resetFunctions,
+    removeStructureFromFunctions
   };
 };

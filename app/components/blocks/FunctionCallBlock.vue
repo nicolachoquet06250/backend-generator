@@ -85,9 +85,9 @@ onMounted(() => {
 
 const otherFunctions = computed(() => {
   if (props.filterContext === 'new_route' || isParentNewRoute.value) {
-    return functions.value.filter(filterRouteFunction);
+    return functions.value.filter(f => filterRouteFunction(f) && !f.metadata?.structureId);
   }
-  return functions.value;
+  return functions.value.filter(f => !f.metadata?.structureId);
 });
 
 // Trouver la fonction sélectionnée

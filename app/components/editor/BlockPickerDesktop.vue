@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import VarBlock from '../blocks/VarBlock.vue';
+import ThisBlock from '../blocks/ThisBlock.vue';
 import MathBlock from '../blocks/MathBlock.vue';
 import IfBlock from '../blocks/IfBlock.vue';
 import ElseIfBlock from '../blocks/ElseIfBlock.vue';
@@ -44,6 +45,12 @@ const domains = [
   { id: 'web', label: 'domains.web' }
 ];
 
+const { functions, activeFunctionId } = useFunctions();
+
+const currentFunction = computed(() => {
+  return functions.value.find(f => f.id === activeFunctionId.value);
+});
+
 const onSelect = (type: string) => {
   emit('select', type);
 };
@@ -62,7 +69,7 @@ const isAccepted = (type: string) => {
     normalizedType = 'boolean';
   }
 
-  const expressionTypes = ['string', 'number', 'boolean', 'true', 'false', 'var', 'parameter', 'math-op', 'compare-op', 'equal', 'array', 'object', 'object_property', 'function', 'print', 'expression'];
+  const expressionTypes = ['string', 'number', 'boolean', 'true', 'false', 'var', 'this', 'parameter', 'math-op', 'compare-op', 'equal', 'array', 'object', 'object_property', 'function', 'print', 'expression'];
   
   if (type.startsWith('math-')) normalizedType = 'math-op';
   if (type.startsWith('compare-')) normalizedType = 'compare-op';
@@ -89,11 +96,14 @@ const isAccepted = (type: string) => {
 
     <div v-if="activeDomain === 'base'" class="block-picker-grid">
       <!-- Variables -->
-      <div class="picker-section" v-if="isAccepted('var') || isAccepted('set_var')">
+      <div class="picker-section" v-if="isAccepted('var') || isAccepted('set_var') || isAccepted('this')">
         <h3>{{ $t('sections.variables') }}</h3>
         <div class="blocks-list">
           <div v-if="isAccepted('var')" class="clickable-block" @click="onSelect('var')">
             <VarBlock minimal />
+          </div>
+          <div v-if="isAccepted('this') && (currentFunction?.structureId || currentFunction?.metadata?.structureId)" class="clickable-block" @click="onSelect('this')">
+            <ThisBlock minimal />
           </div>
           <div v-if="isAccepted('set_var')" class="clickable-block" @click="onSelect('set_var')">
             <SetVarBlock minimal />

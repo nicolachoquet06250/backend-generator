@@ -2,6 +2,8 @@
 import BaseBlock from './BaseBlock.vue';
 import type { DataStructureField } from '~/composables/useDataStructures';
 import TypeSelector from './TypeSelector.vue';
+import { useFunctions } from '~/composables/useFunctions';
+import { useTypeFormatter } from '~/composables/useTypeFormatter';
 
 const props = defineProps<{
   id: string;
@@ -12,6 +14,46 @@ const props = defineProps<{
 const emit = defineEmits(['update:name', 'remove']);
 
 const { updateStructure, addField, removeField, updateField } = useDataStructures();
+const { functions } = useFunctions();
+const { formatType } = useTypeFormatter();
+
+const associatedFunctions = computed(() => {
+  return functions.value.filter(f => f.metadata?.structureId === props.id);
+});
+
+const getFunctionSignature = (func: any) => {
+  const params: { name: string, type: any }[] = [];
+  const findParams = (blocks: any[]) => {
+    blocks.forEach(block => {
+      if (block.type === 'parameter' && block.config?.name) {
+        params.push({ name: block.config.name, type: block.config.type });
+      }
+      if (block.children) findParams(block.children);
+      if (block.config?.slots) {
+        Object.values(block.config.slots).forEach((slotBlock: any) => {
+          if (slotBlock) findParams(Array.isArray(slotBlock) ? slotBlock : [slotBlock]);
+        });
+      }
+    });
+  };
+  findParams(func.blocks);
+  
+  // Unicité par nom
+  const uniqueParams = [];
+  const names = new Set();
+  for (const p of params) {
+    if (!names.has(p.name)) {
+      names.add(p.name);
+      uniqueParams.push(p);
+    }
+  }
+
+  const paramsStr = uniqueParams
+    .map(p => `${p.name}: ${formatType(p.type)}`)
+    .join(', ');
+    
+  return `${func.name}(${paramsStr}): ${formatType(func.metadata?.returnType)}`;
+};
 
 const getFieldType = (type: any) => {
   if (typeof type === 'string') return type;
@@ -75,6 +117,13 @@ const onInput = (e: Event) => {
         <button class="add-field-btn" @click="addField(id)">
           + {{ $t('blocks.struct.add_field') }}
         </button>
+
+        <div v-if="associatedFunctions.length > 0" class="associated-functions">
+          <div class="functions-label">{{ $t('blocks.struct.associated_functions') }}</div>
+          <div v-for="func in associatedFunctions" :key="func.id" class="function-signature">
+            {{ getFunctionSignature(func) }}
+          </div>
+        </div>
       </div>
     </template>
   </BaseBlock>
@@ -168,5 +217,35 @@ const onInput = (e: Event) => {
 }
 .add-field-btn:hover {
   background: rgba(255, 255, 255, 0.3);
+}
+
+.associated-functions {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.functions-label {
+  font-size: 0.7em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.function-signature {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.8em;
+  color: white;
+  background: rgba(0, 0, 0, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

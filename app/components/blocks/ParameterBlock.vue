@@ -10,6 +10,7 @@ const props = defineProps<{
   blockId?: string;
   config?: any;
   children?: any[];
+  filterContext?: string;
 }>();
 
 const { functions, activeFunctionId, updateBlockConfig, updateFunctionMetadata, findReturnParent } = useFunctions();
@@ -46,6 +47,10 @@ const availableParameters = computed(() => {
   const names = new Set();
   for (const p of params) {
     if (!names.has(p.name)) {
+      if (props.filterContext === 'object_only') {
+        const type = typeof p.type === 'string' ? p.type : (p.type?.kind || 'any');
+        if (type !== 'object') continue;
+      }
       names.add(p.name);
       uniqueParams.push(p);
     }
@@ -105,12 +110,8 @@ const updateReturnTypeIfNeeded = (selectedVal: string) => {
     };
 
     const declaration = currentFunction ? findParamDeclaration(currentFunction.blocks, selectedVal) : null;
-    if (declaration) {
-      const typeCfg = declaration.config?.type;
-      updateFunctionMetadata(activeFunctionId.value, { returnType: typeCfg });
-    } else {
-      updateFunctionMetadata(activeFunctionId.value, { returnType: 'any' });
-    }
+    const typeCfg = declaration?.config?.type || 'any';
+    updateFunctionMetadata(activeFunctionId.value, { returnType: typeCfg });
   }
 };
 

@@ -21,6 +21,8 @@
   "workspace": {
     "add_function": "Nouvelle fonction",
     "function_name_prompt": "Entrez le nom de la fonction :",
+    "function_structure_prompt": "Assigner à une structure :",
+    "none": "Aucune",
     "error_no_spaces": "Le nom de la fonction ne doit pas contenir d'espaces."
   },
   "common": {
@@ -49,7 +51,8 @@
         "ternary": "ternaire",
         "any": "N'importe lequel"
       },
-      "select_struct": "Choisir structure"
+      "select_struct": "Choisir structure",
+      "this": "ceci (this)"
     },
     "assign": {
       "label": "affecter"
@@ -71,7 +74,8 @@
       "add_field": "Ajouter un champ",
       "field_name": "nom champ",
       "field_default": "valeur par déf.",
-      "nullable": "null ?"
+      "nullable": "null ?",
+      "associated_functions": "Fonctions associées"
     },
     "math": {
       "placeholder": "0",
