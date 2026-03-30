@@ -102,7 +102,7 @@ const isAccepted = (type: string) => {
           <div v-if="isAccepted('var')" class="clickable-block" @click="onSelect('var')">
             <VarBlock minimal />
           </div>
-          <div v-if="isAccepted('this') && (currentFunction?.structureId || currentFunction?.metadata?.structureId)" class="clickable-block" @click="onSelect('this')">
+          <div v-if="isAccepted('this') && currentFunction?.metadata?.structureId" class="clickable-block" @click="onSelect('this')">
             <ThisBlock minimal />
           </div>
           <div v-if="isAccepted('set_var')" class="clickable-block" @click="onSelect('set_var')">

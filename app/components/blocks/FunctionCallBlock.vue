@@ -48,7 +48,7 @@ const targetStructureId = computed(() => {
     const func = functions.value.find(f => f.id === funcId);
     const returnType = func?.metadata?.returnType;
     if (returnType && typeof returnType === 'object') {
-      return returnType.structId;
+      return (returnType as Record<string, any>).structId;
     }
     return null;
   } else if (block.type === 'object') {

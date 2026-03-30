@@ -13,7 +13,7 @@ const currentFunction = computed(() => {
   return functions.value.find(f => f.id === activeFunctionId.value);
 });
 
-const structureId = computed(() => currentFunction.value?.structureId);
+const structureId = computed(() => currentFunction.value?.metadata?.structureId);
 </script>
 
 <template>

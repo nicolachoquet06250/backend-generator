@@ -53,7 +53,7 @@ const groupedFunctions = computed(() => {
     if (structId && groups[structId]) {
       groups[structId].push(f);
     } else {
-      groups['none'].push(f);
+      groups['none']?.push(f);
     }
   });
   
@@ -65,8 +65,8 @@ const groupedFunctions = computed(() => {
   }
   
   structures.value.forEach(s => {
-    if (groups[s.id].length > 0) {
-      result.push({ id: s.id, name: s.name, functions: groups[s.id] });
+    if (groups[s.id]?.length! > 0) {
+      result.push({ id: s.id, name: s.name, functions: groups[s.id]! });
     }
   });
   

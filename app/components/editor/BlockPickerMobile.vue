@@ -164,7 +164,7 @@ watch(activeDomain, () => {
              @touchstart="handleTouchStart($event, 'var')">
           <VarBlock minimal />
         </div>
-        <div v-if="isAccepted('this') && currentFunction?.structureId" class="mobile-clickable-block" 
+        <div v-if="isAccepted('this') && currentFunction?.metadata?.structureId" class="mobile-clickable-block"
              @click="onSelect('this')"
              @touchstart="handleTouchStart($event, 'this')">
           <ThisBlock minimal />

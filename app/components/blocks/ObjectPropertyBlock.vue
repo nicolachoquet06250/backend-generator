@@ -97,7 +97,7 @@ const sourceStructure = computed(() => {
     }
   } else if (sourceBlock.value.type === 'this') {
     if (currentFunction?.metadata?.structureId) {
-      return structures.value.find(s => s.id === currentFunction.metadata.structureId);
+      return structures.value.find(s => s.id === currentFunction.metadata?.structureId);
     }
   }
   
