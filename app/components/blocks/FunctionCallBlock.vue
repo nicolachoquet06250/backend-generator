@@ -28,6 +28,36 @@ const { functions, activeFunctionId, getBlockById, updateBlockConfig, updateFunc
 
 const { formatType } = useTypeFormatter();
 
+// Déterminer le type de l'objet cible (si présent dans la dropzone)
+const targetBlock = computed(() => props.config?.slots?.target);
+
+const targetStructureId = computed(() => {
+  if (!targetBlock.value) return null;
+  
+  const block = targetBlock.value;
+  if (block.type === 'var') {
+    // Si c'est une variable, on cherche son type (structId)
+    const typeCfg = block.config?.typeConfig;
+    if (typeCfg && typeof typeCfg === 'object') {
+      return typeCfg.structId;
+    }
+    return null;
+  } else if (block.type === 'function') {
+    // Si c'est un appel de fonction, on cherche son type de retour
+    const funcId = block.config?.functionId;
+    const func = functions.value.find(f => f.id === funcId);
+    const returnType = func?.metadata?.returnType;
+    if (returnType && typeof returnType === 'object') {
+      return returnType.structId;
+    }
+    return null;
+  } else if (block.type === 'object') {
+    // Si c'est un bloc objet, on cherche son structureId
+    return block.config?.structureId;
+  }
+  return null;
+});
+
 const parentBlock = props.parentBlockId ? getBlockById(activeFunctionId.value, props.parentBlockId) : null;
 const isParentNewRoute = computed(() => parentBlock?.type === 'new_route');
 
@@ -70,6 +100,14 @@ const updateReturnTypeIfNeeded = (selectedFuncId: string) => {
   }
 };
 
+watch(targetStructureId, (newId, oldId) => {
+  if (newId !== oldId) {
+    // Si la structure change, on réinitialise la fonction sélectionnée
+    // pour éviter d'appeler une fonction qui n'appartient plus à cet objet
+    selectedFunctionId.value = '';
+  }
+});
+
 watch(selectedFunctionId, (val) => {
   if (props.blockId && activeFunctionId.value) {
     updateBlockConfig(activeFunctionId.value, props.blockId, { functionId: val });
@@ -84,10 +122,15 @@ onMounted(() => {
 });
 
 const otherFunctions = computed(() => {
+  const targetId = targetStructureId.value;
+
   if (props.filterContext === 'new_route' || isParentNewRoute.value) {
-    return functions.value.filter(f => filterRouteFunction(f) && !f.metadata?.structureId);
+    return functions.value.filter(f => filterRouteFunction(f) && f.metadata?.structureId === (targetId || undefined));
   }
-  return functions.value.filter(f => !f.metadata?.structureId);
+  
+  // Si un objet est ciblé, on ne montre que les fonctions associées à cet objet (structureId)
+  // Sinon on ne montre que les fonctions globales (structureId undefined ou null)
+  return functions.value.filter(f => f.metadata?.structureId === (targetId || undefined));
 });
 
 // Trouver la fonction sélectionnée
@@ -198,15 +241,39 @@ const getValueComponent = (block: any) => {
       <span class="minimal-return-type" v-if="minimal">({{ selectedFunction.metadata?.returnType || 'any' }})</span>
     </template>
     <template v-if="!minimal">
-      <select v-model="selectedFunctionId" class="block-select">
-        <option value="" disabled>{{ $t('blocks.function.select') }}</option>
-        <option v-for="f in otherFunctions" :key="f.id" :value="f.id">
-          {{ f.name }} ({{ formatType(f.metadata?.returnType) }})
-        </option>
-      </select>
-      <span v-if="selectedFunction" class="return-type-display">
-        : {{ formatType(selectedFunction.metadata?.returnType) }}
-      </span>
+      <div class="call-header">
+        <BlockDropZone
+          :parentBlockId="blockId!"
+          slotName="target"
+          :acceptedBlockTypes="['object', 'var', 'function']"
+          :block="config?.slots?.target"
+        >
+          <component
+            v-if="config?.slots?.target"
+            :is="getValueComponent(config.slots.target)"
+            v-bind="{ 
+              blockId: config.slots.target.id, 
+              config: config.slots.target.config, 
+              ...config.slots.target.config.slots, 
+              isExpression: true,
+              filterContext: config.slots.target.type === 'var' ? 'object_only' : undefined
+            }"
+          />
+          <span v-else class="dropzone-placeholder">{{ $t('blocks.function.drop_object') }}</span>
+        </BlockDropZone>
+        
+        <span v-if="config?.slots?.target" class="dot-separator">.</span>
+
+        <select v-model="selectedFunctionId" class="block-select">
+          <option value="" disabled>{{ $t('blocks.function.select') }}</option>
+          <option v-for="f in otherFunctions" :key="f.id" :value="f.id">
+            {{ f.name }} ({{ formatType(f.metadata?.returnType) }})
+          </option>
+        </select>
+        <span v-if="selectedFunction" class="return-type-display">
+          : {{ formatType(selectedFunction.metadata?.returnType) }}
+        </span>
+      </div>
     </template>
     <template #bottom v-if="(parentBlock?.type !== 'new_route' || parameters.filter(p => !['res', 'req'].includes(p.type.structId)).length > 0) && !minimal && selectedFunction">
       <div class="params-container">
@@ -245,6 +312,21 @@ const getValueComponent = (block: any) => {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+.call-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.dot-separator {
+  font-weight: bold;
+  font-size: 1.2em;
+}
+.dropzone-placeholder {
+  font-size: 0.8em;
+  opacity: 0.6;
+  font-style: italic;
+  white-space: nowrap;
 }
 .param-row {
   display: flex;

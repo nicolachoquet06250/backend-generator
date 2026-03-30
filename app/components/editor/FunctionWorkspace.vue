@@ -389,7 +389,7 @@ const onMobileTrashDragLeave = () => {
   flex: 1;
   display: flex;
   position: relative;
-  overflow: hidden;
+  overflow: auto;
 }
 
 .drop-zone {

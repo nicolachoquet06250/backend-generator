@@ -124,6 +124,10 @@ watch(varName, (val) => {
 watch(selectedVar, (val) => {
   if (props.blockId && activeFunctionId.value) {
     updateBlockConfig(activeFunctionId.value, props.blockId, { selectedVar: val });
+    const declaration = availableVariables.value.find(v => v.name === val);
+    if (declaration) {
+      updateBlockConfig(activeFunctionId.value, props.blockId, { typeConfig: declaration.type });
+    }
     updateReturnTypeIfNeeded(val);
   }
 });

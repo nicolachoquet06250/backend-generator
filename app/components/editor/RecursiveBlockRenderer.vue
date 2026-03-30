@@ -225,7 +225,6 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
   box-shadow: none;
   border: none;
   box-sizing: border-box;
-  overflow: auto;
 }
 
 @media (max-width: 768px) {

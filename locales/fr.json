@@ -160,7 +160,8 @@
     },
     "function": {
       "call": "appeler",
-      "select": "Choisir fonction"
+      "select": "Choisir fonction",
+      "drop_object": "Déposer un objet ici"
     },
     "parameter": {
       "label": "paramètre",
