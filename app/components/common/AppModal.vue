@@ -124,7 +124,9 @@ const onConfirm = () => {
 
 .modal-body {
   color: var(--text-color);
-  overflow-y: auto;
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
   flex: 1;
 }
 
@@ -148,11 +150,13 @@ const onConfirm = () => {
   padding: 16px 24px;
   border-top: 1px solid var(--sidebar-border);
   background: var(--sidebar-bg);
+  border-radius: 0 0 12px 12px;
 }
 
 @media (max-width: 768px) {
   .modal-actions {
     padding: 12px 16px;
+    border-radius: 0;
   }
 }
 

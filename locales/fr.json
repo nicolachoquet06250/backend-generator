@@ -30,7 +30,22 @@
     "confirm": "Confirmer",
     "reset": "Réinitialiser le stockage",
     "reload": "Recharger",
-    "compact": "Mode compact"
+    "compact": "Mode compact",
+    "generate": "Générer le code"
+  },
+  "generator": {
+    "title": "Générer le script backend",
+    "select_language": "Sélectionner le langage de sortie :",
+    "generate_btn": "Générer",
+    "copy_btn": "Copier le code",
+    "download_btn": "Télécharger le fichier",
+    "languages": {
+      "nodejs": "Node.js (TypeScript)",
+      "python": "Python",
+      "php": "PHP",
+      "go": "Go",
+      "java": "Java"
+    }
   },
   "blocks": {
     "true": "Vrai",

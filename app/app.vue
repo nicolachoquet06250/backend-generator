@@ -4,6 +4,7 @@ import FunctionWorkspace from './components/editor/FunctionWorkspace.vue';
 import StructBlock from './components/blocks/StructBlock.vue';
 import PWAManager from './components/common/PWAManager.vue';
 import AppModal from './components/common/AppModal.vue';
+import GeneratorModal from './components/editor/GeneratorModal.vue';
 
 const { locale, locales, setLocale, t } = useI18n();
 const { structures, addStructure, removeStructure, resetStructures } = useDataStructures();
@@ -17,11 +18,18 @@ const handleRemoveStructure = (id: string) => {
 const { isMobile } = useDevice();
 
 useHead({
-  title: t('title')
+  title: t('title'),
+  link: [
+    {
+      rel: 'stylesheet',
+      href: 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap'
+    }
+  ]
 })
 
 const showStructures = ref(false);
 const showResetModal = ref(false);
+const showGeneratorModal = ref(false);
 
 const resetStorage = () => {
   resetStructures();
@@ -78,6 +86,12 @@ function reloadPage() {
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"></polyline>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
+        <button class="generate-btn" :title="$t('common.generate')" @click="showGeneratorModal = true">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
           </svg>
         </button>
         <button class="struct-toggle" :title="$t('sections.structures')" @click="showStructures = !showStructures">
@@ -138,6 +152,8 @@ function reloadPage() {
       </Transition>
 
       <PWAManager />
+
+      <GeneratorModal :show="showGeneratorModal" @close="showGeneratorModal = false" />
 
       <AppModal 
         :show="showResetModal" 
@@ -341,6 +357,28 @@ body {
 .reset-btn:hover {
   background: #e60000;
   border-color: #e60000;
+}
+
+.generate-btn {
+  background: #ff9800;
+  border: 1px solid #ff9800;
+  color: white;
+  width: var(--header-button-size);
+  min-width: var(--header-button-size);
+  height: var(--header-button-size);
+  min-height: var(--header-button-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s;
+}
+
+.generate-btn:hover {
+  background: #e68a00;
+  border-color: #e68a00;
 }
 
 .reload-btn {

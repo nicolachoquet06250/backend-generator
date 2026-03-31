@@ -170,7 +170,13 @@ const getFieldType = (field: any) => {
 };
 
 // État local pour les valeurs par défaut des champs de la structure
-const structValues = ref<Record<string, any>>({});
+const structValues = ref<Record<string, any>>(props.config?.structValues || {});
+
+watch(structValues, (val) => {
+  if (props.blockId && activeFunctionId.value) {
+    updateBlockConfig(activeFunctionId.value, props.blockId, { structValues: val });
+  }
+}, { deep: true });
 
 const acceptedTypes = computed(() => {
   if (selectedType.value === 'number') return ['number', 'math-op', 'var', 'function', 'ternary'];
