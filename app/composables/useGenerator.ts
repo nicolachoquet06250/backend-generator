@@ -1093,7 +1093,7 @@ export const useGenerator = () => {
         if (!structureFunctions[f.metadata.structureId]) {
           structureFunctions[f.metadata.structureId] = [];
         }
-        structureFunctions[f.metadata.structureId].push(f);
+        structureFunctions[f.metadata.structureId]?.push(f);
       }
     });
 

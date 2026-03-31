@@ -3,6 +3,14 @@ export interface BlockInstance {
   type: string; // 'var', 'math', 'if', etc.
   config: any;
   children: BlockInstance[];
+  metadata?: {
+    returnType?: string;
+    structureId?: string;
+    varName?: string;
+    isVarAssign?: boolean;
+    isVarInit?: boolean;
+    isReturn?: boolean;
+  };
 }
 
 export interface FunctionDefinition {
