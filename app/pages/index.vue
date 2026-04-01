@@ -67,11 +67,24 @@ const confirmDelete = (id: string) => {
 const formatDate = (timestamp: number) => {
   return new Date(timestamp).toLocaleDateString();
 };
+
+function reloadPage() {
+  if (import.meta.client) {
+    window.location.reload();
+  }
+}
 </script>
 
 <template>
   <div class="projects-container">
     <LangSwitcher variant="global" />
+    <button class="reload-btn" :title="$t('common.reload')" @click="reloadPage">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+      </svg>
+    </button>
+
     <header class="projects-header">
       <h1>{{ t('projects.title') }}</h1>
       <button class="add-btn" @click="openAddModal">
@@ -426,6 +439,24 @@ const formatDate = (timestamp: number) => {
 .btn-secondary:hover {
   background: var(--card-bg);
   border-color: var(--secondary-text);
+}
+
+.reload-btn {
+  position: absolute;
+  top: 10px;
+  right: 90px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: var(--header-text);
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 @media (max-width: 640px) {
