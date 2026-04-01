@@ -14,6 +14,7 @@ const props = defineProps<{
 }>();
 
 const { functions, activeFunctionId, updateBlockConfig } = useFunctions();
+const { findVarType } = useExpressionType();
 
 // Trouver le type de la variable sélectionnée
 const targetVariableType = computed(() => {
@@ -22,27 +23,8 @@ const targetVariableType = computed(() => {
   const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
   if (!currentFunction) return 'any';
 
-  // Chercher le bloc 'var' qui a déclaré cette variable pour obtenir son type
-  let foundType = 'any';
-  const findVarDeclaration = (blocks: any[]) => {
-    for (const block of blocks) {
-      if (block.type === 'var' && block.config?.name && block.config?.name === props.variable.config.selectedVar) {
-        const tc = block.config.typeConfig;
-        foundType = (tc && typeof tc === 'object' && tc.kind) ? tc.kind : (tc || 'any');
-        return true;
-      }
-      if (block.children && findVarDeclaration(block.children)) return true;
-      if (block.config?.slots) {
-        for (const s of Object.values(block.config.slots)) {
-          if (s && findVarDeclaration([s as any])) return true;
-        }
-      }
-    }
-    return false;
-  };
-
-  findVarDeclaration(currentFunction.blocks);
-  return foundType;
+  const typeConfig = findVarType(currentFunction.blocks, props.variable.config.selectedVar);
+  return (typeConfig && typeof typeConfig === 'object' && typeConfig.kind) ? typeConfig.kind : (typeConfig || 'any');
 });
 
 const acceptedValueTypes = computed(() => {
@@ -61,28 +43,12 @@ watch(() => props.value, (newVal) => {
     const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
     if (!currentFunction || !props.variable?.config?.selectedVar) return;
 
-    let targetTypeConfig: any = null;
-    const findVarDeclaration = (blocks: any[]) => {
-      for (const block of blocks) {
-        if (block.type === 'var' && block.config?.name === props.variable.config.selectedVar) {
-          targetTypeConfig = block.config.typeConfig;
-          return true;
-        }
-        if (block.children && findVarDeclaration(block.children)) return true;
-        if (block.config?.slots) {
-          for (const s of Object.values(block.config.slots)) {
-            if (s && findVarDeclaration([s as any])) return true;
-          }
-        }
-      }
-      return false;
-    };
-    findVarDeclaration(currentFunction.blocks);
+    const targetTypeConfig = findVarType(currentFunction.blocks, props.variable.config.selectedVar);
 
     if (newVal?.type === 'array' && targetTypeConfig?.kind === 'array') {
-      const elementType = targetTypeConfig.elementType;
-      if (elementType && JSON.stringify(newVal.config?.elementType) !== JSON.stringify(elementType)) {
-        updateBlockConfig(activeFunctionId.value, newVal.id, { elementType });
+      const itemType = targetTypeConfig.itemType || targetTypeConfig.elementType;
+      if (itemType && JSON.stringify(newVal.config?.itemType) !== JSON.stringify(itemType)) {
+        updateBlockConfig(activeFunctionId.value, newVal.id, { itemType });
       }
     } else if (newVal?.type === 'object' && targetTypeConfig?.kind === 'object') {
       const structId = targetTypeConfig.structId;

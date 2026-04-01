@@ -45,6 +45,7 @@ watch(selectedProperty, (val) => {
 });
 
 const sourceBlock = computed(() => props.config?.slots?.source);
+const { findVarType, findParamType } = useExpressionType();
 
 const sourceStructure = computed(() => {
   if (!sourceBlock.value) return null;
@@ -54,50 +55,12 @@ const sourceStructure = computed(() => {
 
   if (sourceBlock.value.type === 'var') {
     if (sourceBlock.value.config?.selectedVar) {
-      // Rechercher le type de la variable sélectionnée dans la fonction active
-      const findVarType = (blocks: any[], name: string): any => {
-        for (const block of blocks) {
-          if (block.type === 'var' && block.config?.name === name) return block.config.typeConfig;
-          if (block.children) {
-            const found = findVarType(block.children, name);
-            if (found) return found;
-          }
-          if (block.config?.slots) {
-            for (const s of Object.values(block.config.slots)) {
-              if (s) {
-                const found = findVarType(Array.isArray(s) ? s : [s], name);
-                if (found) return found;
-              }
-            }
-          }
-        }
-        return null;
-      };
       type = currentFunction ? findVarType(currentFunction.blocks, sourceBlock.value.config.selectedVar) : null;
     } else {
       type = sourceBlock.value.config?.typeConfig;
     }
   } else if (sourceBlock.value.type === 'parameter') {
     if (sourceBlock.value.config?.selectedParam) {
-      // Rechercher le type du paramètre sélectionné dans la fonction active
-      const findParamType = (blocks: any[], name: string): any => {
-        for (const block of blocks) {
-          if (block.type === 'parameter' && block.config?.name === name && !block.config?.selectedParam) return block.config.type;
-          if (block.children) {
-            const found = findParamType(block.children, name);
-            if (found) return found;
-          }
-          if (block.config?.slots) {
-            for (const s of Object.values(block.config.slots)) {
-              if (s) {
-                const found = findParamType(Array.isArray(s) ? s : [s], name);
-                if (found) return found;
-              }
-            }
-          }
-        }
-        return null;
-      };
       type = currentFunction ? findParamType(currentFunction.blocks, sourceBlock.value.config.selectedParam) : null;
     } else {
       type = sourceBlock.value.config?.type;

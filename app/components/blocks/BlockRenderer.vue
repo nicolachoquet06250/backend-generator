@@ -76,10 +76,12 @@ const getBlockComponent = (type: string) => {
 const getBlockProps = (block: any) => {
   if (!block) return {};
   
+  const { key, ...slotsWithoutKey } = block.config?.slots || {};
+  
   const baseProps = {
     blockId: block.id,
     config: block.config,
-    ...block.config?.slots,
+    ...slotsWithoutKey,
     isExpression: props.isExpression,
     filterContext: props.filterContext
   };
@@ -95,7 +97,14 @@ const getBlockProps = (block: any) => {
   }
 
   if (block.type === 'array_set_key') {
-    return { ...baseProps, targetKey: block.config?.slots?.key, children: block.children, parentBlockId: props.parentBlockId };
+    return { 
+      ...baseProps, 
+      array: block.config?.slots?.array,
+      targetKey: block.config?.slots?.targetKey || block.config?.slots?.key, 
+      value: block.config?.slots?.value,
+      children: block.children, 
+      parentBlockId: props.parentBlockId 
+    };
   }
 
   if (block.type === 'ternary') {

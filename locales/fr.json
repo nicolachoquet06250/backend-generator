@@ -173,7 +173,8 @@
     "foreach": {
       "label": "pour chaque",
       "in": "dans",
-      "item": "item",
+      "item": "valeur",
+      "key": "clé",
       "list": "liste"
     },
     "break": {

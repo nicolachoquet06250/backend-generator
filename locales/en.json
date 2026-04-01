@@ -173,7 +173,8 @@
     "foreach": {
       "label": "for each",
       "in": "in",
-      "item": "item",
+      "item": "value",
+      "key": "key",
       "list": "list"
     },
     "break": {

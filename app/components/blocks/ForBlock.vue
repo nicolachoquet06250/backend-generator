@@ -14,7 +14,7 @@ import FunctionCallBlock from '~/components/blocks/FunctionCallBlock.vue';
 import BooleanBlock from '~/components/blocks/BooleanBlock.vue';
 import PrintBlock from "~/components/blocks/PrintBlock.vue";
 
-defineProps<{
+const props = defineProps<{
   minimal?: boolean;
   blockId?: string;
   from?: any;
@@ -22,6 +22,32 @@ defineProps<{
   config?: any;
   children?: any[];
 }>();
+
+defineEmits(['block-interaction-start', 'block-interaction-stop']);
+
+const { activeFunctionId, updateBlockConfig } = useFunctions();
+
+const loopVar = ref(props.config?.loopVar || 'i');
+
+const parentLoopVars = inject('loopVars', ref<{ name: string, type: any }[]>([]));
+const loopVars = computed(() => {
+  const vars = [...parentLoopVars.value];
+  if (loopVar.value) vars.push({ name: loopVar.value, type: 'number' });
+  return vars;
+});
+provide('loopVars', loopVars);
+
+watch(() => props.config?.loopVar, (newVal) => {
+  if (newVal !== undefined && newVal !== loopVar.value) {
+    loopVar.value = newVal;
+  }
+});
+
+watch(loopVar, (val) => {
+  if (props.blockId && activeFunctionId.value && val !== props.config?.loopVar) {
+    updateBlockConfig(activeFunctionId.value, props.blockId, { loopVar: val });
+  }
+});
 
 provide('inLoop', ref(true));
 
@@ -49,6 +75,7 @@ const getOperandComponent = (block: any) => {
       class="block-input small" 
       placeholder="i" 
       v-if="!minimal" 
+      v-model="loopVar"
       @mouseenter="$emit('block-interaction-start')"
       @mouseleave="$emit('block-interaction-stop')"
     />

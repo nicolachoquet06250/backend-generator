@@ -15,9 +15,12 @@ const props = defineProps<{
 
 const { structures } = useDataStructures();
 const { activeFunctionId, updateBlockConfig, functions } = useFunctions();
+const { findVarType } = useExpressionType();
 
 const acceptedArrayTypes = ['var', 'parameter', 'array', 'object', 'function'];
 const acceptedValueTypes = ['expression'];
+
+const arrayKey = computed(() => props.targetKey);
 
 const availableKeys = computed(() => {
   if (!props.array) return [];
@@ -27,32 +30,11 @@ const availableKeys = computed(() => {
     const varName = props.array.config?.selectedVar || props.array.config?.name;
     if (!varName) return [];
 
-    // Trouver la déclaration de la variable pour connaître son type/structure
-    const findVarDeclaration = (blocks: any[]): any => {
-      for (const b of blocks) {
-        if (b.type === 'var' && b.config?.name === varName) return b;
-        if (b.children) {
-          const found = findVarDeclaration(b.children);
-          if (found) return found;
-        }
-        if (b.config?.slots) {
-          for (const slot in b.config.slots) {
-            if (b.config.slots[slot]) {
-              const found = findVarDeclaration([b.config.slots[slot]]);
-              if (found) return found;
-            }
-          }
-        }
-      }
-      return null;
-    };
-
     const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
     if (!currentFunction) return [];
 
-    const declaration = findVarDeclaration(currentFunction.blocks);
-    if (declaration && declaration.config?.typeConfig) {
-      const typeConfig = declaration.config.typeConfig;
+    const typeConfig = findVarType(currentFunction.blocks, varName);
+    if (typeConfig) {
       let structId = '';
       if (typeConfig.kind === 'object') {
         structId = typeConfig.structId;
@@ -79,8 +61,14 @@ const availableKeys = computed(() => {
 
 const selectedKey = ref(props.config?.selectedKey || '');
 
+watch(() => props.config?.selectedKey, (val) => {
+  if (val !== undefined && val !== selectedKey.value) {
+    selectedKey.value = val;
+  }
+}, { immediate: true });
+
 watch(selectedKey, (val) => {
-  if (props.blockId && activeFunctionId.value) {
+  if (props.blockId && activeFunctionId.value && val !== props.config?.selectedKey) {
     updateBlockConfig(activeFunctionId.value, props.blockId, { selectedKey: val });
   }
 });
@@ -109,12 +97,12 @@ watch(selectedKey, (val) => {
       </template>
       <template v-else>
         <BlockDropZone 
-          slotName="key" 
+          slotName="arrayKey"
           :parentBlockId="blockId!" 
-          :block="targetKey"
+          :block="arrayKey"
           :acceptedBlockTypes="['string', 'number', 'var', 'parameter', 'function']"
         >
-          <BlockRenderer v-if="targetKey" :block="targetKey" isExpression />
+          <BlockRenderer v-if="arrayKey" :block="arrayKey" isExpression />
         </BlockDropZone>
       </template>
 

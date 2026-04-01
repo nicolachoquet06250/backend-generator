@@ -3,6 +3,7 @@ import type {BlockInstance, FunctionDefinition} from './useFunctions';
 export const useGenerator = () => {
   const { structures } = useDataStructures();
   const { functions } = useFunctions();
+  const { getBlockType } = useExpressionType();
 
   const indent = (code: string, spaces: number = 2) => {
     if (!code || code.trim() === '') return '';
@@ -19,6 +20,9 @@ export const useGenerator = () => {
           if (!s) return false;
           return hasReturnBlock(Array.isArray(s) ? s : [s]);
         });
+      }
+      if (block.type === 'elseif' || block.type === 'else') {
+        if (block.children && hasReturnBlock(block.children)) return true;
       }
       if (block.config?.elseifs) {
         return block.config.elseifs.some((ei: any) => ei.children && hasReturnBlock(ei.children));
@@ -54,6 +58,9 @@ export const useGenerator = () => {
             if (s) scan(Array.isArray(s) ? s : [s]);
           });
         }
+        if (block.type === 'elseif' || block.type === 'else') {
+          if (block.children) scan(block.children);
+        }
         if (block.config?.elseifs) {
           block.config.elseifs.forEach((ei: any) => ei.children && scan(ei.children));
         }
@@ -66,11 +73,36 @@ export const useGenerator = () => {
     return reassigned;
   };
 
+  const hasBreakOrContinue = (blocks: BlockInstance[]): boolean => {
+    return blocks.some(block => {
+      if (block.type === 'break' || block.type === 'continue') return true;
+      if (block.children && hasBreakOrContinue(block.children)) return true;
+      if (block.config?.else?.children && hasBreakOrContinue(block.config.else.children)) return true;
+      if (block.config?.elseifs) {
+        return block.config.elseifs.some((ei: any) => ei.children && hasBreakOrContinue(ei.children));
+      }
+      return false;
+    });
+  };
+
   const formatLiteral = (value: any, language: string, typeHint?: string): string => {
     if (value === undefined || value === null || value === '') {
       if (typeHint === 'number') return '0';
-      if (typeHint === 'string') return language === 'python' ? '""' : "''";
-      if (typeHint === 'boolean') return 'false';
+      if (typeHint === 'string') return (language === 'python' || language === 'java') ? '""' : "''";
+      if (typeHint === 'boolean') return language === 'python' ? 'False' : 'false';
+      if (typeHint === 'array' || (typeof typeHint === 'object' && (typeHint as any).kind === 'array')) {
+        const itemType = typeof typeHint === 'object' ? ((typeHint as any).itemType || (typeHint as any).elementType) : undefined;
+        if (language === 'python') return '[]';
+        if (language === 'php') return '[]';
+        if (language === 'nodejs') return '[]';
+        if (language === 'java') {
+          return `new ArrayList<${itemType ? getJavaType(itemType) : 'Object'}>()`;
+        }
+        if (language === 'go') {
+          const goItemType = itemType ? getGoType(itemType) : 'interface{}';
+          return `[]${goItemType}{}`;
+        }
+      }
       
       if (language === 'python') return 'None';
       if (language === 'php' || language === 'nodejs' || language === 'java') return 'null';
@@ -111,6 +143,7 @@ export const useGenerator = () => {
           const decl = isReassigned ? 'let' : 'const';
           
           const type = typeof block.config.typeConfig === 'string' ? block.config.typeConfig : (block.config.typeConfig?.kind || 'any');
+          const tsTypeName = getTypescriptType(block.config.typeConfig);
           if (type === 'object') {
             const structId = block.config.typeConfig?.structId;
             const struct = structures.value.find(s => s.id === structId);
@@ -126,10 +159,10 @@ export const useGenerator = () => {
             } else {
               fields = '{}';
             }
-            return `${decl} ${varName} = new ${structName}(${fields});`;
+            return `${decl} ${varName}: ${tsTypeName} = new ${structName}(${fields});`;
           }
-          const val = block.config.slots?.value ? generateNodeJS([block.config.slots.value], true, reassigned) : formatLiteral(block.config.value, 'nodejs', type);
-          return `${decl} ${varName} = ${val};`;
+          const nodeJsVal = block.config.slots?.value ? generateNodeJS([block.config.slots.value], true, reassigned) : formatLiteral(block.config.value, 'nodejs', block.config.typeConfig || type);
+          return `${decl} ${varName}: ${tsTypeName} = ${nodeJsVal};`;
         case 'set_var':
           const varSource = block.config.slots?.variable ? generateNodeJS([block.config.slots.variable], true, reassigned) : (block.config.name || 'undefined');
           const nodeJsSetVarType = block.config.slots?.variable?.config?.typeConfig;
@@ -194,31 +227,74 @@ export const useGenerator = () => {
           const printVal = block.config.slots?.value ? generateNodeJS([block.config.slots.value], true, reassigned) : formatLiteral(block.config.value, 'nodejs');
           return `console.log(${printVal});`;
         case 'if':
-          const condition = block.config.condition || 'true';
+          const nodeJsCondIf = block.config.slots?.condition ? generateNodeJS([block.config.slots.condition], true, reassigned) : (block.config.condition || 'true');
           const children = generateNodeJS(block.children, false, reassigned);
           const elseifArr = block.config.elseifs?.map((ei: any) => {
+            const eiCond = ei.slots?.condition ? generateNodeJS([ei.slots.condition], true, reassigned) : (ei.condition || 'true');
             const eiChildren = generateNodeJS(ei.children || [], false, reassigned);
-            return ` else if (${ei.condition}) {\n${indent(eiChildren)}${eiChildren ? '\n' : ''}}`;
+            return ` else if (${eiCond}) {\n${indent(eiChildren)}${eiChildren ? '\n' : ''}}`;
           }).join('') || '';
           const elsePart = block.config.else ? (() => {
             const eChildren = generateNodeJS(block.config.else.children || [], false, reassigned);
             return ` else {\n${indent(eChildren)}${eChildren ? '\n' : ''}}`;
           })() : '';
-          return `if (${condition}) {\n${indent(children)}${children ? '\n' : ''}}${elseifArr}${elsePart}`;
+          return `if (${nodeJsCondIf}) {\n${indent(children)}${children ? '\n' : ''}}${elseifArr}${elsePart}`;
+        case 'elseif':
+          const nodeJsCondElseIf = block.config.slots?.condition ? generateNodeJS([block.config.slots.condition], true, reassigned) : (block.config.condition || 'true');
+          const elseifChildren = generateNodeJS(block.children, false, reassigned);
+          return `else if (${nodeJsCondElseIf}) {\n${indent(elseifChildren)}${elseifChildren ? '\n' : ''}}`;
+        case 'else':
+          const elseChildren = generateNodeJS(block.children, false, reassigned);
+          return `else {\n${indent(elseChildren)}${elseChildren ? '\n' : ''}}`;
         case 'for':
-          const forVar = block.config.varName || 'i';
-          const forDecl = reassigned.has(forVar) ? 'let' : 'const';
-          const forInit = `${forDecl} ${forVar} = ${block.config.from || 0}`;
+          const forVar = block.config.loopVar || block.config.varName || 'i';
+          const forInit = `let ${forVar} = ${block.config.from || 0}`;
           const forCond = `${forVar} < ${block.config.to || 10}`;
           const forInc = `${forVar}++`;
           const forChildren = generateNodeJS(block.children, false, reassigned);
           return `for (${forInit}; ${forCond}; ${forInc}) {\n${indent(forChildren)}${forChildren ? '\n' : ''}}`;
         case 'foreach':
+          const foreachListExpr = block.config.slots?.list ? generateNodeJS([block.config.slots.list], true, reassigned) : (block.config.list || 'list');
+          const foreachItemVar = (block.config.item || 'item');
+          const foreachKeyVar = (block.config.key || '').trim();
           const foreachChildren = generateNodeJS(block.children, false, reassigned);
-          return `${block.config.list || 'list'}.forEach(${block.config.item || 'item'} => {\n${indent(foreachChildren)}${foreachChildren ? '\n' : ''}});`;
+          
+          if (hasBreakOrContinue(block.children)) {
+            let keyInit = '';
+            let keyInc = '';
+            if (foreachKeyVar) {
+              keyInit = `let ${foreachKeyVar} = 0;\n`;
+              keyInc = `  ${foreachKeyVar}++;`;
+            }
+            return `${keyInit}for (const ${foreachItemVar} of ${foreachListExpr}) {\n${indent(foreachChildren)}${foreachChildren ? '\n' : ''}${keyInc ? indent(keyInc) + '\n' : ''}}`;
+          }
+
+          if (foreachKeyVar) {
+            return `${foreachListExpr}.forEach((${foreachItemVar}, ${foreachKeyVar}) => {\n${indent(foreachChildren)}${foreachChildren ? '\n' : ''}});`;
+          }
+          return `${foreachListExpr}.forEach((${foreachItemVar}) => {\n${indent(foreachChildren)}${foreachChildren ? '\n' : ''}});`;
+        case 'array':
+          const arrayItems = (block.children || []).map(child => generateNodeJS([child], true, reassigned)).join(', ');
+          const arrayType = block.config.typeConfig || block.config.itemType || block.config.elementType;
+          const arrayRes = `[${arrayItems}]`;
+          return isNested ? arrayRes : `${arrayRes};`;
+        case 'array_push':
+          const pushTarget = block.config.slots?.array ? generateNodeJS([block.config.slots.array], true, reassigned) : '[]';
+          const pushValue = block.config.slots?.value ? generateNodeJS([block.config.slots.value], true, reassigned) : 'null';
+          return `${pushTarget}.push(${pushValue});`;
+        case 'array_remove':
+          const removeTarget = block.config.slots?.array ? generateNodeJS([block.config.slots.array], true, reassigned) : '[]';
+          const removeIndex = block.config.slots?.index ? generateNodeJS([block.config.slots.index], true, reassigned) : '0';
+          return `${removeTarget}.splice(${removeIndex}, 1);`;
+        case 'array_set_key':
+          const setKeyTarget = block.config.slots?.array ? generateNodeJS([block.config.slots.array], true, reassigned) : '[]';
+          const setKeyValue = block.config.slots?.value ? generateNodeJS([block.config.slots.value], true, reassigned) : 'null';
+          const setKeyKey = block.config.selectedKey ? `"${block.config.selectedKey}"` : (block.config.slots?.key ? generateNodeJS([block.config.slots.key], true, reassigned) : '0');
+          return `${setKeyTarget}[${setKeyKey}] = ${setKeyValue};`;
         case 'while':
+          const nodeJsWhileCond = block.config.slots?.condition ? generateNodeJS([block.config.slots.condition], true, reassigned) : (block.config.condition || 'true');
           const whileChildren = generateNodeJS(block.children, false, reassigned);
-          return `while (${block.config.condition || 'true'}) {\n${indent(whileChildren)}${whileChildren ? '\n' : ''}}`;
+          return `while (${nodeJsWhileCond}) {\n${indent(whileChildren)}${whileChildren ? '\n' : ''}}`;
         case 'parameter':
           const nodeJsParamName = block.config.selectedParam || '';
           return isNested ? nodeJsParamName : (nodeJsParamName ? `${nodeJsParamName};` : '');
@@ -262,13 +338,16 @@ export const useGenerator = () => {
         case 'continue':
           return 'continue;';
         default:
-          if (block.type.startsWith('math-')) {
+          if (block.type.startsWith('math-') || block.type.startsWith('compare-')) {
+            const isCompare = block.type.startsWith('compare-');
             const op = block.type.split('-')[1];
             const left = block.config.slots?.left ? generateNodeJS([block.config.slots.left], true, reassigned) : (block.config.left || '0');
             const right = block.config.slots?.right ? generateNodeJS([block.config.slots.right], true, reassigned) : (block.config.right || '0');
-            const res = `${left} ${op} ${right}`;
-            const isInsideMath = block.config.slots?.left?.type.startsWith('math-') || block.config.slots?.right?.type.startsWith('math-');
-            return isNested && isInsideMath ? `(${res})` : res;
+            let actualOp = op;
+            if (op === '!=') actualOp = '!==';
+            const res = isCompare ? `${left} ${actualOp} ${right}` : `${left} ${op} ${right}`;
+            const isInside = block.config.slots?.left?.type.startsWith(isCompare ? 'compare-' : 'math-') || block.config.slots?.right?.type.startsWith(isCompare ? 'compare-' : 'math-');
+            return isNested && isInside ? `(${res})` : res;
           }
           return `// TODO: implement ${block.type}`;
       }
@@ -285,7 +364,7 @@ export const useGenerator = () => {
           const pyTypeConfig = block.config.typeConfig;
           const isNullable = block.config.nullable || false;
           const pyTypeName = getPythonType(pyTypeConfig, isNullable);
-          if (pyTypeName.startsWith('object') || (pyTypeConfig?.kind === 'object' && !isNullable)) {
+          if ((pyTypeName.startsWith('object') || (pyTypeConfig?.kind === 'object' && !isNullable)) && block.config.typeConfig?.kind !== 'array') {
             const structId = pyTypeConfig?.structId;
             const struct = structures.value.find(s => s.id === structId);
             const structName = struct?.name || structId || 'Object';
@@ -299,9 +378,8 @@ export const useGenerator = () => {
             }
             return `${block.config.name || 'v'}: ${pyTypeName} = ${structName}(${fields})`;
           }
-          const pythonVarVal = block.config.slots?.value ? generatePython([block.config.slots.value], true) : formatLiteral(block.config.value, 'python', typeof pyTypeConfig === 'string' ? pyTypeConfig : pyTypeConfig?.kind);
-          const assignDefault = !(!isNullable && (block.config.value === null || block.config.value === undefined || block.config.value === ''));
-          return `${block.config.name || 'v'}: ${pyTypeName}${assignDefault ? ` = ${pythonVarVal}` : ''}`;
+          const pythonVarVal = block.config.slots?.value ? generatePython([block.config.slots.value], true) : formatLiteral(block.config.value, 'python', pyTypeConfig || (typeof pyTypeConfig === 'string' ? pyTypeConfig : pyTypeConfig?.kind));
+          return `${block.config.name || 'v'}: ${pyTypeName} = ${pythonVarVal}`;
         case 'set_var':
           const varSource = block.config.slots?.variable ? generatePython([block.config.slots.variable], true) : (block.config.name || 'None');
           const pySetVarType = block.config.slots?.variable?.config?.typeConfig;
@@ -356,22 +434,54 @@ export const useGenerator = () => {
           const printVal = block.config.slots?.value ? generatePython([block.config.slots.value], true) : formatLiteral(block.config.value, 'python');
           return `print(${printVal})`;
         case 'if':
+          const pyCondIf = block.config.slots?.condition ? generatePython([block.config.slots.condition], true) : (block.config.condition || 'True');
           const children = generatePython(block.children);
           const elifs = block.config.elseifs?.map((ei: any) => {
+            const eiCond = ei.slots?.condition ? generatePython([ei.slots.condition], true) : (ei.condition || 'True');
             const eiChildren = generatePython(ei.children || []);
-            return `\nelif ${ei.condition}:\n${indent(eiChildren || 'pass', 4)}`;
+            return `\nelif ${eiCond}:\n${indent(eiChildren || 'pass', 4)}`;
           }).join('') || '';
           const elsePart = block.config.else ? (() => {
             const eChildren = generatePython(block.config.else.children || []);
             return `\nelse:\n${indent(eChildren || 'pass', 4)}`;
           })() : '';
-          return `if ${block.config.condition || 'True'}:\n${indent(children || 'pass', 4)}${elifs}${elsePart}`;
+          return `if ${pyCondIf}:\n${indent(children || 'pass', 4)}${elifs}${elsePart}`;
+        case 'elseif':
+          const pyCondElseIf = block.config.slots?.condition ? generatePython([block.config.slots.condition], true) : (block.config.condition || 'True');
+          const elseifChildrenPy = generatePython(block.children);
+          return `elif ${pyCondElseIf}:\n${indent(elseifChildrenPy || 'pass', 4)}`;
+        case 'else':
+          const elseChildrenPy = generatePython(block.children);
+          return `else:\n${indent(elseChildrenPy || 'pass', 4)}`;
         case 'for':
           return `for ${block.config.varName || 'i'} in range(${block.config.from || 0}, ${block.config.to || 10}):\n${indent(generatePython(block.children) || 'pass', 4)}`;
         case 'foreach':
-          return `for ${block.config.item || 'item'} in ${block.config.list || 'list'}:\n${indent(generatePython(block.children) || 'pass', 4)}`;
+          const pyListExpr = block.config.slots?.list ? generatePython([block.config.slots.list], true) : (block.config.list || 'list');
+          const pyItem = (block.config.item || 'item');
+          const pyKey = (block.config.key || '').trim();
+          if (pyKey) {
+            return `for ${pyKey}, ${pyItem} in enumerate(${pyListExpr}):\n${indent(generatePython(block.children) || 'pass', 4)}`;
+          }
+          return `for ${pyItem} in ${pyListExpr}:\n${indent(generatePython(block.children) || 'pass', 4)}`;
+        case 'array':
+          const pyArrayItems = (block.children || []).map(child => generatePython([child], true)).join(', ');
+          return `[${pyArrayItems}]`;
+        case 'array_push':
+          const pyPushTarget = block.config.slots?.array ? generatePython([block.config.slots.array], true) : '[]';
+          const pyPushValue = block.config.slots?.value ? generatePython([block.config.slots.value], true) : 'None';
+          return `${pyPushTarget}.append(${pyPushValue})`;
+        case 'array_remove':
+          const pyRemoveTarget = block.config.slots?.array ? generatePython([block.config.slots.array], true) : '[]';
+          const pyRemoveIndex = block.config.slots?.index ? generatePython([block.config.slots.index], true) : '0';
+          return `del ${pyRemoveTarget}[${pyRemoveIndex}]`;
+        case 'array_set_key':
+          const pySetKeyTarget = block.config.slots?.array ? generatePython([block.config.slots.array], true) : '[]';
+          const pySetKeyValue = block.config.slots?.value ? generatePython([block.config.slots.value], true) : 'None';
+          const pySetKeyKey = block.config.selectedKey ? `"${block.config.selectedKey}"` : (block.config.slots?.key ? generatePython([block.config.slots.key], true) : '0');
+          return `${pySetKeyTarget}[${pySetKeyKey}] = ${pySetKeyValue}`;
         case 'while':
-          return `while ${block.config.condition || 'True'}:\n${indent(generatePython(block.children) || 'pass', 4)}`;
+          const pyWhileCond = block.config.slots?.condition ? generatePython([block.config.slots.condition], true) : (block.config.condition || 'True');
+          return `while ${pyWhileCond}:\n${indent(generatePython(block.children) || 'pass', 4)}`;
         case 'parameter':
           return block.config.selectedParam || '';
         case 'func_call':
@@ -412,13 +522,14 @@ export const useGenerator = () => {
         case 'continue':
           return 'continue';
         default:
-          if (block.type.startsWith('math-')) {
+          if (block.type.startsWith('math-') || block.type.startsWith('compare-')) {
+            const isCompare = block.type.startsWith('compare-');
             const op = block.type.split('-')[1];
             const left = block.config.slots?.left ? generatePython([block.config.slots.left], true) : (block.config.left || '0');
             const right = block.config.slots?.right ? generatePython([block.config.slots.right], true) : (block.config.right || '0');
             const res = `${left} ${op} ${right}`;
-            const isInsideMath = block.config.slots?.left?.type.startsWith('math-') || block.config.slots?.right?.type.startsWith('math-');
-            return isNested && isInsideMath ? `(${res})` : res;
+            const isInside = block.config.slots?.left?.type.startsWith(isCompare ? 'compare-' : 'math-') || block.config.slots?.right?.type.startsWith(isCompare ? 'compare-' : 'math-');
+            return isNested && isInside ? `(${res})` : res;
           }
           return `# TODO: implement ${block.type}`;
       }
@@ -437,7 +548,14 @@ export const useGenerator = () => {
         const struct = structures.value.find(s => s.id === structId);
         phpType = struct?.name || 'object';
         break;
-      case 'array': phpType = 'array'; break;
+      case 'array':
+        const itemType = type?.itemType || type?.elementType;
+        if (itemType) {
+          phpType = `${getPHPType(itemType)}[]`;
+        } else {
+          phpType = 'array';
+        }
+        break;
       case 'void': phpType = 'void'; break;
       default: phpType = 'mixed'; break;
     }
@@ -457,7 +575,12 @@ export const useGenerator = () => {
         const structId = type?.structId;
         const struct = structures.value.find(s => s.id === structId);
         return struct?.name || 'Object';
-      case 'array': return 'List<Object>';
+      case 'array':
+        const itemType = type?.itemType || type?.elementType;
+        if (itemType) {
+          return `List<${getJavaType(itemType)}>`;
+        }
+        return 'List<Object>';
       case 'void': return 'void';
       default: return 'Object';
     }
@@ -475,8 +598,13 @@ export const useGenerator = () => {
         const struct = structures.value.find(s => s.id === structId);
         pythonType = struct?.name || 'object';
         break;
-      case 'array': pythonType = 'list'; break;
-      case 'void': pythonType = 'None'; break;
+      case 'array':
+        const itemType = type?.itemType || type?.elementType;
+        if (itemType) {
+          return `list[${getPythonType(itemType)}]`;
+        }
+        return 'list';
+      case 'void': return 'None';
       default: pythonType = 'Any'; break;
     }
 
@@ -496,7 +624,12 @@ export const useGenerator = () => {
         const structId = type?.structId;
         const struct = structures.value.find(s => s.id === structId);
         return struct?.name || 'any';
-      case 'array': return 'any[]';
+      case 'array':
+        const itemType = type?.itemType || type?.elementType;
+        if (itemType) {
+          return `${getTypescriptType(itemType)}[]`;
+        }
+        return 'any[]';
       case 'void': return 'void';
       default: return 'any';
     }
@@ -512,7 +645,12 @@ export const useGenerator = () => {
         const structId = type?.structId;
         const struct = structures.value.find(s => s.id === structId);
         return struct?.name ? `*${struct.name}` : 'interface{}';
-      case 'array': return '[]interface{}';
+      case 'array':
+        const itemType = type?.itemType || type?.elementType;
+        if (itemType) {
+          return `[]${getGoType(itemType)}`;
+        }
+        return '[]interface{}';
       case 'void': return '';
       default: return 'interface{}';
     }
@@ -525,15 +663,22 @@ export const useGenerator = () => {
           if (block.config.selectedVar) {
             return block.config.selectedVar;
           }
-          const goTypeConfig = typeof block.config.typeConfig === 'string' ? block.config.typeConfig : (block.config.typeConfig?.kind || 'any');
+          const goTypeConfig = block.config.typeConfig;
           const goVarName = block.config.name || 'v';
           
           if (block.config.slots?.value?.type === 'ternary') {
             const ternaryBlock = { ...block.config.slots.value, metadata: { ...block.config.slots.value.metadata, isVarInit: true, varName: goVarName } };
             return generateGo([ternaryBlock], false);
           }
-          if (goTypeConfig === 'object') {
-            const structId = block.config.typeConfig?.structId;
+
+          const hasInitialValue = block.config.slots?.value || (block.config.value !== undefined && block.config.value !== null && block.config.value !== '');
+
+          if (!hasInitialValue) {
+            return `var ${goVarName} ${getGoType(goTypeConfig)}`;
+          }
+
+          if ((typeof goTypeConfig === 'object' ? goTypeConfig?.kind : goTypeConfig) === 'object') {
+            const structId = goTypeConfig?.structId;
             const struct = structures.value.find(s => s.id === structId);
             const structName = struct?.name || structId || 'struct{}';
             let fields = '';
@@ -546,7 +691,7 @@ export const useGenerator = () => {
             }
             return `${goVarName} := &${structName}{${fields}}`;
           }
-          const goVarVal = block.config.slots?.value ? generateGo([block.config.slots.value], true) : formatLiteral(block.config.value, 'go', goTypeConfig);
+          const goVarVal = block.config.slots?.value ? generateGo([block.config.slots.value], true) : formatLiteral(block.config.value, 'go', goTypeConfig || (typeof goTypeConfig === 'string' ? goTypeConfig : goTypeConfig?.kind));
           return `${goVarName} := ${goVarVal}`;
         case 'set_var':
           const goSetVarType = block.config.slots?.variable?.config?.typeConfig;
@@ -660,17 +805,25 @@ export const useGenerator = () => {
           const printVal = block.config.slots?.value ? generateGo([block.config.slots.value], true) : formatLiteral(block.config.value, 'go');
           return `fmt.Println(${printVal})`;
         case 'if':
-          const condition = (block.config.condition || 'true');
+          const goCondIf = block.config.slots?.condition ? generateGo([block.config.slots.condition], true) : (block.config.condition || 'true');
           const children = generateGo(block.children, false);
           const elseifArr = block.config.elseifs?.map((ei: any) => {
+            const eiCond = ei.slots?.condition ? generateGo([ei.slots.condition], true) : (ei.condition || 'true');
             const eiChildren = generateGo(ei.children || [], false);
-            return ` else if ${ei.condition} {\n${indent(eiChildren)}${eiChildren ? '\n' : ''}}`;
+            return ` else if ${eiCond} {\n${indent(eiChildren)}${eiChildren ? '\n' : ''}}`;
           }).join('') || '';
           const elsePart = block.config.else ? (() => {
             const eChildren = generateGo(block.config.else.children || [], false);
             return ` else {\n${indent(eChildren)}${eChildren ? '\n' : ''}}`;
           })() : '';
-          return `if ${condition} {\n${indent(children)}${children ? '\n' : ''}}${elseifArr}${elsePart}`;
+          return `if ${goCondIf} {\n${indent(children)}${children ? '\n' : ''}}${elseifArr}${elsePart}`;
+        case 'elseif':
+          const goCondElseIf = block.config.slots?.condition ? generateGo([block.config.slots.condition], true) : (block.config.condition || 'true');
+          const elseifChildrenGo = generateGo(block.children, false);
+          return `else if ${goCondElseIf} {\n${indent(elseifChildrenGo)}${elseifChildrenGo ? '\n' : ''}}`;
+        case 'else':
+          const elseChildrenGo = generateGo(block.children, false);
+          return `else {\n${indent(elseChildrenGo)}${elseChildrenGo ? '\n' : ''}}`;
         case 'for':
           const forVar = block.config.varName || 'i';
           const forInit = `${forVar} := ${block.config.from || 0}`;
@@ -679,11 +832,29 @@ export const useGenerator = () => {
           const forChildren = generateGo(block.children, false);
           return `for ${forInit}; ${forCond}; ${forInc} {\n${indent(forChildren)}${forChildren ? '\n' : ''}}`;
         case 'foreach':
-          const feItem = block.config.itemName || 'item';
-          const feIndex = block.config.indexName || 'i';
+          const feItem = (block.config.item || block.config.itemName || 'item');
+          const feIndex = (block.config.key || block.config.indexName || 'i');
           const feList = block.config.slots?.list ? generateGo([block.config.slots.list], true) : (block.config.list || '[]');
           const feChildren = generateGo(block.children, false);
           return `for ${feIndex}, ${feItem} := range ${feList} {\n${indent(feChildren)}${feChildren ? '\n' : ''}}`;
+        case 'array':
+          const goArrayItems = (block.children || []).map(child => generateGo([child], true)).join(', ');
+          const goArrayType = block.config.typeConfig || block.config.itemType || block.config.elementType;
+          const goItemType = goArrayType ? getGoType(goArrayType) : 'interface{}';
+          return `[]${goItemType}{${goArrayItems}}`;
+        case 'array_push':
+          const goPushTarget = block.config.slots?.array ? generateGo([block.config.slots.array], true) : '[]interface{}{}';
+          const goPushValue = block.config.slots?.value ? generateGo([block.config.slots.value], true) : 'nil';
+          return `${goPushTarget} = append(${goPushTarget}, ${goPushValue})`;
+        case 'array_remove':
+          const goRemoveTarget = block.config.slots?.array ? generateGo([block.config.slots.array], true) : '[]interface{}{}';
+          const goRemoveIndex = block.config.slots?.index ? generateGo([block.config.slots.index], true) : '0';
+          return `${goRemoveTarget} = append(${goRemoveTarget}[:${goRemoveIndex}], ${goRemoveTarget}[${goRemoveIndex}+1:]...)`;
+        case 'array_set_key':
+          const goSetKeyTarget = block.config.slots?.array ? generateGo([block.config.slots.array], true) : 'nil';
+          const goSetKeyValue = block.config.slots?.value ? generateGo([block.config.slots.value], true) : 'nil';
+          const goSetKeyKey = block.config.selectedKey ? `"${block.config.selectedKey}"` : (block.config.slots?.key ? generateGo([block.config.slots.key], true) : '0');
+          return `${goSetKeyTarget}[${goSetKeyKey}] = ${goSetKeyValue}`;
         case 'while':
           const whileCond = block.config.slots?.condition ? generateGo([block.config.slots.condition], true) : (block.config.condition || 'true');
           const whileChildren = generateGo(block.children, false);
@@ -700,17 +871,24 @@ export const useGenerator = () => {
         case 'continue':
           return 'continue';
         default:
-          if (block.type.startsWith('math-')) {
+          if (block.type.startsWith('math-') || block.type.startsWith('compare-')) {
+            const isCompare = block.type.startsWith('compare-');
             const op = block.type.split('-')[1];
             const left = block.config.slots?.left ? generateGo([block.config.slots.left], true) : (block.config.left || '0');
             const right = block.config.slots?.right ? generateGo([block.config.slots.right], true) : (block.config.right || '0');
             const res = `${left} ${op} ${right}`;
-            const isInsideMath = block.config.slots?.left?.type.startsWith('math-') || block.config.slots?.right?.type.startsWith('math-');
-            return isNested && isInsideMath ? `(${res})` : res;
+            const isInside = block.config.slots?.left?.type.startsWith(isCompare ? 'compare-' : 'math-') || block.config.slots?.right?.type.startsWith(isCompare ? 'compare-' : 'math-');
+            return isNested && isInside ? `(${res})` : res;
           }
           return `// TODO: implement ${block.type}`;
       }
-    }).filter(line => line.trim() !== '').join('\n');
+    }).filter(line => line.trim() !== '').reduce((acc, line) => {
+      if (acc === '') return line;
+      if (line.startsWith('else if') || line.startsWith('else ')) {
+        return acc + ' ' + line;
+      }
+      return acc + '\n' + line;
+    }, '');
   };
 
   const generatePHP = (blocks: BlockInstance[], isNested: boolean = false): string => {
@@ -739,7 +917,7 @@ export const useGenerator = () => {
             }
             return `${phpDoc}$${block.config.name || 'v'} = new ${structName}(${fields});`;
           }
-          const phpVarVal = block.config.slots?.value ? generatePHP([block.config.slots.value], true) : formatLiteral(block.config.value, 'php', phpTypeConfig);
+          const phpVarVal = block.config.slots?.value ? generatePHP([block.config.slots.value], true) : formatLiteral(block.config.value, 'php', block.config.typeConfig || phpTypeConfig);
           return `${phpDoc}$${block.config.name || 'v'} = ${phpVarVal};`;
         case 'set_var':
           const varSource = block.config.slots?.variable ? generatePHP([block.config.slots.variable], true) : (block.config.name ? `$${block.config.name}` : 'null');
@@ -807,18 +985,25 @@ export const useGenerator = () => {
           const printVal = block.config.slots?.value ? generatePHP([block.config.slots.value], true) : formatLiteral(block.config.value, 'php');
           return `echo ${printVal};`;
         case 'if':
-          const condition = (block.config.condition || 'true').replace(';', '');
+          const phpCondIf = block.config.slots?.condition ? generatePHP([block.config.slots.condition], true).replace(';', '') : (block.config.condition || 'true').replace(';', '');
           const children = generatePHP(block.children);
           const elseifArr = block.config.elseifs?.map((ei: any) => {
-            const eiCondition = (ei.condition || 'true').replace(';', '');
+            const eiCond = ei.slots?.condition ? generatePHP([ei.slots.condition], true).replace(';', '') : (ei.condition || 'true').replace(';', '');
             const eiChildren = generatePHP(ei.children || []);
-            return ` else if (${eiCondition}) {\n${indent(eiChildren, 4)}${eiChildren ? '\n' : ''}}`;
+            return ` else if (${eiCond}) {\n${indent(eiChildren, 4)}${eiChildren ? '\n' : ''}}`;
           }).join('') || '';
           const elsePart = block.config.else ? (() => {
             const eChildren = generatePHP(block.config.else.children || []);
             return ` else {\n${indent(eChildren, 4)}${eChildren ? '\n' : ''}}`;
           })() : '';
-          return `if (${condition}) {\n${indent(children, 4)}${children ? '\n' : ''}}${elseifArr}${elsePart}`;
+          return `if (${phpCondIf}) {\n${indent(children, 4)}${children ? '\n' : ''}}${elseifArr}${elsePart}`;
+        case 'elseif':
+          const phpCondElseIf = block.config.slots?.condition ? generatePHP([block.config.slots.condition], true).replace(';', '') : (block.config.condition || 'true').replace(';', '');
+          const elseifChildrenPhp = generatePHP(block.children);
+          return `else if (${phpCondElseIf}) {\n${indent(elseifChildrenPhp, 4)}${elseifChildrenPhp ? '\n' : ''}}`;
+        case 'else':
+          const elseChildrenPhp = generatePHP(block.children);
+          return `else {\n${indent(elseChildrenPhp, 4)}${elseChildrenPhp ? '\n' : ''}}`;
         case 'for':
           const forVar = (block.config.varName || 'i').replace(';', '');
           const forInit = `$${forVar} = ${block.config.from || 0}`;
@@ -827,14 +1012,36 @@ export const useGenerator = () => {
           const forChildren = generatePHP(block.children);
           return `for (${forInit}; ${forCond}; ${forInc}) {\n${indent(forChildren, 4)}${forChildren ? '\n' : ''}}`;
         case 'foreach':
-          const foreachList = (block.config.list || 'list').replace(';', '');
+          const foreachList = (block.config.slots?.list ? generatePHP([block.config.slots.list], true) : (block.config.list || 'list')).replace(';', '');
           const foreachItem = (block.config.item || 'item').replace(';', '');
+          const foreachKey = (block.config.key || '').replace(';', '');
           const foreachChildren = generatePHP(block.children);
+          if (foreachKey) {
+            return `foreach (${foreachList} as $${foreachKey} => $${foreachItem}) {\n${indent(foreachChildren, 4)}${foreachChildren ? '\n' : ''}}`;
+          }
           return `foreach (${foreachList} as $${foreachItem}) {\n${indent(foreachChildren, 4)}${foreachChildren ? '\n' : ''}}`;
+        case 'array':
+          const phpArrayItems = (block.children || []).map(child => generatePHP([child], true).replace(';', '')).join(', ');
+          const phpArrayType = block.config.typeConfig || block.config.itemType || block.config.elementType;
+          const phpArrayRes = `[${phpArrayItems}]`;
+          return isNested ? phpArrayRes : `${phpArrayRes};`;
+        case 'array_push':
+          const phpPushTarget = (block.config.slots?.array ? generatePHP([block.config.slots.array], true) : '[]').replace(';', '');
+          const phpPushValue = generatePHP([block.config.slots.value], true).replace(';', '');
+          return `${phpPushTarget}[] = ${phpPushValue};`;
+        case 'array_remove':
+          const phpRemoveTarget = (block.config.slots?.array ? generatePHP([block.config.slots.array], true) : '[]').replace(';', '');
+          const phpRemoveIndex = generatePHP([block.config.slots.index], true).replace(';', '');
+          return `array_splice(${phpRemoveTarget}, ${phpRemoveIndex}, 1);`;
+        case 'array_set_key':
+          const phpSetKeyTarget = (block.config.slots?.array ? generatePHP([block.config.slots.array], true) : '[]').replace(';', '');
+          const phpSetKeyValue = generatePHP([block.config.slots.value], true).replace(';', '');
+          const phpSetKeyKey = block.config.selectedKey ? `"${block.config.selectedKey}"` : (block.config.slots?.key ? generatePHP([block.config.slots.key], true).replace(';', '') : '0');
+          return `${phpSetKeyTarget}[${phpSetKeyKey}] = ${phpSetKeyValue};`;
         case 'while':
-          const whileCond = (block.config.condition || 'true').replace(';', '');
+          const phpWhileCond = block.config.slots?.condition ? generatePHP([block.config.slots.condition], true).replace(';', '') : (block.config.condition || 'true').replace(';', '');
           const whileChildren = generatePHP(block.children);
-          return `while (${whileCond}) {\n${indent(whileChildren, 4)}${whileChildren ? '\n' : ''}}`;
+          return `while (${phpWhileCond}) {\n${indent(whileChildren, 4)}${whileChildren ? '\n' : ''}}`;
         case 'parameter':
           const phpParamName = block.config.selectedParam ? `$${block.config.selectedParam}` : `$${block.config.name || 'param'}`;
           return isNested ? phpParamName : `${phpParamName};`;
@@ -878,14 +1085,17 @@ export const useGenerator = () => {
         case 'continue':
           return 'continue;';
         default:
-          if (block.type.startsWith('math-')) {
+          if (block.type.startsWith('math-') || block.type.startsWith('compare-')) {
+            const isCompare = block.type.startsWith('compare-');
             const op = block.type.split('-')[1];
             const left = block.config.slots?.left ? generatePHP([block.config.slots.left], true) : (block.config.left || '0');
             const right = block.config.slots?.right ? generatePHP([block.config.slots.right], true) : (block.config.right || '0');
-            const res = `${left} ${op} ${right}`;
-            const isInsideMath = block.config.slots?.left?.type.startsWith('math-') || block.config.slots?.right?.type.startsWith('math-');
+            let actualOp = op;
+            if (op === '!=') actualOp = '!==';
+            const res = `${left} ${actualOp} ${right}`;
+            const isInside = block.config.slots?.left?.type.startsWith(isCompare ? 'compare-' : 'math-') || block.config.slots?.right?.type.startsWith(isCompare ? 'compare-' : 'math-');
             if (isNested) {
-              return isInsideMath ? `(${res})` : res;
+              return isInside ? `(${res})` : res;
             }
             return `${res};`;
           }
@@ -938,7 +1148,7 @@ export const useGenerator = () => {
             }
             return `${jType} ${block.config.name || 'v'} = new ${structName}(${javaFields});`;
           }
-          const val = block.config.slots?.value ? generateJava([block.config.slots.value], true) : formatLiteral(block.config.value, 'java', javaKind);
+          const val = block.config.slots?.value ? generateJava([block.config.slots.value], true) : formatLiteral(block.config.value, 'java', block.config.typeConfig || javaKind);
           return `${jType} ${block.config.name || 'v'} = ${val};`;
         case 'set_var':
           const varSource = block.config.slots?.variable ? generateJava([block.config.slots.variable], true) : (block.config.name || 'null');
@@ -1001,17 +1211,25 @@ export const useGenerator = () => {
           const printVal = block.config.slots?.value ? generateJava([block.config.slots.value], true) : formatLiteral(block.config.value, 'java');
           return `System.out.println(${printVal});`;
         case 'if':
-          const condition = block.config.condition || 'true';
+          const javaCondIf = block.config.slots?.condition ? generateJava([block.config.slots.condition], true) : (block.config.condition || 'true');
           const children = generateJava(block.children);
           const elseifArr = block.config.elseifs?.map((ei: any) => {
+            const eiCond = ei.slots?.condition ? generateJava([ei.slots.condition], true) : (ei.condition || 'true');
             const eiChildren = generateJava(ei.children || []);
-            return ` else if (${ei.condition}) {\n${indent(eiChildren)}${eiChildren ? '\n' : ''}}`;
+            return ` else if (${eiCond}) {\n${indent(eiChildren)}${eiChildren ? '\n' : ''}}`;
           }).join('') || '';
           const elsePart = block.config.else ? (() => {
             const eChildren = generateJava(block.config.else.children || []);
             return ` else {\n${indent(eChildren)}${eChildren ? '\n' : ''}}`;
           })() : '';
-          return `if (${condition}) {\n${indent(children)}${children ? '\n' : ''}}${elseifArr}${elsePart}`;
+          return `if (${javaCondIf}) {\n${indent(children)}${children ? '\n' : ''}}${elseifArr}${elsePart}`;
+        case 'elseif':
+          const javaCondElseIf = block.config.slots?.condition ? generateJava([block.config.slots.condition], true) : (block.config.condition || 'true');
+          const elseifChildrenJava = generateJava(block.children);
+          return `else if (${javaCondElseIf}) {\n${indent(elseifChildrenJava)}${elseifChildrenJava ? '\n' : ''}}`;
+        case 'else':
+          const elseChildrenJava = generateJava(block.children);
+          return `else {\n${indent(elseChildrenJava)}${elseChildrenJava ? '\n' : ''}}`;
         case 'for':
           const forInit = `int ${block.config.varName || 'i'} = ${block.config.from || 0}`;
           const forCond = `${block.config.varName || 'i'} < ${block.config.to || 10}`;
@@ -1019,13 +1237,50 @@ export const useGenerator = () => {
           const forChildren = generateJava(block.children);
           return `for (${forInit}; ${forCond}; ${forInc}) {\n${indent(forChildren)}${forChildren ? '\n' : ''}}`;
         case 'foreach':
-          const list = block.config.list || 'list';
+          const list = block.config.slots?.list ? generateJava([block.config.slots.list], true) : (block.config.list || 'list');
           const item = block.config.item || 'item';
+          const key = (block.config.key || '').trim();
           const foreachChildren = generateJava(block.children);
-          return `for (Object ${item} : ${list}) {\n${indent(foreachChildren)}${foreachChildren ? '\n' : ''}}`;
+          
+          let itemType = 'Object';
+          if (block.config?.slots?.list) {
+            const listType = getBlockType(block.config.slots.list, blocks);
+            if (listType && typeof listType === 'object' && listType.kind === 'array' && listType.elementType) {
+              itemType = getJavaType(listType.elementType);
+            }
+          }
+
+          if (key) {
+            const body = `${itemType} ${item} = ${list}.get(${key});\n${foreachChildren}`.trimEnd();
+            return `for (int ${key} = 0; ${key} < ${list}.size(); ${key}++) {\n${indent(body)}${body ? '\n' : ''}}`;
+          }
+          return `for (${itemType} ${item} : ${list}) {\n${indent(foreachChildren)}${foreachChildren ? '\n' : ''}}`;
+        case 'array':
+          const javaArrayItems = (block.children || []).map(child => generateJava([child], true)).join(', ');
+          const javaArrayType = block.config.typeConfig || block.config.itemType || block.config.elementType;
+          const javaArrayRes = `new ArrayList<${javaArrayType ? getJavaType(javaArrayType) : 'Object'}>(Arrays.asList(${javaArrayItems}))`;
+          return isNested ? javaArrayRes : `${javaArrayRes};`;
+        case 'array_push':
+          const javaPushTarget = block.config.slots?.array ? generateJava([block.config.slots.array], true) : 'list';
+          const javaPushValue = block.config.slots?.value ? generateJava([block.config.slots.value], true) : 'null';
+          return `${javaPushTarget}.add(${javaPushValue});`;
+        case 'array_remove':
+          const javaRemoveTarget = block.config.slots?.array ? generateJava([block.config.slots.array], true) : 'list';
+          const javaRemoveIndex = block.config.slots?.index ? generateJava([block.config.slots.index], true) : '0';
+          return `${javaRemoveTarget}.remove((int)${javaRemoveIndex});`;
+        case 'array_set_key':
+          const javaSetKeyTarget = block.config.slots?.array ? generateJava([block.config.slots.array], true) : 'list';
+          const javaSetKeyValue = block.config.slots?.value ? generateJava([block.config.slots.value], true) : 'null';
+          const javaSetKeyKey = block.config.selectedKey ? `"${block.config.selectedKey}"` : (block.config.slots?.key ? generateJava([block.config.slots.key], true) : '0');
+          // On suppose que si c'est une clé textuelle, c'est un Map ou un objet, sinon c'est un List.set()
+          if (block.config.selectedKey || (block.config.slots?.key && getBlockType(block.config.slots.key, blocks) === 'string')) {
+              return `${javaSetKeyTarget}.put(${javaSetKeyKey}, ${javaSetKeyValue});`;
+          }
+          return `${javaSetKeyTarget}.set((int)${javaSetKeyKey}, ${javaSetKeyValue});`;
         case 'while':
+          const javaWhileCond = block.config.slots?.condition ? generateJava([block.config.slots.condition], true) : (block.config.condition || 'true');
           const whileChildren = generateJava(block.children);
-          return `while (${block.config.condition || 'true'}) {\n${indent(whileChildren)}${whileChildren ? '\n' : ''}}`;
+          return `while (${javaWhileCond}) {\n${indent(whileChildren)}${whileChildren ? '\n' : ''}}`;
         case 'parameter':
           const javaParamName = block.config.selectedParam || '';
           return isNested ? javaParamName : (javaParamName ? `${javaParamName};` : '');
@@ -1068,13 +1323,14 @@ export const useGenerator = () => {
         case 'continue':
           return 'continue;';
         default:
-          if (block.type.startsWith('math-')) {
+          if (block.type.startsWith('math-') || block.type.startsWith('compare-')) {
+            const isCompare = block.type.startsWith('compare-');
             const op = block.type.split('-')[1];
             const left = block.config.slots?.left ? generateJava([block.config.slots.left], true) : (block.config.left || '0');
             const right = block.config.slots?.right ? generateJava([block.config.slots.right], true) : (block.config.right || '0');
             const res = `${left} ${op} ${right}`;
-            const isInsideMath = block.config.slots?.left?.type.startsWith('math-') || block.config.slots?.right?.type.startsWith('math-');
-            return isNested && isInsideMath ? `(${res})` : res;
+            const isInside = block.config.slots?.left?.type.startsWith(isCompare ? 'compare-' : 'math-') || block.config.slots?.right?.type.startsWith(isCompare ? 'compare-' : 'math-');
+            return isNested && isInside ? `(${res})` : res;
           }
           return `// TODO: implement ${block.type}`;
       }
@@ -1344,7 +1600,7 @@ export const useGenerator = () => {
           const goRetType = getGoType(hasReturn ? (func.metadata?.returnType || 'interface{}') : 'void');
           const goBody = generateGo(func.blocks.filter(b => b.type !== 'parameter' || b.config?.selectedParam));
           globalCode += `func ${func.name}(${goParams})${goRetType ? ' ' + goRetType : ''} {\n`;
-          globalCode += indent(goBody, 4);
+          globalCode += indent(goBody);
           globalCode += `${goBody ? '\n' : ''}}\n\n`;
         }
       });
@@ -1355,7 +1611,12 @@ export const useGenerator = () => {
       code = header + code + globalCode;
     } else if (language === 'java') {
       if (globalCode || code) {
-        code = `public class Main {\n${indent(globalCode + (code ? '\n\n' + code : ''))}\n}\n`;
+        let finalCode = '';
+        if (code) {
+          finalCode += code + '\n';
+        }
+        finalCode += `public class Main {\n${indent(globalCode)}\n}\n`;
+        code = finalCode;
       }
     } else if (language === 'php' && (code || globalCode)) {
       code = '<?php\n\n' + code + globalCode;

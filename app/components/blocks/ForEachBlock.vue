@@ -15,13 +15,67 @@ import EqualBlock from './EqualBlock.vue';
 import BooleanBlock from './BooleanBlock.vue';
 import PrintBlock from "~/components/blocks/PrintBlock.vue";
 
-defineProps<{
+const props = defineProps<{
   minimal?: boolean;
   blockId?: string;
   list?: any;
   config?: any;
   children?: any[];
 }>();
+
+const { activeFunctionId, updateBlockConfig, functions } = useFunctions();
+const { getBlockType } = useExpressionType();
+
+// Support item (value) and optional key (index)
+const itemVar = ref(props.config?.item || 'item');
+const keyVar = ref(props.config?.key || '');
+
+const parentLoopVars = inject('loopVars', ref<{ name: string, type: any }[]>([]));
+
+const itemType = computed(() => {
+  if (!props.list) return 'any';
+  
+  const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
+  const blocks = currentFunction?.blocks || [];
+  const listType = getBlockType(props.list, blocks);
+  
+  if (listType && typeof listType === 'object' && listType.kind === 'array') {
+    return listType.itemType || listType.elementType || 'any';
+  }
+  return 'any';
+});
+
+const loopVars = computed(() => {
+  const vars = [...parentLoopVars.value];
+  if (itemVar.value) vars.push({ name: itemVar.value, type: itemType.value });
+  if (keyVar.value) vars.push({ name: keyVar.value, type: 'number' });
+  return vars;
+});
+provide('loopVars', loopVars);
+
+watch(() => props.config?.item, (newVal) => {
+  if (newVal !== undefined && newVal !== itemVar.value) {
+    itemVar.value = newVal;
+  }
+});
+
+watch(() => props.config?.key, (newVal) => {
+  if (newVal !== undefined && newVal !== keyVar.value) {
+    keyVar.value = newVal;
+  }
+});
+
+watch(itemVar, (val) => {
+  if (props.blockId && activeFunctionId.value && val !== props.config?.item) {
+    updateBlockConfig(activeFunctionId.value, props.blockId, { item: val });
+  }
+});
+
+watch(keyVar, (val) => {
+  if (props.blockId && activeFunctionId.value && val !== props.config?.key) {
+    updateBlockConfig(activeFunctionId.value, props.blockId, { key: val });
+  }
+});
 
 provide('inLoop', ref(true));
 
@@ -45,7 +99,11 @@ const getOperandComponent = (block: any) => {
 
 <template>
   <BaseBlock color="#FF6680" :label="$t('blocks.foreach.label')" :minimal="minimal">
-    <input class="block-input small" :placeholder="$t('blocks.foreach.item')" v-if="!minimal" />
+    <div v-if="!minimal" style="display: inline-flex; gap: 6px; align-items: center;">
+      <input class="block-input small" :placeholder="$t('blocks.foreach.item')" v-model="itemVar" />
+      <span v-if="!minimal">,</span>
+      <input class="block-input small" :placeholder="$t('blocks.foreach.key')" v-model="keyVar" />
+    </div>
     <span>{{ $t('blocks.foreach.in') }}</span>
     <BlockDropZone 
       v-if="!minimal"

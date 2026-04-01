@@ -23,6 +23,7 @@ const onBlockDragStart = (e: DragEvent, block: any) => {
 };
 
 const elementType = computed(() => {
+  if (props.config?.itemType) return props.config.itemType;
   if (props.config?.elementType) return props.config.elementType;
   return null;
 });
@@ -72,7 +73,7 @@ onMounted(() => {
     const returnBlock = findReturnParent(activeFunctionId.value, props.blockId);
     if (returnBlock) {
       updateFunctionMetadata(activeFunctionId.value, { 
-        returnType: elementType.value ? { kind: 'array', elementType: elementType.value } : 'array' 
+        returnType: elementType.value ? { kind: 'array', itemType: elementType.value } : 'array' 
       });
     }
   }

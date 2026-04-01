@@ -18,16 +18,19 @@ const props = defineProps<{
 const { structures } = useDataStructures();
 const { functions, activeFunctionId, updateBlockConfig, updateFunctionMetadata, getBlockById, findReturnParent } = useFunctions();
 const { formatType } = useTypeFormatter();
+const { findVarType } = useExpressionType();
 
 const currentFunction = computed(() => {
   return functions.value.find(f => f.id === activeFunctionId.value);
 });
 
+const parentLoopVars = inject('loopVars', ref<{ name: string, type: any }[]>([]));
+
 // Récupérer toutes les variables déclarées dans la fonction courante
 const availableVariables = computed(() => {
   if (!currentFunction.value) return [];
   
-  const vars: { name: string, type: any }[] = [];
+  const vars: { name: string, type: any }[] = [...parentLoopVars.value];
   const findVars = (blocks: any[]) => {
     blocks.forEach(block => {
       // Un bloc 'var' au niveau racine (ou dans children) est considéré comme une déclaration
@@ -35,6 +38,24 @@ const availableVariables = computed(() => {
       if (block.type === 'var' && block.config?.name) {
         vars.push({ name: block.config.name, type: block.config.typeConfig });
       }
+      
+      // Ajouter également la variable d'itération des boucles for
+      if (block.type === 'for' && block.config?.loopVar) {
+        vars.push({ name: block.config.loopVar, type: 'number' });
+      }
+      
+      // Ajouter également les variables d'itération des boucles foreach
+      if (block.type === 'foreach') {
+        if (block.config?.item) {
+          const type = findVarType(currentFunction.value!.blocks, block.config.item) || 'any';
+          const finalType = (typeof type === 'object' && type?.kind === 'array') ? { kind: 'array', itemType: type.itemType || type.elementType } : type;
+          vars.push({ name: block.config.item, type: finalType });
+        }
+        if (block.config?.key) {
+          vars.push({ name: block.config.key, type: 'number' });
+        }
+      }
+
       if (block.children) findVars(block.children);
       if (block.config?.slots) {
         Object.values(block.config.slots).forEach((slotBlock: any) => {
@@ -74,6 +95,8 @@ const updateReturnTypeIfNeeded = (varNameValue: string) => {
     const findVarDeclaration = (blocks: any[], name: string): any => {
       for (const block of blocks) {
         if (block.type === 'var' && block.config?.name === name) return block;
+        if (block.type === 'for' && block.config?.loopVar === name) return block;
+        if (block.type === 'foreach' && (block.config?.item === name || block.config?.key === name)) return block;
         if (block.children) {
           const found = findVarDeclaration(block.children, name);
           if (found) return found;
@@ -81,7 +104,7 @@ const updateReturnTypeIfNeeded = (varNameValue: string) => {
         if (block.config?.slots) {
           for (const s of Object.values(block.config.slots)) {
             if (s) {
-              const found = findVarDeclaration([s], name);
+              const found = findVarDeclaration(Array.isArray(s) ? s : [s as any], name);
               if (found) return found;
             }
           }
@@ -91,7 +114,18 @@ const updateReturnTypeIfNeeded = (varNameValue: string) => {
     };
 
     const declaration = currentFunction ? findVarDeclaration(currentFunction.blocks, varNameValue) : null;
-    const typeCfg = declaration?.config?.typeConfig || 'any';
+    let typeCfg = 'any';
+    if (declaration?.type === 'for') {
+      typeCfg = 'number';
+    } else if (declaration?.type === 'foreach') {
+      if (declaration.config?.key === varNameValue) {
+        typeCfg = 'number';
+      } else {
+        typeCfg = 'any'; // Idéalement, on pourrait tenter de deviner le type de l'item à partir du type de la liste
+      }
+    } else if (declaration?.config?.typeConfig) {
+      typeCfg = declaration.config.typeConfig;
+    }
     updateFunctionMetadata(activeFunctionId.value, { returnType: typeCfg });
   }
 };

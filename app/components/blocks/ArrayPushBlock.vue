@@ -14,6 +14,7 @@ const props = defineProps<{
 
 const { structures } = useDataStructures();
 const { activeFunctionId, updateBlockConfig, addBlockToFunction, functions } = useFunctions();
+const { findVarType } = useExpressionType();
 
 const acceptedArrayTypes = ['var', 'parameter', 'array', 'function'];
 const acceptedValueTypes = computed(() => {
@@ -21,27 +22,9 @@ const acceptedValueTypes = computed(() => {
     const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
     if (currentFunction) {
       const varName = props.array.config?.selectedVar || props.array.config?.name;
-      const findVarDeclaration = (blocks: any[]): any => {
-        for (const b of blocks) {
-          if (b.type === 'var' && b.config?.name === varName) return b;
-          if (b.children) {
-            const found = findVarDeclaration(b.children);
-            if (found) return found;
-          }
-          if (b.config?.slots) {
-            for (const slot in b.config.slots) {
-              if (b.config.slots[slot]) {
-                const found = findVarDeclaration([b.config.slots[slot]]);
-                if (found) return found;
-              }
-            }
-          }
-        }
-        return null;
-      };
-      const declaration = findVarDeclaration(currentFunction.blocks);
-      if (declaration?.config?.typeConfig?.kind === 'array') {
-        const elementType = declaration.config.typeConfig.elementType;
+      const typeConfig = findVarType(currentFunction.blocks, varName);
+      if (typeConfig?.kind === 'array') {
+        const elementType = typeConfig.elementType;
         const kind = typeof elementType === 'string' ? elementType : elementType.kind;
         if (kind === 'string') return ['string', 'var', 'function', 'ternary'];
         if (kind === 'number') return ['number', 'math-op', 'var', 'function', 'ternary'];
@@ -57,37 +40,15 @@ const acceptedValueTypes = computed(() => {
 // Lorsqu'un ArrayBlock est poussé dans un tableau, on lui passe son elementType
 watch(() => props.value, (newVal) => {
   if (newVal?.type === 'array' && activeFunctionId.value && props.blockId) {
-     // Si on drop un tableau dans array_push, il faudrait aussi que ce tableau ait le bon elementType ?
-     // En fait, array_push ajoute un élément au tableau. 
-     // Si le tableau est de type T[][], alors l'élément ajouté est de type T[].
-     // On va extraire l'elementType du tableau cible.
      const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
      if (!currentFunction) return;
 
      const varName = props.array?.config?.selectedVar || props.array?.config?.name;
      if (!varName) return;
 
-     const findVarDeclaration = (blocks: any[]): any => {
-        for (const b of blocks) {
-          if (b.type === 'var' && b.config?.name === varName) return b;
-          if (b.children) {
-            const found = findVarDeclaration(b.children);
-            if (found) return found;
-          }
-          if (b.config?.slots) {
-            for (const slot in b.config.slots) {
-              if (b.config.slots[slot]) {
-                const found = findVarDeclaration([b.config.slots[slot]]);
-                if (found) return found;
-              }
-            }
-          }
-        }
-        return null;
-      };
-      const declaration = findVarDeclaration(currentFunction.blocks);
-      if (declaration?.config?.typeConfig?.kind === 'array') {
-        const elementType = declaration.config.typeConfig.elementType;
+      const typeConfig = findVarType(currentFunction.blocks, varName);
+      if (typeConfig?.kind === 'array') {
+        const elementType = typeConfig.elementType;
         if (elementType && elementType.kind === 'array' && JSON.stringify(newVal.config?.elementType) !== JSON.stringify(elementType.elementType)) {
           updateBlockConfig(activeFunctionId.value, newVal.id, { elementType: elementType.elementType });
         }
@@ -106,28 +67,8 @@ watch(() => props.array, (newArray, oldArray) => {
       const currentFunction = functions.value.find(f => f.id === activeFunctionId.value);
       if (!currentFunction) return;
 
-      const findVarDeclaration = (blocks: any[]): any => {
-        for (const b of blocks) {
-          if (b.type === 'var' && b.config?.name === varName) return b;
-          if (b.children) {
-            const found = findVarDeclaration(b.children);
-            if (found) return found;
-          }
-          if (b.config?.slots) {
-            for (const slot in b.config.slots) {
-              if (b.config.slots[slot]) {
-                const found = findVarDeclaration([b.config.slots[slot]]);
-                if (found) return found;
-              }
-            }
-          }
-        }
-        return null;
-      };
-
-      const declaration = findVarDeclaration(currentFunction.blocks);
-      if (declaration && declaration.config?.typeConfig) {
-        const typeConfig = declaration.config.typeConfig;
+      const typeConfig = findVarType(currentFunction.blocks, varName);
+      if (typeConfig) {
         let kind = typeof typeConfig === 'string' ? typeConfig : typeConfig.kind;
 
         // Si la variable est "any", ne rien faire

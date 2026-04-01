@@ -20,6 +20,8 @@ const { functions, activeFunctionId, addBlockToFunction, removeBlockFromFunction
 const findVarDeclaration = (blocks: any[], name: string): any => {
   for (const block of blocks) {
     if (block.type === 'var' && block.config?.name === name) return block;
+    if (block.type === 'for' && block.config?.loopVar === name) return block;
+    if (block.type === 'foreach' && (block.config?.item === name || block.config?.key === name)) return block;
     if (block.children) {
       const found = findVarDeclaration(block.children, name);
       if (found) return found;
@@ -280,12 +282,13 @@ const isAccepted = (type: string) => {
     }
   }
 
-  if (parentBlock && (parentBlock.type === 'json' || parentBlock.type === 'html' || parentBlock.type === 'new_route')) {
-    // Si un bloc est déjà présent dans ce slot et que ce n'est pas une zone de pile, on refuse.
-    if (props.block && !props.isStackZone) return false;
-
-    // On n'accepte que les types explicitement fournis dans expandedAccepted (car déjà limités dans JsonBlock/HtmlBlock/NewRouteBlock).
-    return expandedAccepted.includes(normalizedType);
+  if (props.block && !props.isStackZone) {
+    // Si c'est un slot nommé (pas une liste de children), on autorise le remplacement
+    // SAUF pour certains blocs spécifiques qui ont une logique de protection.
+    const protectedBlocks = ['json', 'html', 'new_route'];
+    if (parentBlock && protectedBlocks.includes(parentBlock.type)) {
+      return false;
+    }
   }
 
   if (normalizedType === 'elseif' || normalizedType === 'else') {
@@ -513,6 +516,10 @@ const onDrop = (e: DragEvent) => {
             if (blockToCreate === 'array' && arrayElementType) {
               initialConfig = { ...initialConfig, elementType: arrayElementType };
             }
+          } else if (parentBlock && parentBlock.type === 'array_set_key' && props.slotName === 'arrayKey') {
+            if (currentType === 'literal') {
+              blockToCreate = 'string';
+            }
           } else if (parentBlock && parentBlock.type === 'array' && parentBlock.config?.elementType) {
              const kind = typeof parentBlock.config.elementType === 'string' ? 
                           parentBlock.config.elementType : parentBlock.config.elementType.kind;
@@ -525,6 +532,13 @@ const onDrop = (e: DragEvent) => {
           }
         }
 
+        if (blockToCreate === 'for') {
+          initialConfig = { ...initialConfig, loopVar: 'i' };
+        } else if (blockToCreate === 'foreach') {
+          initialConfig = { ...initialConfig, item: 'item' };
+        }
+
+        console.log(activeFunctionId.value, blockToCreate, props.parentBlockId, props.slotName, undefined, props.afterBlockId, initialConfig)
         addBlockToFunction(activeFunctionId.value, blockToCreate, props.parentBlockId, props.slotName, undefined, props.afterBlockId, initialConfig);
 
         // Update function metadata if drop in a return block

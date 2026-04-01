@@ -145,9 +145,11 @@ export const useFunctions = () => {
         children: []
       };
 
-      if (!existingBlock && (blockType === 'array_push' || blockType === 'array')) {
+      if (!existingBlock && (blockType === 'array_push' || blockType === 'array' || blockType === 'array_set_key')) {
         newBlock.config.slots = {
           ...newBlock.config.slots,
+          array: null,
+          targetKey: null,
           value: null
         };
       }
@@ -366,7 +368,7 @@ export const useFunctions = () => {
     let parentInfo = getParentBlockWithSlot(functionId, currentId);
     
     // Slots qui ne propagent pas le type de retour de leur contenu vers le bloc return parent
-    const blockingSlots = ['condition', 'from', 'to', 'list', 'left', 'right'];
+    const blockingSlots = ['condition', 'from', 'to', 'list', 'left', 'right', 'key', 'targetKey'];
     
     while (parentInfo) {
       const { parent, slotName } = parentInfo;

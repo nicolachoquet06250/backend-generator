@@ -12,7 +12,7 @@ const type = computed({
   get: () => (typeof props.modelValue === 'string' ? props.modelValue : props.modelValue.kind),
   set: (val) => {
     if (val === 'array') {
-      emit('update:modelValue', { kind: 'array', elementType: 'any' });
+      emit('update:modelValue', { kind: 'array', itemType: 'any' });
     } else if (val === 'object') {
       emit('update:modelValue', { kind: 'object', structId: '' });
     } else {
@@ -22,9 +22,9 @@ const type = computed({
 });
 
 const subType = computed({
-  get: () => (typeof props.modelValue === 'object' ? props.modelValue.elementType : 'any'),
+  get: () => (typeof props.modelValue === 'object' ? (props.modelValue.itemType || props.modelValue.elementType) : 'any'),
   set: (val) => {
-    emit('update:modelValue', { ...props.modelValue, elementType: val });
+    emit('update:modelValue', { ...props.modelValue, itemType: val });
   }
 });
 
