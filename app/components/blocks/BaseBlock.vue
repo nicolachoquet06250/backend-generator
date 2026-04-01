@@ -129,7 +129,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
   box-sizing: border-box;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.3);
   transition: all 0.2s ease-in-out;
-  overflow-x: auto;
+  overflow: visible;
   height: max-content;
 }
 
@@ -163,7 +163,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
   display: flex;
   align-items: center;
   gap: var(--block-gap);
-  overflow-x: auto;
+  overflow: visible;
   padding-bottom: 2px;
   min-height: 24px;
 }

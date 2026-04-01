@@ -257,8 +257,9 @@ const onMobileTrashDragLeave = () => {
   flex-direction: column;
   height: 100%;
   background: var(--workspace-bg);
-  overflow: auto;
+  overflow: hidden;
   transition: all 0.2s ease-in-out;
+  position: relative;
 }
 
 @media (max-width: 768px) {
@@ -356,8 +357,8 @@ const onMobileTrashDragLeave = () => {
   position: absolute;
   bottom: 20px;
   right: 20px;
-  width: calc(var(--header-height) * 0.9);
-  height: calc(var(--header-height) * 0.9);
+  width: 50px;
+  height: 50px;
   background: var(--header-bg);
   color: white;
   border: none;
@@ -393,7 +394,7 @@ const onMobileTrashDragLeave = () => {
   flex: 1;
   display: flex;
   position: relative;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .drop-zone {

@@ -255,6 +255,7 @@ function goBack() {
   display: flex;
   overflow: hidden;
   position: relative;
+  min-height: 0;
 }
 
 .sidebar {
@@ -268,6 +269,9 @@ function goBack() {
   background: var(--workspace-bg);
   background-image: radial-gradient(var(--sidebar-border) 1px, transparent 1px);
   background-size: 20px 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 
