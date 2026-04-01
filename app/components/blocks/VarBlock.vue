@@ -1,19 +1,7 @@
 <script setup lang="ts">
-import BaseBlock from './BaseBlock.vue';
-import TypeSelector from './TypeSelector.vue';
-import BlockDropZone from './BlockDropZone.vue';
-import MathBlock from './MathBlock.vue';
-import StringBlock from './StringBlock.vue';
-import NumberBlock from './NumberBlock.vue';
-import ArrayBlock from './ArrayBlock.vue';
-import ObjectBlock from './ObjectBlock.vue';
-import ObjectPropertyBlock from './ObjectPropertyBlock.vue';
-import PrintBlock from './PrintBlock.vue';
-import BooleanBlock from './BooleanBlock.vue';
-import ComparisonBlock from './ComparisonBlock.vue';
-import FunctionCallBlock from './FunctionCallBlock.vue';
-import ParameterBlock from './ParameterBlock.vue';
-import VarBlock from "~/components/blocks/VarBlock.vue";
+import BaseBlock from '~/components/blocks/BaseBlock.vue';
+import TypeSelector from '~/components/blocks/TypeSelector.vue';
+import BlockDropZone from '~/components/blocks/BlockDropZone.vue';
 
 import BlockRenderer from './BlockRenderer.vue';
 
@@ -208,7 +196,12 @@ watch(() => props.value, (newVal) => {
 <template>
   <BaseBlock color="#FF8C1A" :label="minimal ? $t('blocks.var.label_sidebar') : (isExpression ? $t('blocks.var.label_choice') : $t('blocks.var.label'))" :minimal="minimal" :blockId="blockId" blockType="var">
     <template v-if="isExpression && !minimal">
-      <select v-model="selectedVar" class="block-select">
+      <select 
+        v-model="selectedVar" 
+        class="block-select"
+        @mouseenter="$emit('block-interaction-start')"
+        @mouseleave="$emit('block-interaction-stop')"
+      >
         <option value="" disabled>{{ $t('blocks.var.select_var') }}</option>
         <option v-for="v in availableVariables" :key="v.name" :value="v.name">
           {{ v.name }} : {{ formatType(v.type) }}
@@ -216,13 +209,28 @@ watch(() => props.value, (newVal) => {
       </select>
     </template>
     <template v-else>
-      <input v-model="varName" class="block-input" :placeholder="$t('blocks.var.placeholder_name')" />
+      <input 
+        v-model="varName" 
+        class="block-input" 
+        :placeholder="$t('blocks.var.placeholder_name')"
+        @mouseenter="$emit('block-interaction-start')"
+        @mouseleave="$emit('block-interaction-stop')"
+      />
       <span class="type-sep">:</span>
       
-      <TypeSelector v-model="typeConfig" />
+      <TypeSelector 
+        v-model="typeConfig" 
+        @block-interaction-start="$emit('block-interaction-start')"
+        @block-interaction-stop="$emit('block-interaction-stop')"
+      />
       
       <label v-if="selectedType === 'object' && selectedStructure" class="struct-toggle">
-        <input type="checkbox" v-model="showProperties" />
+        <input 
+          type="checkbox" 
+          v-model="showProperties" 
+          @mouseenter="$emit('block-interaction-start')"
+          @mouseleave="$emit('block-interaction-stop')"
+        />
         <span class="checkmark"></span>
       </label>
       
@@ -251,17 +259,23 @@ watch(() => props.value, (newVal) => {
             class="block-input small" 
             v-model="structValues[field.name]"
             :type="getFieldType(field) === 'number' ? 'number' : 'text'"
+            @mouseenter="$emit('block-interaction-start')"
+            @mouseleave="$emit('block-interaction-stop')"
           />
           <input 
             v-else-if="getFieldType(field) === 'boolean'"
             type="checkbox"
             v-model="structValues[field.name]"
+            @mouseenter="$emit('block-interaction-start')"
+            @mouseleave="$emit('block-interaction-stop')"
           />
           <input 
             v-else-if="getFieldType(field) !== 'array' && getFieldType(field) !== 'object'"
             class="block-input small" 
             v-model="structValues[field.name]"
             placeholder="..."
+            @mouseenter="$emit('block-interaction-start')"
+            @mouseleave="$emit('block-interaction-stop')"
           />
         </div>
       </div>

@@ -1,17 +1,18 @@
 <script setup lang="ts">
-import BaseBlock from './BaseBlock.vue';
+import BaseBlock from '~/components/blocks/BaseBlock.vue';
 import type { DataStructureField } from '~/composables/useDataStructures';
-import TypeSelector from './TypeSelector.vue';
+import TypeSelector from '~/components/blocks/TypeSelector.vue';
 import { useFunctions } from '~/composables/useFunctions';
 import { useTypeFormatter } from '~/composables/useTypeFormatter';
 
 const props = defineProps<{
   id: string;
-  name: string;
   fields: DataStructureField[];
 }>();
 
-const emit = defineEmits(['update:name', 'remove']);
+const emit = defineEmits(['remove', 'block-interaction-start', 'block-interaction-stop']);
+
+const name = defineModel<string>('name')
 
 const { updateStructure, addField, removeField, updateField } = useDataStructures();
 const { functions } = useFunctions();
@@ -62,7 +63,7 @@ const getFieldType = (type: any) => {
 
 const onInput = (e: Event) => {
   const value = (e.target as HTMLInputElement).value;
-  emit('update:name', value);
+  name.value = value;
   updateStructure(props.id, { name: value });
 };
 </script>
@@ -75,6 +76,8 @@ const onInput = (e: Event) => {
         :value="name" 
         @input="onInput"
         :placeholder="$t('blocks.struct.placeholder_name')" 
+        @mouseenter="$emit('block-interaction-start')"
+        @mouseleave="$emit('block-interaction-stop')"
       />
     </div>
 
@@ -86,11 +89,15 @@ const onInput = (e: Event) => {
             v-model="field.name" 
             @input="updateField(id, field.id, { name: field.name })"
             :placeholder="$t('blocks.struct.field_name')"
+            @mouseenter="$emit('block-interaction-start')"
+            @mouseleave="$emit('block-interaction-stop')"
           />
           
           <TypeSelector
             v-model="field.type"
             @update:modelValue="updateField(id, field.id, { type: $event })"
+            @block-interaction-start="$emit('block-interaction-start')"
+            @block-interaction-stop="$emit('block-interaction-stop')"
           />
 
           <label class="field-checkbox">
@@ -99,6 +106,8 @@ const onInput = (e: Event) => {
               type="checkbox" 
               v-model="field.nullable"
               @change="updateField(id, field.id, { nullable: field.nullable })"
+              @mouseenter="$emit('block-interaction-start')"
+              @mouseleave="$emit('block-interaction-stop')"
             />
           </label>
 
@@ -109,12 +118,24 @@ const onInput = (e: Event) => {
             v-model="field.defaultValue"
             @input="updateField(id, field.id, { defaultValue: field.defaultValue })"
             :placeholder="$t('blocks.struct.field_default')"
+            @mouseenter="$emit('block-interaction-start')"
+            @mouseleave="$emit('block-interaction-stop')"
           />
 
-          <button class="field-remove" @click="removeField(id, field.id)">×</button>
+          <button 
+            class="field-remove" 
+            @click="removeField(id, field.id)"
+            @mouseenter="$emit('block-interaction-start')"
+            @mouseleave="$emit('block-interaction-stop')"
+          >×</button>
         </div>
         
-        <button class="add-field-btn" @click="addField(id)">
+        <button 
+          class="add-field-btn" 
+          @click="addField(id)"
+          @mouseenter="$emit('block-interaction-start')"
+          @mouseleave="$emit('block-interaction-stop')"
+        >
           + {{ $t('blocks.struct.add_field') }}
         </button>
 
@@ -176,7 +197,7 @@ const onInput = (e: Event) => {
   box-sizing: border-box;
 }
 
-.field-input, .field-select {
+.field-input {
   border: none;
   border-radius: 2px;
   padding: 2px 4px;

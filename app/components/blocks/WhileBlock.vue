@@ -1,20 +1,19 @@
 <script setup lang="ts">
-import BaseBlock from './BaseBlock.vue';
-import BlockDropZone from './BlockDropZone.vue';
-import StringBlock from './StringBlock.vue';
-import NumberBlock from './NumberBlock.vue';
-import ArrayBlock from './ArrayBlock.vue';
-import ObjectBlock from './ObjectBlock.vue';
-import ObjectPropertyBlock from './ObjectPropertyBlock.vue';
-import MathBlock from './MathBlock.vue';
-import VarBlock from './VarBlock.vue';
+import BaseBlock from '~/components/blocks/BaseBlock.vue';
+import BlockDropZone from '~/components/blocks/BlockDropZone.vue';
+import StringBlock from '~/components/blocks/StringBlock.vue';
+import NumberBlock from '~/components/blocks/NumberBlock.vue';
+import ArrayBlock from '~/components/blocks/ArrayBlock.vue';
+import ObjectBlock from '~/components/blocks/ObjectBlock.vue';
+import ObjectPropertyBlock from '~/components/blocks/ObjectPropertyBlock.vue';
+import MathBlock from '~/components/blocks/MathBlock.vue';
+import VarBlock from '~/components/blocks/VarBlock.vue';
 
-import BooleanBlock from './BooleanBlock.vue';
-import EqualBlock from './EqualBlock.vue';
-import ComparisonBlock from './ComparisonBlock.vue';
-import FunctionCallBlock from './FunctionCallBlock.vue';
+import BooleanBlock from '~/components/blocks/BooleanBlock.vue';
+import ComparisonBlock from '~/components/blocks/ComparisonBlock.vue';
+import FunctionCallBlock from '~/components/blocks/FunctionCallBlock.vue';
 import PrintBlock from "~/components/blocks/PrintBlock.vue";
-import ParameterBlock from './ParameterBlock.vue';
+import ParameterBlock from '~/components/blocks/ParameterBlock.vue';
 
 defineProps<{
   minimal?: boolean;
@@ -71,12 +70,3 @@ const getConditionComponent = (block: any) => {
   </BaseBlock>
 </template>
 
-<style scoped>
-.block-input {
-  border: none;
-  border-radius: 4px;
-  padding: 4px 8px;
-  width: 120px;
-  outline: none;
-}
-</style>

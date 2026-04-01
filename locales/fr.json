@@ -33,6 +33,7 @@
     "compact": "Mode compact",
     "generate": "Générer le code",
     "back_to_projects": "Retour aux projets",
+    "back_to_home": "Retour à l'accueil",
     "close": "Fermer"
   },
   "projects": {
@@ -60,7 +61,8 @@
       "php": "PHP",
       "go": "Go",
       "java": "Java"
-    }
+    },
+    "no_code": "// Aucun code généré"
   },
   "blocks": {
     "true": "Vrai",
@@ -214,6 +216,20 @@
     },
     "new_route": {
       "label": "Nouvelle route"
+    }
+  },
+  "landing": {
+    "title": "Backend Generator",
+    "subtitle": "Concevez votre logique backend visuellement",
+    "description": "Créez des structures de données complexes et des fonctions logiques sans écrire une seule ligne de code. Générez ensuite le code pour votre langage préféré.",
+    "get_started": "Commencer maintenant",
+    "features": {
+      "visual": "Édition Visuelle",
+      "visual_desc": "Utilisez des blocs intuitifs pour construire votre logique métier.",
+      "multi_lang": "Multi-langage",
+      "multi_lang_desc": "Générez du code propre en Node.js, Python, PHP, Go ou Java.",
+      "structures": "Structures de Données",
+      "structures_desc": "Définissez vos modèles de données avec précision."
     }
   },
   "pwa": {

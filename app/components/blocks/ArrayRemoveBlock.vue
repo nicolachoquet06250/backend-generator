@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import BaseBlock from './BaseBlock.vue';
-import BlockDropZone from './BlockDropZone.vue';
-import BlockRenderer from './BlockRenderer.vue';
+import BaseBlock from '~/components/blocks/BaseBlock.vue';
+import BlockDropZone from '~/components/blocks/BlockDropZone.vue';
+import BlockRenderer from '~/components/blocks/BlockRenderer.vue';
 
 defineProps<{
   minimal?: boolean;

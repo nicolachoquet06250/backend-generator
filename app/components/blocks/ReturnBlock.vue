@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import BaseBlock from './BaseBlock.vue';
-import BlockDropZone from './BlockDropZone.vue';
+import BaseBlock from '~/components/blocks/BaseBlock.vue';
+import BlockDropZone from '~/components/blocks/BlockDropZone.vue';
 import StringBlock from './StringBlock.vue';
 import NumberBlock from './NumberBlock.vue';
 import ArrayBlock from './ArrayBlock.vue';

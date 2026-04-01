@@ -33,6 +33,7 @@
     "compact": "Compact mode",
     "generate": "Generate code",
     "back_to_projects": "Back to projects",
+    "back_to_home": "Back to home",
     "close": "Close"
   },
   "projects": {
@@ -60,7 +61,8 @@
       "php": "PHP",
       "go": "Go",
       "java": "Java"
-    }
+    },
+    "no_code": "// No code generated"
   },
   "blocks": {
     "true": "True",
@@ -214,6 +216,20 @@
     },
     "new_route": {
       "label": "New route"
+    }
+  },
+  "landing": {
+    "title": "Backend Generator",
+    "subtitle": "Design your backend logic visually",
+    "description": "Create complex data structures and logical functions without writing a single line of code. Then generate code for your favorite language.",
+    "get_started": "Get Started",
+    "features": {
+      "visual": "Visual Editing",
+      "visual_desc": "Use intuitive blocks to build your business logic.",
+      "multi_lang": "Multi-language",
+      "multi_lang_desc": "Generate clean code in Node.js, Python, PHP, Go or Java.",
+      "structures": "Data Structures",
+      "structures_desc": "Define your data models with precision."
     }
   },
   "pwa": {

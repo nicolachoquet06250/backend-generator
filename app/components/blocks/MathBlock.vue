@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import BaseBlock from './BaseBlock.vue';
-import BlockDropZone from './BlockDropZone.vue';
-import VarBlock from './VarBlock.vue';
-import StringBlock from './StringBlock.vue';
-import NumberBlock from './NumberBlock.vue';
-import ArrayBlock from './ArrayBlock.vue';
-import ObjectBlock from './ObjectBlock.vue';
-import ObjectPropertyBlock from './ObjectPropertyBlock.vue';
-import PrintBlock from './PrintBlock.vue';
+import BaseBlock from '~/components/blocks/BaseBlock.vue';
+import BlockDropZone from '~/components/blocks/BlockDropZone.vue';
+import VarBlock from '~/components/blocks/VarBlock.vue';
+import StringBlock from '~/components/blocks/StringBlock.vue';
+import NumberBlock from '~/components/blocks/NumberBlock.vue';
+import ArrayBlock from '~/components/blocks/ArrayBlock.vue';
+import ObjectBlock from '~/components/blocks/ObjectBlock.vue';
+import ObjectPropertyBlock from '~/components/blocks/ObjectPropertyBlock.vue';
+import PrintBlock from '~/components/blocks/PrintBlock.vue';
 import MathBlock from "~/components/blocks/MathBlock.vue";
 
 import FunctionCallBlock from './FunctionCallBlock.vue';
@@ -115,20 +115,5 @@ const getOperandComponent = (block: any) => {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-.operand-slot {
-  min-width: 40px;
-  min-height: 30px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px;
-}
-.placeholder {
-  opacity: 0.5;
-  font-size: 0.8em;
-  user-select: none;
 }
 </style>

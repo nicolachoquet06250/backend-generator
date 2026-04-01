@@ -17,9 +17,29 @@ const props = withDefaults(defineProps<{
 
 const { activeFunctionId, isDragging } = useFunctions();
 const { onTouchStart, onTouchMove, onTouchEnd } = useMobileDragDrop();
+const isOverInteractiveElement = ref(false);
+const isInputFocused = ref(false);
+
+const handleInteractionStart = () => {
+  isOverInteractiveElement.value = true;
+};
+
+const handleInteractionStop = () => {
+  isOverInteractiveElement.value = false;
+};
 
 const onDragStart = (e: DragEvent) => {
-  if (props.minimal) return; // Don't drag from sidebar via this handler
+  const target = e.target as HTMLElement;
+  const interactiveTags = ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'];
+  if (target && (interactiveTags.includes(target.tagName) || target.closest('.block-input, .block-select, input, select, textarea, button'))) {
+    e.preventDefault();
+    return;
+  }
+
+  if (props.minimal) {
+    return;
+  }
+  
   if (e.dataTransfer && props.blockId && activeFunctionId.value) {
     isDragging.value = true;
     e.stopPropagation();
@@ -37,11 +57,13 @@ const onDragEnd = () => {
 };
 
 const handleTouchStart = (e: TouchEvent) => {
-  if (props.minimal) return;
   const target = e.target as HTMLElement;
-  if (target && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(target.tagName)) {
+  const interactiveTags = ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'];
+  if (target && (interactiveTags.includes(target.tagName) || target.closest('.block-input, .block-select, input, select, textarea, button'))) {
     return;
   }
+
+  if (props.minimal || isInputFocused.value) return;
   
   if (props.blockId && activeFunctionId.value) {
     isDragging.value = true;
@@ -63,18 +85,52 @@ const handleTouchEnd = (e: TouchEvent) => {
 
 const onStopPropagation = (e: MouseEvent | TouchEvent) => {
   const target = e.target as HTMLElement;
-  if (target && ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'].includes(target.tagName)) {
+  const interactiveTags = ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'];
+  if (target && (interactiveTags.includes(target.tagName) || target.closest('.block-input, .block-select, input, select, textarea, button'))) {
     e.stopPropagation();
   }
+};
+
+const handleFocus = (e: FocusEvent) => {
+  const target = e.target as HTMLElement;
+  if (target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) {
+    isInputFocused.value = true;
+  }
+};
+
+const handleBlur = (e: FocusEvent) => {
+  const target = e.target as HTMLElement;
+  if (target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) {
+    isInputFocused.value = false;
+  }
+};
+
+const handleHoverInteraction = (e: MouseEvent) => {
+  // Garder la détection automatique en complément pour les éléments qui n'enverraient pas l'événement
+  const target = e.target as HTMLElement;
+  const interactiveTags = ['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON'];
+  if (target && (interactiveTags.includes(target.tagName) || target.closest('.block-input, .block-select, input, select, textarea, button'))) {
+    isOverInteractiveElement.value = true;
+  }
+};
+
+const handleMouseLeaveContent = () => {
+  isOverInteractiveElement.value = false;
 };
 </script>
 
 <template>
-  <div 
+  <div
     class="block-container" 
-    :class="{ minimal, 'is-full-width': $attrs.class && ($attrs.class as string).includes('full-width'), 'is-root': isRoot, 'no-hover': noHover }"
+    :class="{ 
+      minimal, 
+      'is-full-width': $attrs.class && ($attrs.class as string).includes('full-width'), 
+      'is-root': isRoot, 
+      'no-hover': noHover || isOverInteractiveElement || isInputFocused,
+      'is-interacting': isOverInteractiveElement || isInputFocused
+    }"
     :style="{ backgroundColor: color || '#4C97FF' }"
-    v-bind="draggable ? { draggable: true } : {}"
+    v-bind="(draggable && !isOverInteractiveElement && !isInputFocused) ? { draggable: true } : { draggable: false }"
     @dragstart="onDragStart"
     @dragend="onDragEnd"
     @mousedown="onStopPropagation"
@@ -82,14 +138,26 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
     @touchmove="onTouchMove"
     @touchend="handleTouchEnd"
     @touchcancel="handleTouchEnd"
+    @focusin="handleFocus"
+    @focusout="handleBlur"
+    @block-interaction-start="handleInteractionStart"
+    @block-interaction-stop="handleInteractionStop"
   >
-    <div class="block-content">
+    <div 
+      class="block-content"
+      @mouseover.capture="handleHoverInteraction"
+      @mouseleave="handleMouseLeaveContent"
+    >
       <span v-if="label" class="block-label">{{ label }}</span>
       <slot name="label" />
       <slot v-if="!minimal" />
     </div>
     <div v-if="$slots.bottom && !minimal" class="block-bottom-container">
-      <div class="block-bottom">
+      <div 
+        class="block-bottom"
+        @mouseover.capture="handleHoverInteraction"
+        @mouseleave="handleMouseLeaveContent"
+      >
         <slot name="bottom" />
       </div>
     </div>
@@ -134,6 +202,10 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
 }
 
 .block-container.is-root, .block-container.no-hover {
+  cursor: default;
+}
+
+.block-container.is-interacting {
   cursor: default;
 }
 
@@ -218,6 +290,8 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
   background: var(--input-bg);
   color: var(--input-text);
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+  user-select: text;
+  cursor: text;
 }
 
 ::v-deep(.block-input:focus), ::v-deep(.block-select:focus) {

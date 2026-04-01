@@ -3,7 +3,7 @@ const props = defineProps<{
   modelValue: any;
 }>();
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'block-interaction-start', 'block-interaction-stop']);
 
 const types = ['any', 'string', 'number', 'boolean', 'array', 'object'];
 const { structures } = useDataStructures();
@@ -38,7 +38,12 @@ const structId = computed({
 
 <template>
   <div class="type-selector">
-    <select v-model="type" class="block-select">
+    <select 
+      v-model="type" 
+      class="block-select"
+      @mouseenter="$emit('block-interaction-start')"
+      @mouseleave="$emit('block-interaction-stop')"
+    >
       <option v-for="t in types" :key="t" :value="t">
         {{ $t(`blocks.var.types.${t}`) }}
       </option>
@@ -46,13 +51,22 @@ const structId = computed({
 
     <template v-if="type === 'array'">
       <span class="struct-sep">&lt;</span>
-      <TypeSelector v-model="subType" />
+      <TypeSelector 
+        v-model="subType" 
+        @block-interaction-start="$emit('block-interaction-start')"
+        @block-interaction-stop="$emit('block-interaction-stop')"
+      />
       <span class="struct-sep">&gt;</span>
     </template>
 
     <template v-if="type === 'object'">
       <span class="struct-sep">&lt;</span>
-      <select v-model="structId" class="block-select">
+      <select 
+        v-model="structId" 
+        class="block-select"
+        @mouseenter="$emit('block-interaction-start')"
+        @mouseleave="$emit('block-interaction-stop')"
+      >
         <option value="" disabled>{{ $t('blocks.var.select_struct') }}</option>
         <option v-for="s in structures" :key="s.id" :value="s.id">
           {{ s.name }}

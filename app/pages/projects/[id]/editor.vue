@@ -11,7 +11,7 @@ const projectId = route.params.id as string;
 
 onBeforeMount(() => {
   if (!projects.value.find(p => p.id === projectId)) {
-    router.push('/');
+    router.push('/projects');
     return;
   }
   currentProjectId.value = projectId;
@@ -69,7 +69,7 @@ function reloadPage() {
 }
 
 function goBack() {
-  router.push('/');
+  router.push('/projects');
 }
 </script>
 

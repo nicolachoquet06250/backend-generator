@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import BaseBlock from './BaseBlock.vue';
-import BlockDropZone from './BlockDropZone.vue';
+import BaseBlock from '~/components/blocks/BaseBlock.vue';
+import BlockDropZone from '~/components/blocks/BlockDropZone.vue';
 
-import BlockRenderer from './BlockRenderer.vue';
+import BlockRenderer from '~/components/blocks/BlockRenderer.vue';
 
 const props = defineProps<{
   minimal?: boolean;
@@ -151,6 +151,8 @@ const acceptedBlockTypes = computed(() => {
             class="field-input"
             v-model="newItemValues[field.name]"
             @keyup.enter="addNewItem"
+            @mouseenter="$emit('block-interaction-start')"
+            @mouseleave="$emit('block-interaction-stop')"
           />
           <input 
             v-else-if="getFieldType(field) === 'number'"
@@ -158,15 +160,24 @@ const acceptedBlockTypes = computed(() => {
             class="field-input small"
             v-model="newItemValues[field.name]"
             @keyup.enter="addNewItem"
+            @mouseenter="$emit('block-interaction-start')"
+            @mouseleave="$emit('block-interaction-stop')"
           />
           <input 
             v-else-if="getFieldType(field) === 'boolean'"
             type="checkbox"
             v-model="newItemValues[field.name]"
+            @mouseenter="$emit('block-interaction-start')"
+            @mouseleave="$emit('block-interaction-stop')"
           />
         </div>
         <div class="add-actions">
-          <button class="add-button" @click="addNewItem">+</button>
+          <button 
+            class="add-button" 
+            @click="addNewItem"
+            @mouseenter="$emit('block-interaction-start')"
+            @mouseleave="$emit('block-interaction-stop')"
+          >+</button>
           <BlockDropZone 
             slotName="" 
             :parentBlockId="blockId!" 
@@ -183,6 +194,8 @@ const acceptedBlockTypes = computed(() => {
           v-model="newItemValues"
           placeholder="..."
           @keyup.enter="addNewItem"
+          @mouseenter="$emit('block-interaction-start')"
+          @mouseleave="$emit('block-interaction-stop')"
         />
         <input 
           v-else-if="kind === 'number'"
@@ -190,13 +203,22 @@ const acceptedBlockTypes = computed(() => {
           class="field-input small"
           v-model="newItemValues"
           @keyup.enter="addNewItem"
+          @mouseenter="$emit('block-interaction-start')"
+          @mouseleave="$emit('block-interaction-stop')"
         />
         <input 
           v-else-if="kind === 'boolean'"
           type="checkbox"
           v-model="newItemValues"
+          @mouseenter="$emit('block-interaction-start')"
+          @mouseleave="$emit('block-interaction-stop')"
         />
-        <button class="add-button" @click="addNewItem">+</button>
+        <button 
+          class="add-button" 
+          @click="addNewItem"
+          @mouseenter="$emit('block-interaction-start')"
+          @mouseleave="$emit('block-interaction-stop')"
+        >+</button>
         <BlockDropZone 
           slotName="" 
           :parentBlockId="blockId!" 

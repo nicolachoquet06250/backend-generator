@@ -1,16 +1,25 @@
 <script setup lang="ts">
-import PWAManager from './components/common/PWAManager.vue';
-import { useMigration } from './composables/useMigration';
+import PWAManager from '~/components/common/PWAManager.vue';
+import { useMigration } from '~/composables/useMigration';
 
 const { migrateLegacyData } = useMigration();
+const route = useRoute();
+
+const isLandingPage = computed(() => route.path === '/');
 
 onMounted(() => {
   migrateLegacyData();
 });
+
+useHead({
+  bodyAttrs: {
+    class: computed(() => isLandingPage.value ? 'has-landing-page' : '')
+  }
+});
 </script>
 
 <template>
-  <div class="app-root">
+  <div class="app-root" :class="{ 'landing-page-root': isLandingPage }">
     <NuxtPage />
     <PWAManager />
   </div>
@@ -131,6 +140,10 @@ body {
   color: var(--text-color);
 }
 
+body.has-landing-page {
+  overflow: auto;
+}
+
 .app-root {
   height: 100dvh;
   display: flex;
@@ -141,6 +154,13 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
+}
+
+.app-root.landing-page-root {
+  position: relative;
+  height: auto;
+  min-height: 100vh;
+  overflow: auto;
 }
 
 /* Transitions */

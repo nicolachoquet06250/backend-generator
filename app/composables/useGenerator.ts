@@ -427,7 +427,7 @@ export const useGenerator = () => {
 
   const getPHPType = (type: string | any, isNullable: boolean = false): string => {
     const kind = typeof type === 'string' ? type : (type?.kind || 'mixed');
-    let phpType = 'mixed';
+    let phpType;
     switch (kind) {
       case 'string': phpType = 'string'; break;
       case 'number': phpType = 'float'; break;
@@ -465,7 +465,7 @@ export const useGenerator = () => {
 
   const getPythonType = (type: string | any, isNullable: boolean = false): string => {
     const kind = typeof type === 'string' ? type : (type?.kind || 'Any');
-    let pythonType = 'Any';
+    let pythonType;
     switch (kind) {
       case 'string': pythonType = 'str'; break;
       case 'number': pythonType = 'float'; break;
@@ -1099,7 +1099,11 @@ export const useGenerator = () => {
 
     // Generate Structures / Classes
     structures.value.forEach(struct => {
+      // Skip default Request/Response structures if they have no fields and no associated functions
       const associatedFuncs = structureFunctions[struct.id] || [];
+      if ((struct.id === 'req' || struct.id === 'res') && struct.fields.length === 0 && associatedFuncs.length === 0) {
+        return;
+      }
 
       if (language === 'nodejs') {
         code += `class ${struct.name} {\n`;
@@ -1350,8 +1354,8 @@ export const useGenerator = () => {
       let header = 'package main\n\nimport "fmt"\n\n';
       code = header + code + globalCode;
     } else if (language === 'java') {
-      if (globalCode) {
-        code += `public class Main {\n${indent(globalCode)}\n}\n\n`;
+      if (globalCode || code) {
+        code = `public class Main {\n${indent(globalCode + (code ? '\n\n' + code : ''))}\n}\n`;
       }
     } else if (language === 'php' && (code || globalCode)) {
       code = '<?php\n\n' + code + globalCode;
@@ -1370,7 +1374,7 @@ export const useGenerator = () => {
       }
     }
 
-    return code || '// No code generated';
+    return code || '';
   };
 
   return {

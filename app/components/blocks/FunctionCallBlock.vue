@@ -264,7 +264,12 @@ const getValueComponent = (block: any) => {
         
         <span v-if="config?.slots?.target" class="dot-separator">.</span>
 
-        <select v-model="selectedFunctionId" class="block-select">
+        <select 
+          v-model="selectedFunctionId" 
+          class="block-select"
+          @mouseenter="$emit('block-interaction-start')"
+          @mouseleave="$emit('block-interaction-stop')"
+        >
           <option value="" disabled>{{ $t('blocks.function.select') }}</option>
           <option v-for="f in otherFunctions" :key="f.id" :value="f.id">
             {{ f.name }} ({{ formatType(f.metadata?.returnType) }})

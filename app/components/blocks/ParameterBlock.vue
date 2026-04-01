@@ -170,7 +170,12 @@ watch(() => props.config?.slots?.defaultValue, (newVal) => {
 <template>
   <BaseBlock color="#FF8C1A" :label="isExpression ? $t('blocks.parameter.label_choice') : $t('blocks.parameter.label')" :minimal="minimal">
     <template v-if="isExpression && !minimal">
-      <select v-model="selectedParam" class="block-select">
+      <select 
+        v-model="selectedParam" 
+        class="block-select"
+        @mouseenter="$emit('block-interaction-start')"
+        @mouseleave="$emit('block-interaction-stop')"
+      >
         <option value="" disabled>{{ $t('blocks.parameter.select_param') }}</option>
         <option v-for="p in availableParameters" :key="p.name" :value="p.name">
           {{ p.name }} : {{ formatType(p.type) }}
@@ -184,11 +189,22 @@ watch(() => props.config?.slots?.defaultValue, (newVal) => {
             v-model="paramName" 
             class="block-input" 
             :placeholder="$t('blocks.parameter.placeholder_name')" 
+            @mouseenter="$emit('block-interaction-start')"
+            @mouseleave="$emit('block-interaction-stop')"
           />
-          <TypeSelector v-model="typeConfig" />
+          <TypeSelector 
+            v-model="typeConfig" 
+            @block-interaction-start="$emit('block-interaction-start')"
+            @block-interaction-stop="$emit('block-interaction-stop')"
+          />
           
           <label class="default-toggle">
-            <input type="checkbox" v-model="hasDefaultValue" />
+            <input 
+              type="checkbox" 
+              v-model="hasDefaultValue" 
+              @mouseenter="$emit('block-interaction-start')"
+              @mouseleave="$emit('block-interaction-stop')"
+            />
             <span class="checkmark"></span>
           </label>
         </div>

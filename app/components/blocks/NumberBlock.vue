@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import BaseBlock from './BaseBlock.vue';
+import BaseBlock from '~/components/blocks/BaseBlock.vue';
 import { useFunctions } from '~/composables/useFunctions';
 
 const props = defineProps<{
@@ -42,6 +42,8 @@ watch(localValue, (val) => {
       type="number" 
       placeholder="0" 
       v-model.number="localValue"
+      @mouseenter="$emit('block-interaction-start')"
+      @mouseleave="$emit('block-interaction-stop')"
     />
   </BaseBlock>
 </template>

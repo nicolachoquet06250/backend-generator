@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import BaseBlock from './BaseBlock.vue';
-import BlockDropZone from './BlockDropZone.vue';
-import BlockRenderer from './BlockRenderer.vue';
+import BaseBlock from '~/components/blocks/BaseBlock.vue';
+import BlockDropZone from '~/components/blocks/BlockDropZone.vue';
+import BlockRenderer from '~/components/blocks/BlockRenderer.vue';
 
 const props = defineProps<{
   minimal?: boolean;
@@ -30,12 +30,3 @@ const props = defineProps<{
   </BaseBlock>
 </template>
 
-<style scoped>
-.block-input {
-  border: none;
-  border-radius: 4px;
-  padding: 4px 8px;
-  width: 120px;
-  outline: none;
-}
-</style>

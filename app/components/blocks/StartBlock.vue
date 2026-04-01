@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import BaseBlock from './BaseBlock.vue';
+import BaseBlock from '~/components/blocks/BaseBlock.vue';
 defineProps<{
   children?: any[];
 }>();

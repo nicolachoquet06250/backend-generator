@@ -82,5 +82,10 @@ export default defineNuxtConfig({
     output: {
       dir: 'output',
     }
+  },
+
+  routeRules: {
+    '/': { ssr: true },
+    '/projects/**': { ssr: false },
   }
 })
