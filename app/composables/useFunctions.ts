@@ -40,9 +40,16 @@ export const useFunctions = () => {
   const isDragging = useState<boolean>('is-dragging', () => false);
 
   // Initialize from localStorage only on client
+  const { currentProjectId } = useProjects();
+
+  const functionsKey = computed(() => currentProjectId.value ? `project-functions-${currentProjectId.value}` : 'editor-functions');
+  const activeFunctionKey = computed(() => currentProjectId.value ? `project-active-function-${currentProjectId.value}` : 'active-function-id');
+
+  // No need to initialize in onMounted if immediate: true watch handles it
+  // But we can keep it as a safety for the first load
   onMounted(() => {
     if (import.meta.client) {
-      const savedFunctions = localStorage.getItem('editor-functions');
+      const savedFunctions = localStorage.getItem(functionsKey.value);
       if (savedFunctions) {
         try {
           functions.value = JSON.parse(savedFunctions);
@@ -51,7 +58,7 @@ export const useFunctions = () => {
         }
       }
 
-      const savedActiveId = localStorage.getItem('active-function-id');
+      const savedActiveId = localStorage.getItem(activeFunctionKey.value);
       if (savedActiveId && functions.value.some(f => f.id === savedActiveId)) {
         activeFunctionId.value = savedActiveId;
       } else if (functions.value.length > 0) {
@@ -63,13 +70,46 @@ export const useFunctions = () => {
   // Persist state when it changes
   watch(functions, (newFunctions) => {
     if (import.meta.client) {
-      localStorage.setItem('editor-functions', JSON.stringify(newFunctions));
+      localStorage.setItem(functionsKey.value, JSON.stringify(newFunctions));
     }
   }, { deep: true });
 
   watch(activeFunctionId, (newId) => {
     if (import.meta.client) {
-      localStorage.setItem('active-function-id', newId);
+      localStorage.setItem(activeFunctionKey.value, newId);
+    }
+  });
+
+  watch(functionsKey, (newKey) => {
+    if (import.meta.client) {
+      const saved = localStorage.getItem(newKey);
+      if (saved) {
+        try {
+          functions.value = JSON.parse(saved);
+        } catch (e) {
+          console.error('Failed to parse saved functions', e);
+          resetFunctions();
+        }
+      } else {
+        resetFunctions();
+      }
+
+      // Also reset active function for the new project
+      const savedActiveId = localStorage.getItem(activeFunctionKey.value);
+      if (savedActiveId && functions.value.some(f => f.id === savedActiveId)) {
+        activeFunctionId.value = savedActiveId;
+      } else if (functions.value.length > 0) {
+        activeFunctionId.value = functions.value[0]!.id;
+      }
+    }
+  }, { immediate: true });
+
+  watch(activeFunctionKey, (newKey) => {
+    if (import.meta.client) {
+      const saved = localStorage.getItem(newKey);
+      if (saved && functions.value.some(f => f.id === saved)) {
+        activeFunctionId.value = saved;
+      }
     }
   });
 
@@ -342,12 +382,12 @@ export const useFunctions = () => {
     return null;
   };
 
-  const resetFunctions = () => {
+  function resetFunctions () {
     functions.value = [
       { id: 'f1', name: 'main', blocks: [] }
     ];
     activeFunctionId.value = 'f1';
-  };
+  }
 
   const removeStructureFromFunctions = (structureId: string) => {
     functions.value.forEach(f => {

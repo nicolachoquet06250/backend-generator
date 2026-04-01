@@ -31,7 +31,22 @@
     "reset": "Réinitialiser le stockage",
     "reload": "Recharger",
     "compact": "Mode compact",
-    "generate": "Générer le code"
+    "generate": "Générer le code",
+    "back_to_projects": "Retour aux projets",
+    "close": "Fermer"
+  },
+  "projects": {
+    "title": "Mes Projets",
+    "new_project": "Nouveau Projet",
+    "project_name": "Nom du projet",
+    "project_description": "Description (optionnelle)",
+    "add_project": "Créer le projet",
+    "no_projects": "Prêt à créer votre premier projet ?",
+    "last_updated": "Mis à jour le",
+    "delete_confirm": "Êtes-vous sûr de vouloir supprimer ce projet ? Cette action est irréversible.",
+    "edit_project": "Modifier le projet",
+    "update_project": "Mettre à jour le projet",
+    "empty_name": "Le nom du projet ne peut pas être vide."
   },
   "generator": {
     "title": "Générer le script backend",

@@ -270,7 +270,7 @@ const onMobileTrashDragLeave = () => {
 .tabs-container {
   display: flex;
   background: var(--tabs-bg);
-  padding: calc(var(--block-padding) / 2);
+  padding: calc(var(--block-padding-v) / 2) var(--block-padding-h);
   padding-bottom: 0;
   gap: var(--block-gap);
   overflow-x: auto;
@@ -327,10 +327,6 @@ const onMobileTrashDragLeave = () => {
   opacity: 0.7;
   font-weight: normal;
   font-style: italic;
-}
-
-.tab-prefix {
-  opacity: 0.6;
 }
 
 .tab:hover {

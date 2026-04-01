@@ -31,7 +31,22 @@
     "reset": "Reset Storage",
     "reload": "Reload",
     "compact": "Compact mode",
-    "generate": "Generate code"
+    "generate": "Generate code",
+    "back_to_projects": "Back to projects",
+    "close": "Close"
+  },
+  "projects": {
+    "title": "My Projects",
+    "new_project": "New Project",
+    "project_name": "Project name",
+    "project_description": "Description (optional)",
+    "add_project": "Create project",
+    "no_projects": "Ready to create your first project?",
+    "last_updated": "Last updated on",
+    "delete_confirm": "Are you sure you want to delete this project? This action is irreversible.",
+    "edit_project": "Edit Project",
+    "update_project": "Update Project",
+    "empty_name": "Project name cannot be empty."
   },
   "generator": {
     "title": "Generate Backend Script",

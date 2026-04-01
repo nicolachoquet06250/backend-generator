@@ -43,15 +43,54 @@ export const useDataStructures = () => {
   ]);
 
   // Initialize from localStorage only on client
+  const { currentProjectId } = useProjects();
+  
+  const storageKey = computed(() => currentProjectId.value ? `project-structures-${currentProjectId.value}` : 'data-structures');
+
+  const resetStructures = () => {
+    structures.value = [
+      { 
+        id: 'req', 
+        name: 'Request',
+        fields: []
+      },
+      { 
+        id: 'res', 
+        name: 'Response',
+        fields: []
+      },
+      { 
+        id: '1', 
+        name: 'User',
+        fields: [
+          { id: 'f1', name: 'id', type: 'number', nullable: false, defaultValue: 0 },
+          { id: 'f2', name: 'email', type: 'string', nullable: false, defaultValue: '' }
+        ]
+      },
+      { 
+        id: '2', 
+        name: 'Product',
+        fields: [
+          { id: 'f3', name: 'name', type: 'string', nullable: false, defaultValue: '' },
+          { id: 'f4', name: 'price', type: 'number', nullable: false, defaultValue: 0 }
+        ]
+      }
+    ];
+  };
+
+  // No need to initialize in onMounted if immediate: true watch handles it
+  // But we can keep it as a safety for the first load
   onMounted(() => {
     if (import.meta.client) {
-      const saved = localStorage.getItem('data-structures');
+      const saved = localStorage.getItem(storageKey.value);
       if (saved) {
         try {
           structures.value = JSON.parse(saved);
         } catch (e) {
           console.error('Failed to parse saved structures', e);
         }
+      } else {
+        resetStructures();
       }
     }
   });
@@ -59,9 +98,25 @@ export const useDataStructures = () => {
   // Persist state when it changes
   watch(structures, (newStructures) => {
     if (import.meta.client) {
-      localStorage.setItem('data-structures', JSON.stringify(newStructures));
+      localStorage.setItem(storageKey.value, JSON.stringify(newStructures));
     }
   }, { deep: true });
+
+  watch(storageKey, (newKey) => {
+    if (import.meta.client) {
+      const saved = localStorage.getItem(newKey);
+      if (saved) {
+        try {
+          structures.value = JSON.parse(saved);
+        } catch (e) {
+          console.error('Failed to parse saved structures', e);
+          resetStructures();
+        }
+      } else {
+        resetStructures();
+      }
+    }
+  }, { immediate: true });
 
   const addStructure = (name: string) => {
     structures.value.push({
@@ -110,37 +165,6 @@ export const useDataStructures = () => {
         Object.assign(field, updates);
       }
     }
-  };
-
-  const resetStructures = () => {
-    structures.value = [
-      { 
-        id: 'req', 
-        name: 'Request',
-        fields: []
-      },
-      { 
-        id: 'res', 
-        name: 'Response',
-        fields: []
-      },
-      { 
-        id: '1', 
-        name: 'User',
-        fields: [
-          { id: 'f1', name: 'id', type: 'number', nullable: false, defaultValue: 0 },
-          { id: 'f2', name: 'email', type: 'string', nullable: false, defaultValue: '' }
-        ]
-      },
-      { 
-        id: '2', 
-        name: 'Product',
-        fields: [
-          { id: 'f3', name: 'name', type: 'string', nullable: false, defaultValue: '' },
-          { id: 'f4', name: 'price', type: 'number', nullable: false, defaultValue: 0 }
-        ]
-      }
-    ];
   };
 
   return {

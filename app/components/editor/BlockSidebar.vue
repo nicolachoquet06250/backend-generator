@@ -21,7 +21,6 @@ import ParameterBlock from '../blocks/ParameterBlock.vue';
 import ArrayPushBlock from '../blocks/ArrayPushBlock.vue';
 import ArrayRemoveBlock from '../blocks/ArrayRemoveBlock.vue';
 import ArraySetKeyBlock from '../blocks/ArraySetKeyBlock.vue';
-import FinBlock from '../blocks/FinBlock.vue';
 import ReturnBlock from '../blocks/ReturnBlock.vue';
 import JsonBlock from '../blocks/JsonBlock.vue';
 import HtmlBlock from '../blocks/HtmlBlock.vue';
@@ -357,12 +356,12 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
 }
 
 .domain-tab:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--sidebar-section-border);
   opacity: 1;
 }
 
 .domain-tab.active {
-  background: var(--primary-color, #4C97FF);
+  background: var(--primary-color);
   color: white;
   opacity: 1;
 }
@@ -441,15 +440,15 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
   align-items: center;
   justify-content: center;
   padding: 9px 4px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px dashed rgba(255, 255, 255, 0.2);
+  background: var(--sidebar-section-bg);
+  border: 1px dashed var(--sidebar-section-border);
   border-radius: 4px;
   cursor: grab;
   min-width: 60px;
   flex: 1;
 }
 .multi:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--sidebar-section-border);
 }
 .multi-icon {
   display: flex;
