@@ -34,7 +34,7 @@ const acceptedBlockTypes = ['array', 'object', 'object_property', 'var', 'parame
           :block="child" 
           isExpression
           class="json-element"
-          draggable="true"
+          draggable
           @dragstart.stop="onBlockDragStart($event, child)"
         />
       </div>
@@ -50,7 +50,7 @@ const acceptedBlockTypes = ['array', 'object', 'object_property', 'var', 'parame
             :block="value" 
             isExpression
             class="json-element"
-            draggable="true"
+            draggable
             @dragstart.stop="onBlockDragStart($event, value)"
           />
         </div>

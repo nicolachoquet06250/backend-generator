@@ -139,7 +139,7 @@ const acceptedBlockTypes = computed(() => {
           :block="child" 
           isExpression
           class="array-element"
-          draggable="true"
+          draggable
           @dragstart.stop="onBlockDragStart($event, child)"
         />
       </div>

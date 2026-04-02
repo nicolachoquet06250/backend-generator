@@ -3,8 +3,11 @@ import type { BlockInstance } from './useFunctions';
 export const useExpressionType = () => {
   const { functions, activeFunctionId } = useFunctions();
 
-  const findVarType = (blocks: BlockInstance[], name: string): any => {
+  const findVarType = (blocks: BlockInstance[], name: string, visited = new WeakSet<BlockInstance>()): any => {
     for (const block of blocks) {
+      if (!block || visited.has(block)) continue;
+      visited.add(block);
+
       if (block.type === 'var' && block.config?.name === name) return block.config.typeConfig;
       if (block.type === 'for' && block.config?.loopVar === name) return 'number';
       if (block.type === 'foreach') {
@@ -21,13 +24,13 @@ export const useExpressionType = () => {
         }
       }
       if (block.children) {
-        const found = findVarType(block.children, name);
+        const found = findVarType(block.children, name, visited);
         if (found) return found;
       }
       if (block.config?.slots) {
         for (const s of Object.values(block.config.slots)) {
           if (s) {
-            const found = findVarType(Array.isArray(s) ? s : [s as any], name);
+            const found = findVarType(Array.isArray(s) ? s : [s as any], name, visited);
             if (found) return found;
           }
         }
@@ -36,17 +39,20 @@ export const useExpressionType = () => {
     return null;
   };
 
-  const findParamType = (blocks: BlockInstance[], name: string): any => {
+  const findParamType = (blocks: BlockInstance[], name: string, visited = new WeakSet<BlockInstance>()): any => {
     for (const block of blocks) {
+      if (!block || visited.has(block)) continue;
+      visited.add(block);
+
       if (block.type === 'parameter' && block.config?.name === name && !block.config?.selectedParam) return block.config.type;
       if (block.children) {
-        const found = findParamType(block.children, name);
+        const found = findParamType(block.children, name, visited);
         if (found) return found;
       }
       if (block.config?.slots) {
         for (const s of Object.values(block.config.slots)) {
           if (s) {
-            const found = findParamType(Array.isArray(s) ? s : [s as any], name);
+            const found = findParamType(Array.isArray(s) ? s : [s as any], name, visited);
             if (found) return found;
           }
         }

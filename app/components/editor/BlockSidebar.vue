@@ -104,7 +104,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
       <!-- Variables -->
       <div class="sidebar-section">
         <h3>{{ $t('sections.variables') }}</h3>
-        <div class="draggable-wrapper" draggable="true"
+        <div class="draggable-wrapper" draggable
              @dragstart="onDragStart($event, 'var')"
              @dragend="onDragEnd"
              @touchstart="handleTouchStart($event, 'var')"

@@ -34,7 +34,7 @@ const acceptedBlockTypes = ['string', 'var', 'parameter'];
           :block="child" 
           isExpression
           class="html-element"
-          draggable="true"
+          draggable
           @dragstart.stop="onBlockDragStart($event, child)"
         />
       </div>
@@ -50,7 +50,7 @@ const acceptedBlockTypes = ['string', 'var', 'parameter'];
             :block="value" 
             isExpression
             class="html-element"
-            draggable="true"
+            draggable
             @dragstart.stop="onBlockDragStart($event, value)"
           />
         </div>
