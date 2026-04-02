@@ -176,7 +176,7 @@ const onMobileTrashDragLeave = () => {
           <div v-for="func in group.functions" 
                :key="func.id" 
                class="tab" 
-               :class="{ active: activeFunctionId === func.id }"
+               :class="{ 'active': activeFunctionId === func.id }"
                @click="activeFunctionId = func.id"
           >
             <span class="tab-name">{{ func.name }}</span>
@@ -335,10 +335,21 @@ const onMobileTrashDragLeave = () => {
 }
 
 .tab.active {
-  background: var(--tab-active-bg);
-  color: var(--tab-active-text);
-  border-color: var(--sidebar-border);
-  box-shadow: 0 -2px 5px rgba(0,0,0,0.05);
+  background: var(--tab-active-bg) !important;
+  color: var(--tab-active-text) !important;
+  border: 1px solid var(--sidebar-border) !important;
+  border-bottom: 1px solid var(--tab-active-bg) !important;
+  box-shadow: 0 -2px 5px rgba(0,0,0,0.1) !important;
+  margin-bottom: -1px;
+  position: relative;
+  z-index: 2;
+}
+
+.tab:not(.active) {
+  background: var(--tab-bg) !important;
+  color: var(--tab-text) !important;
+  opacity: 0.8;
+  border-bottom: 1px solid var(--sidebar-border) !important;
 }
 
 .close-tab {

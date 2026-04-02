@@ -45,6 +45,27 @@ export const useFunctions = () => {
   const functionsKey = computed(() => currentProjectId.value ? `project-functions-${currentProjectId.value}` : 'editor-functions');
   const activeFunctionKey = computed(() => currentProjectId.value ? `project-active-function-${currentProjectId.value}` : 'active-function-id');
 
+  const ensureMainFunction = () => {
+    const mainFunc = functions.value.find(f => f.name === 'main');
+    if (!mainFunc) {
+      const id = 'f-' + Math.random().toString(36).substring(2, 9);
+      functions.value.unshift({
+        id,
+        name: 'main',
+        blocks: [],
+        metadata: {
+          returnType: 'any'
+        }
+      });
+      activeFunctionId.value = id;
+    } else {
+      // If main exists but no function is active, or if we want to ensure it's selected on project load
+      if (!activeFunctionId.value || !functions.value.some(f => f.id === activeFunctionId.value)) {
+        activeFunctionId.value = mainFunc.id;
+      }
+    }
+  };
+
   // No need to initialize in onMounted if immediate: true watch handles it
   // But we can keep it as a safety for the first load
   onMounted(() => {
@@ -64,6 +85,8 @@ export const useFunctions = () => {
       } else if (functions.value.length > 0) {
         activeFunctionId.value = functions.value[0]!.id;
       }
+      
+      ensureMainFunction();
     }
   });
 
@@ -101,6 +124,8 @@ export const useFunctions = () => {
       } else if (functions.value.length > 0) {
         activeFunctionId.value = functions.value[0]!.id;
       }
+
+      ensureMainFunction();
     }
   }, { immediate: true });
 
