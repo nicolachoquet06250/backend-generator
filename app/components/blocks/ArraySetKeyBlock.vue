@@ -17,6 +17,7 @@ const { structures } = useDataStructures();
 const { activeFunctionId, updateBlockConfig, functions } = useFunctions();
 
 const acceptedArrayTypes = ['var', 'parameter', 'array', 'object', 'function'];
+const acceptedKeyType = ['string', 'number', 'var', 'parameter', 'function'];
 const acceptedValueTypes = ['expression'];
 
 const availableKeys = computed(() => {
@@ -109,10 +110,10 @@ watch(selectedKey, (val) => {
       </template>
       <template v-else>
         <BlockDropZone 
-          slotName="key" 
+          slotName="targetKey"
           :parentBlockId="blockId!" 
           :block="targetKey"
-          :acceptedBlockTypes="['string', 'number', 'var', 'parameter', 'function']"
+          :acceptedBlockTypes="acceptedKeyType"
         >
           <BlockRenderer v-if="targetKey" :block="targetKey" isExpression />
         </BlockDropZone>

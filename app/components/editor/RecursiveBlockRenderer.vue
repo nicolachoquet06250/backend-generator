@@ -156,7 +156,7 @@ const onStopPropagation = (e: MouseEvent | TouchEvent) => {
           (block.type === 'true' || block.type === 'false' ? 
             { value: block.type === 'true', blockId: block.id, config: block.config, ...block.config.slots } :
             (block.type === 'array_set_key' ?
-              { blockId: block.id, config: block.config, ...block.config.slots, targetKey: block.config?.slots?.key } :
+              { blockId: block.id, config: block.config, ...block.config.slots, targetKey: block.config?.slots?.targetKey } :
               (block.type === 'new_route' ?
                 { blockId: block.id, config: block.config, ...block.config.slots, value: block.config?.slots?.value } :
                 { blockId: block.id, config: block.config, ...block.config.slots }
