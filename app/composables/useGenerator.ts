@@ -330,6 +330,10 @@ export const useGenerator = () => {
           const funcCallTarget = block.config.slots?.target ? generateNodeJS([block.config.slots.target], true, reassigned) : (block.config.slots?.source ? generateNodeJS([block.config.slots.source], true, reassigned) : null);
           const call = funcCallTarget ? `${funcCallTarget}.${funcName}(${nodeJsArgs})` : `${funcName}(${nodeJsArgs})`;
           return isNested ? call : `${call};`;
+        case 'new_route':
+          const nodeJsPath = block.config.path || '/';
+          const nodeJsHandler = block.config.slots?.value ? generateNodeJS([block.config.slots.value], true, reassigned) : '() => {}';
+          return `app.get("${nodeJsPath}", ${nodeJsHandler});`;
         case 'return':
           const retVal = block.config.slots?.value ? generateNodeJS([block.config.slots.value], true, reassigned) : formatLiteral(block.config.value, 'nodejs');
           return `return ${retVal};`;
@@ -514,6 +518,10 @@ export const useGenerator = () => {
 
           const funcCallTarget = block.config.slots?.target ? generatePython([block.config.slots.target], true) : (block.config.slots?.source ? generatePython([block.config.slots.source], true) : null);
           return funcCallTarget ? `${funcCallTarget}.${funcName}(${pythonArgs})` : `${funcName}(${pythonArgs})`;
+        case 'new_route':
+          const pyPath = block.config.path || '/';
+          const pyHandler = block.config.slots?.value ? generatePython([block.config.slots.value], true) : 'lambda: None';
+          return `@app.route("${pyPath}")\ndef route_${Math.random().toString(36).substring(7)}():\n    return ${pyHandler}()`;
         case 'return':
           const retVal = block.config.slots?.value ? generatePython([block.config.slots.value], true) : formatLiteral(block.config.value, 'python');
           return `return ${retVal}`;
@@ -637,6 +645,20 @@ export const useGenerator = () => {
 
   const getGoType = (type: string | any): string => {
     const kind = typeof type === 'string' ? type : (type?.kind || 'any');
+
+    if (kind === 'object' || typeof type === 'string') {
+      const typeName = typeof type === 'string' ? type : '';
+      const structId = type?.structId;
+      const struct = structures.value.find(s => s.id === structId || s.name === typeName);
+      if (struct) {
+        if (struct.name.toLowerCase().includes('response')) return 'http.ResponseWriter';
+        if (struct.name.toLowerCase().includes('request')) return '*http.Request';
+        return `*${struct.name}`;
+      }
+      if (typeName.toLowerCase().includes('response')) return 'http.ResponseWriter';
+      if (typeName.toLowerCase().includes('request')) return '*http.Request';
+    }
+
     switch (kind) {
       case 'string': return 'string';
       case 'number': return 'int';
@@ -743,6 +765,10 @@ export const useGenerator = () => {
 
           const goArgs = params.map(p => {
             const argBlock = block.config.slots?.[`arg_${p}`];
+            if (!argBlock) {
+              if (p.toLowerCase().includes('res') || p.toLowerCase().includes('response')) return 'res';
+              if (p.toLowerCase().includes('req') || p.toLowerCase().includes('request')) return 'req';
+            }
             return argBlock ? generateGo([argBlock], true) : 'nil';
           }).join(', ');
 
@@ -859,6 +885,34 @@ export const useGenerator = () => {
           const whileCond = block.config.slots?.condition ? generateGo([block.config.slots.condition], true) : (block.config.condition || 'true');
           const whileChildren = generateGo(block.children, false);
           return `for ${whileCond} {\n${indent(whileChildren)}${whileChildren ? '\n' : ''}}`;
+        case 'new_route':
+          const goPath = block.config.path || '/';
+          const goHandlerBlock = block.config.slots?.value;
+          const goHandler = goHandlerBlock ? generateGo([goHandlerBlock], true) : 'nil';
+          const goMethod = block.config.method || 'GET';
+
+          let handlerCall = '';
+          if (goHandlerBlock && (goHandlerBlock.type === 'func_call' || goHandlerBlock.type === 'function')) {
+            const func = functions.value.find(f => f.id === goHandlerBlock.config.functionId || f.id === goHandlerBlock.config.property?.replace('func_', ''));
+            if (func) {
+              const paramsArr = func.blocks.filter(b => b.type === 'parameter' && b.config?.name && !b.config?.selectedParam);
+              const hasHttpParams = paramsArr.some(b => {
+                const t = (typeof b.config.type === 'string' ? b.config.type : b.config.type?.kind) || '';
+                return t.toLowerCase().includes('response') || t.toLowerCase().includes('request');
+              });
+
+              if (hasHttpParams) {
+                // Si la fonction attend déjà res/req, on ne l'appelle pas comme une fonction retournant un handler
+                // mais on l'appelle directement avec res, req.
+                handlerCall = `${goHandler}`; // goHandler contient déjà l'appel avec des nils potentiels si non géré
+                // En fait, generateGo pour func_call génère l'appel avec les arguments des slots.
+                // Si c'est un func_call, on veut probablement juste le nom de la fonction si elle matche la signature
+                // ou un appel direct.
+              }
+            }
+          }
+
+          return `mux := http.NewServeMux()\nmux.HandleFunc("${goMethod} ${goPath}", func(res http.ResponseWriter, req *http.Request) {\n\t${goHandler}\n})\n\nfmt.Println("Server starting on :8080...")\nerr := http.ListenAndServe(":8080", mux)\nif err != nil {\n\tlog.Fatal(err)\n}`;
         case 'return':
           if (block.config.slots?.value?.type === 'ternary') {
             const ternaryBlock = { ...block.config.slots.value, metadata: { ...block.config.slots.value.metadata, isReturn: true } };
@@ -1076,6 +1130,10 @@ export const useGenerator = () => {
           const callTarget = funcCallTarget ? funcCallTarget.replace(/;$/, '') : null;
           const call = (callTarget === '$this' || callTarget === '$this;') ? `$this->${funcName}(${phpArgs})` : (callTarget ? `${callTarget}->${funcName}(${phpArgs})` : `${funcName}(${phpArgs})`);
           return isNested ? call : `${call};`;
+        case 'new_route':
+          const phpPath = block.config.path || '/';
+          const phpHandler = block.config.slots?.value ? generatePHP([block.config.slots.value], true).replace(';', '') : 'function() {}';
+          return `$router->get("${phpPath}", ${phpHandler});`;
         case 'return':
           const retVal = block.config.slots?.value ? generatePHP([block.config.slots.value], true) : formatLiteral(block.config.value, 'php');
           return `return ${retVal};`;
@@ -1509,10 +1567,33 @@ export const useGenerator = () => {
 
         if (associatedFuncs.length > 0) {
           code += associatedFuncs.map(func => {
-            const goParams = func.blocks
-                .filter(b => b.type === 'parameter' && b.config?.name && !b.config?.selectedParam)
+          const goParamsArr = func.blocks
+              .filter(b => b.type === 'parameter' && b.config?.name && !b.config?.selectedParam);
+
+          let goParams;
+          const resParam = goParamsArr.find(b => {
+            const t = (typeof b.config.type === 'string' ? b.config.type : b.config.type?.kind) || '';
+            return t.toLowerCase().includes('response');
+          });
+          const reqParam = goParamsArr.find(b => {
+            const t = (typeof b.config.type === 'string' ? b.config.type : b.config.type?.kind) || '';
+            return t.toLowerCase().includes('request');
+          });
+
+          if (resParam || reqParam) {
+            const otherParams = goParamsArr.filter(b => b !== resParam && b !== reqParam);
+            const formattedParams = [];
+            if (resParam) formattedParams.push(`${resParam.config.name} ${getGoType(resParam.config.type)}`);
+            if (reqParam) formattedParams.push(`${reqParam.config.name} ${getGoType(reqParam.config.type)}`);
+            otherParams.forEach(b => {
+              formattedParams.push(`${b.config.name} ${getGoType(b.config.type || 'interface{}')}`);
+            });
+            goParams = formattedParams.join(', ');
+          } else {
+            goParams = goParamsArr
                 .map(b => `${b.config.name} ${getGoType(b.config.type || 'interface{}')}`)
                 .join(', ');
+          }
             const hasReturn = hasReturnBlock(func.blocks);
             const goRetType = getGoType(hasReturn ? (func.metadata?.returnType || 'interface{}') : 'void');
             const goBody = generateGo(func.blocks.filter(b => b.type !== 'parameter' || b.config?.selectedParam));
@@ -1591,13 +1672,61 @@ export const useGenerator = () => {
           globalCode += indent(phpBody, 4);
           globalCode += `${phpBody ? '\n' : ''}}\n\n`;
         } else if (language === 'go') {
-          const goParams = func.blocks
-              .filter(b => b.type === 'parameter' && b.config?.name && !b.config?.selectedParam)
-              .map(b => `${b.config.name} ${getGoType(b.config.type || 'interface{}')}`)
-              .join(', ');
+          const goParamsArr = func.blocks
+              .filter(b => b.type === 'parameter' && b.config?.name && !b.config?.selectedParam);
+
+          let goParams;
+          const resParam = goParamsArr.find(b => {
+            const t = (typeof b.config.type === 'string' ? b.config.type : b.config.type?.kind) || '';
+            return t.toLowerCase().includes('response');
+          });
+          const reqParam = goParamsArr.find(b => {
+            const t = (typeof b.config.type === 'string' ? b.config.type : b.config.type?.kind) || '';
+            return t.toLowerCase().includes('request');
+          });
+
+          if (resParam || reqParam) {
+            const otherParams = goParamsArr.filter(b => b !== resParam && b !== reqParam);
+            const formattedParams = [];
+            if (resParam) formattedParams.push(`${resParam.config.name} ${getGoType(resParam.config.type)}`);
+            if (reqParam) formattedParams.push(`${reqParam.config.name} ${getGoType(reqParam.config.type)}`);
+            otherParams.forEach(b => {
+              formattedParams.push(`${b.config.name} ${getGoType(b.config.type || 'interface{}')}`);
+            });
+            goParams = formattedParams.join(', ');
+          } else {
+            goParams = goParamsArr
+                .map(b => `${b.config.name} ${getGoType(b.config.type || 'interface{}')}`)
+                .join(', ');
+          }
           const hasReturn = hasReturnBlock(func.blocks);
           const goRetType = getGoType(hasReturn ? (func.metadata?.returnType || 'interface{}') : 'void');
-          const goBody = generateGo(func.blocks.filter(b => b.type !== 'parameter' || b.config?.selectedParam));
+          let goBody = generateGo(func.blocks.filter(b => b.type !== 'parameter' || b.config?.selectedParam));
+          
+          if (func.name === 'main') {
+            const httpFuncs = globalFunctions.filter(f => {
+              const params = f.blocks.filter(b => b.type === 'parameter' && b.config?.name && !b.config?.selectedParam);
+              return params.some(b => {
+                const t = (typeof b.config.type === 'string' ? b.config.type : b.config.type?.kind) || '';
+                return t.toLowerCase().includes('response') || t.toLowerCase().includes('request');
+              });
+            });
+
+            if (httpFuncs.length > 0) {
+              let serverCode = '\n\nmux := http.NewServeMux()\n';
+              httpFuncs.forEach(f => {
+                const route = f.name === 'index' ? '/' : `/${f.name}`;
+                serverCode += `mux.HandleFunc("GET ${route}", func(res http.ResponseWriter, req *http.Request) {\n\t${f.name}(res, req)\n})\n`;
+              });
+              serverCode += '\nfmt.Println("Server starting on :8080...")\n';
+              serverCode += 'err := http.ListenAndServe(":8080", mux)\n';
+              serverCode += 'if err != nil {\n';
+              serverCode += '\tlog.Fatal(err)\n';
+              serverCode += '}\n';
+              goBody += serverCode;
+            }
+          }
+          
           globalCode += `func ${func.name}(${goParams})${goRetType ? ' ' + goRetType : ''} {\n`;
           globalCode += indent(goBody);
           globalCode += `${goBody ? '\n' : ''}}\n\n`;
@@ -1606,7 +1735,20 @@ export const useGenerator = () => {
     }
 
     if (language === 'go' && (code || globalCode)) {
-      let header = 'package main\n\nimport "fmt"\n\n';
+      const combined = code + globalCode;
+      const hasHttp = combined.includes('http.');
+      const hasLog = combined.includes('log.');
+      const hasFmt = combined.includes('fmt.');
+      
+      let imports = [];
+      if (hasFmt) imports.push('"fmt"');
+      if (hasHttp) imports.push('"net/http"');
+      if (hasLog) imports.push('"log"');
+      
+      let header = `package main\n\n`;
+      if (imports.length > 0) {
+        header += `import (\n\t${imports.join('\n\t')}\n)\n\n`;
+      }
       code = header + code + globalCode;
     } else if (language === 'java') {
       if (globalCode || code) {
