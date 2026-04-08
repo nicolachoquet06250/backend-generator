@@ -508,5 +508,13 @@ function reloadPage() {
   .projects-header h1 {
     font-size: 2rem;
   }
+
+  .project-actions {
+    opacity: 1;
+  }
+
+  .project-card::before {
+    opacity: 1;
+  }
 }
 </style>
